@@ -14,8 +14,6 @@
 | 3 | Vũ Hải Đăng | 2351170580 | 65KTPM | Thành viên | Giao trực tiếp/giao hộ; quét QR/Barcode; chụp và tải ảnh minh chứng bắt buộc; xác nhận bàn giao và xử lý ảnh chờ gửi. | [Đánh giá sau] | vuhaidang3566577@gmail.com |
 | 4 | Lý Đình Sơn | 2351170615 | 65KTPM | Thành viên | Quản lý vòng đời và trạng thái giao dịch; theo dõi lịch sử; xác nhận thanh toán ngoài ứng dụng; xử lý sự cố và thông báo. | [Đánh giá sau] | lydinhson.it@gmail.com |
 
-> **Cần hoàn thiện trước khi nộp:** Điền lớp sinh hoạt, email và tỷ lệ đóng góp thực tế của từng sinh viên. Lớp học phần 65KTPM không mặc định là lớp sinh hoạt. Các tỷ lệ đóng góp cần do nhóm thống nhất theo kết quả thực hiện, không phải số liệu đã được xác nhận.
-
 ---
 
 ## Hướng Dẫn Thiết Lập Môi Trường Và Chạy Ứng Dụng
