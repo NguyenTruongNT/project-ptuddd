@@ -1,9 +1,9 @@
 # STUDYSHARE — BỘ ĐẶC TẢ UI/UX MVP & HƯỚNG DẪN TRIỂN KHAI
-**Mã:** SS-UIUX-01 · **Phiên bản:** 1.0 – bản bàn giao thiết kế · **Ngày:** 21/11/2026
+**Mã:** SS-UIUX-01 · **Phiên bản:** 1.1 – đồng bộ SS-BR v2.0 và README giảng viên · **Ngày:** 21/11/2026
 **Dự án:** StudyShare – Ứng dụng di động hỗ trợ cho mượn, chuyển nhượng tài liệu học tập và xác thực giao nhận giữa sinh viên
 **Nhóm:** 12 – 65KTPM · **Nhóm trưởng:** Nguyễn Văn Trường · **Nền tảng:** Android Flutter/Dart
 > **Phạm vi trạng thái:** SCR-04 đến SCR-26 và Bottom Navigation đã được nhóm trưởng duyệt trong hội thoại. SCR-01 đến SCR-03 được hoàn thiện trong bản tài liệu này theo yêu cầu mới. Đây là đặc tả thiết kế, **chưa phải code/SQL/Contracts đã triển khai**, và không xác nhận trạng thái merge GitHub.
-> **Nguồn đối chiếu:** `QUY_TAC_NGHIEP_VU.md` (SS-BR 1.3-REVIEW, bản tệp hiện có), `QUY_TRINH_HOAT_DONG.md` (UI-01…UI-18), `QUY_TRINH_GIT_NHOM.md`; những quyết định đã chốt tiếp theo trong hội thoại được ưu tiên ghi rõ, nhưng phải cập nhật SS-BR/Contracts trước khi lập trình nếu tài liệu kho còn lệch.
+> **Nguồn đối chiếu:** `QUY_TAC_NGHIEP_VU.md` (SS-BR v2.0 trên nhánh integration), `QUY_TRINH_HOAT_DONG.md` (UI-01…UI-18), `QUY_TRINH_GIT_NHOM.md`; những quyết định đã chốt tiếp theo trong hội thoại được ưu tiên ghi rõ, nhưng phải cập nhật SS-BR/Contracts trước khi lập trình nếu tài liệu kho còn lệch.
 
 ## 1. Tóm tắt quyết định đã chốt
 - **26 đích điều hướng SCR-01…SCR-26**, tương ứng 18 mã UI nghiệp vụ cũ (không tự nhân bản hệ thống UI).
@@ -399,15 +399,16 @@ flowchart TD
 10. Offline chỉ có draft, ảnh chờ upload và cache read-only; **không** tự ghi success/ACK trên client.
 
 ## 9. Kiến trúc Flutter đề xuất – chuẩn bị Stage 3 Shared Foundation
+**Vị trí dự án:** `nhom12-65ktpm/src/` theo README giảng viên (không dùng `nhom12-65ktpm/app/`). `src/lib/app/` bên dưới chỉ là thư mục Dart nội bộ.
 **Stack định hướng:** Flutter Android + Riverpod quản lý state + go_router điều hướng + Supabase Auth/Postgres/RLS/private Storage + Drift/SQLite cho bản nháp offline + `gen-l10n` Việt/Anh. Không khóa package version trong tài liệu này; khi bắt đầu sprint cần chốt qua `pubspec.lock` và kiểm thử Android target thực tế.
 ```text
 nhom12-65ktpm/
 ├── docs/
 │   ├── QUY_TAC_NGHIEP_VU.md      # SS-BR gốc, không ghi đè
-│   ├── UI_SPEC.md               # bản Markdown này khi đưa vào repo (chờ PR)
+│   ├── StudyShare_UIUX_MVP_va_HuongDan_TrienKhai.md # chính tệp này
 │   ├── STATE_MACHINES.md        # trạng thái & transition được chốt
 │   └── CONTRACTS.md             # DTO/RPC/error/idempotency được chốt
-└── app/                         # tên thư mục dự kiến, đối chiếu repo trước tạo
+└── src/                         # ROOT Flutter, bắt buộc theo README của thầy
     ├── lib/
     │   ├── main.dart
     │   ├── app/{app.dart,router.dart,bootstrap.dart}
