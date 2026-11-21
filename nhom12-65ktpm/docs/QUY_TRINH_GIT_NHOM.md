@@ -1,7 +1,7 @@
 # QUY TRÌNH GIT VÀ PHỐI HỢP NHÓM – STUDYSHARE
 
 > **Mã tài liệu:** SS-GIT  
-> **Phiên bản:** 1.1 – Bổ sung quy tắc tái sử dụng nhánh tài liệu và commit theo từng thay đổi; chờ PR review  
+> **Phiên bản:** 1.2 – Quy chuẩn commit nguyên tử theo nhiệm vụ cho bốn thành viên; hướng dẫn giữ lịch sử PR  
 > **Nhóm:** 12 – Lớp 65KTPM  
 > **Nhóm trưởng:** Nguyễn Văn Trường  
 > **Kho Fork:** `NguyenTruongNT/project-ptuddd`  
@@ -127,9 +127,10 @@ Các lệnh trên chạy tại gốc `project-ptuddd/`, sau khi ba file đã đ�
 
 ```bash
 git status
-git add nhom12-65ktpm/
+git add nhom12-65ktpm/src/lib/features/transactions/
 git diff --cached --name-only
-git commit -m "feat(nhom12-65ktpm): xay dung man hinh chi tiet giao dich"
+git diff --cached --check
+git commit -m "feat(nhom12-65ktpm): transaction - tao man hinh chi tiet"
 git push -u origin feature/nhom12/son-transaction-workflow
 ```
 
@@ -142,6 +143,71 @@ Những lần push tiếp theo trên cùng nhánh có thể dùng `git push`.
 - `docs(nhom12-65ktpm): mo ta ngan` – cập nhật tài liệu.
 
 Giữ định dạng của thầy; không tự đổi scope thành `integration` hoặc tên thành viên. Không sử dụng `git add .` tại gốc repo; không commit `.env`, signing keys, `build/`, `.dart_tool/`, `.gradle/`, APK/AAB hoặc ảnh riêng tư.
+
+
+### 6.1. Quy tắc commit theo nhiệm vụ – áp dụng cho cả bốn thành viên
+
+**Mục tiêu:** nhìn vào lịch sử Git là biết **ai đã làm gì, chức năng nào thay đổi, file nào bị tác động và cách kiểm tra thay đổi đó**. Đây là quy định nội bộ của nhóm, bổ sung cho README của giảng viên.
+
+1. **Một commit = một thay đổi có ý nghĩa, tương đối độc lập và có thể kiểm tra.** Ví dụ thêm UI login, thêm validation login, tích hợp Supabase Auth, thêm test login là các commit khác nhau. Không gom toàn bộ màn hình hoặc cả sprint vào một commit.
+2. **Không ép một file = một commit.** Nếu hoàn thành một nhiệm vụ cần sửa model + repository + test liên quan thì có thể đưa vào **cùng một commit**, miễn đó là một thay đổi logic thống nhất và kiểm thử được.
+3. **Không commit khi thay đổi chưa có ý nghĩa riêng hoặc đang làm vỡ build chung.** Nếu công việc quá lớn, chia thành các bước nhỏ; code chưa hoàn thiện có thể được giữ ở nhánh cá nhân và gắn trạng thái PR Draft, tránh merge vào integration.
+4. **Chỉ stage đúng file/hunk của nhiệm vụ.** Ở gốc repo không dùng `git add .`, không mặc định `git add nhom12-65ktpm/` khi đang làm nhiều việc; dùng `git add <đường-dẫn>` hoặc `git add -p <file>` nếu hai nhiệm vụ cùng chỉnh một file.
+5. **Kiểm tra trước mỗi commit:** `git status --short`, `git diff --cached --stat`, `git diff --cached --check`; chạy test phù hợp nếu có. Không ghi test “đạt” khi chưa thực sự chạy.
+6. **Commit bởi người thực hiện bằng tài khoản của họ.** Cấu hình `git config user.name`, `git config user.email` chính xác; ghi Issue/PR và commit SHA để truy vết. Không lấy tên nhánh làm bằng chứng đóng góp duy nhất.
+7. **Nhiều commit có thể nằm trong một PR cùng chức năng.** Push một lần sau vài commit vẫn bảo toàn từng commit. Để giữ lịch sử trên nhánh integration, chọn **Create a merge commit**, không chọn Squash and merge. Không force-push vào nhánh nhóm/integration.
+8. **Phát hiện lỗi sau merge:** mở Issue và tạo commit `fix` trong nhánh feature/hotfix, gửi PR mới; không xóa lịch sử đã được review.
+
+**Định dạng tiêu đề commit** (README giảng viên quy định cú pháp `loại(nhom12-65ktpm): mô tả`; nhóm bổ sung tên phân hệ trong phần mô tả):
+
+```text
+feat(nhom12-65ktpm): auth - tao giao dien dang nhap
+feat(nhom12-65ktpm): auth - them kiem tra email va mat khau
+fix(nhom12-65ktpm): material - chan tao listing trung
+feat(nhom12-65ktpm): discovery - them bo loc BORROW SELL DONATE
+feat(nhom12-65ktpm): handover - xac thuc QR theo material
+fix(nhom12-65ktpm): handover - chan QR da quet khong khop
+feat(nhom12-65ktpm): transaction - hien thi timeline server
+fix(nhom12-65ktpm): transaction - chan giao SELL truoc xac nhan tien
+docs(nhom12-65ktpm): git - bo sung quy tac commit theo nhiem vu
+```
+
+Với thay đổi chỉ dành cho test hoặc tái cấu trúc, nhóm **có thể đề xuất** `test(...)` và `refactor(...)` nếu đã thống nhất; `feat`, `fix`, `docs` vẫn là ba loại được README giảng viên nêu trực tiếp.
+
+**Mẫu thực hiện tại gốc `project-ptuddd/`:**
+
+```bash
+git status --short
+# Chọn đúng file của nhiệm vụ, ví dụ:
+git add nhom12-65ktpm/src/lib/features/auth/presentation/login_page.dart
+git diff --cached --stat
+git diff --cached --check
+git commit -m "feat(nhom12-65ktpm): auth - tao giao dien dang nhap"
+
+# Tiếp tục làm nhiệm vụ thứ hai và tạo commit thứ hai:
+git add nhom12-65ktpm/src/lib/features/auth/presentation/login_form_validator.dart
+git diff --cached --stat
+git diff --cached --check
+git commit -m "feat(nhom12-65ktpm): auth - them validation form"
+
+# Một lần push vẫn giữ 2 commit riêng:
+git push origin feature/nhom12/truong-foundation
+```
+
+Các đường dẫn Dart ở trên chỉ là **ví dụ khi file tương ứng đã được tạo**; không chạy nguyên xi nếu cấu trúc thực tế khác. Đường dẫn gốc của ứng dụng luôn là `nhom12-65ktpm/src/`, theo README giảng viên.
+
+### 6.2. Gợi ý lịch sử commit theo từng thành viên
+
+| Người phụ trách | Module | Chuỗi commit mẫu, theo thứ tự |
+|---|---|---|
+| **Trường** | Shared Foundation, Auth, Material/Listing | `chore/feat: foundation - tao Flutter src` → `feat: auth - tao form dang nhap` → `feat: material - tao model va repository` → `feat: listing - tao form dang tin` → `fix: ...` |
+| **Khanh** | Discovery, Request, BORROW | `feat: discovery - tao listing card` → `feat: discovery - loc tai lieu` → `feat: request - gui yeu cau` → `feat: borrow - hien thi han tra` → `fix: ...` |
+| **Đăng** | Giao hộ, Handover, QR/camera | `feat: delivery - tao danh sach task` → `feat: delivery - ung tuyen` → `feat: handover - quet QR` → `feat: handover - gui anh` → `fix: ...` |
+| **Sơn** | Transaction, SELL, Issue, Notification | `feat: transaction - tao timeline` → `feat: payment - xac nhan tien SELL` → `feat: issue - tao su co` → `feat: notification - danh sach thong bao` → `fix: ...` |
+
+Các tiêu đề trong bảng là **gợi ý phạm vi**; khi commit thực tế vẫn ghi đầy đủ cú pháp chuẩn `feat(nhom12-65ktpm): module - ...`.
+
+**Checklist của tác giả trước khi mở PR:** mỗi commit chỉ có file liên quan; từng message đủ tìm kiếm; test phù hợp đã chạy; PR mô tả Issue và kết quả kiểm thử; không có bí mật hoặc file của nhóm khác; PR vào `integration/nhom12-65ktpm`.
 
 ## 7. PR tính năng vào integration
 
@@ -221,7 +287,12 @@ Mỗi người có Issue, nhánh, commit cá nhân, PR, review, UI, nghiệp v�
 1. `QUY_TAC_NGHIEP_VU.md` – quy tắc và nhãn **ĐÃ CHỐT / ĐỀ XUẤT / CHƯA QUYẾT ĐỊNH**.
 2. `QUY_TRINH_HOAT_DONG.md` – pipeline, UI, dữ liệu cập nhật và ngoại lệ.
 3. `QUY_TRINH_GIT_NHOM.md` – nhánh, commit, PR và quy trình cộng tác.
-4. `TRANG_THAI_NGHIEP_VU.md`, `MO_HINH_DU_LIEU.md`, `HOP_DONG_LAP_TRINH.md` – **chỉ khi các tài liệu này đã được tạo, review và khóa**.
+4. `TECHNICAL_FOUNDATION.md` – cấu trúc Flutter trong `src/`, module, theme/router và thứ tự triển khai.
+5. `CONTRACTS.md` – schema logic, DTO, RPC, RLS, Repository Interfaces và mã lỗi.
+6. `STATE_MACHINES.md` – các trạng thái, chuyển trạng thái và bất biến cần test.
+7. `StudyShare_UIUX_MVP_va_HuongDan_TrienKhai.md` – giao diện 26 màn, điều hướng và component chung.
+
+**Lưu ý:** các tài liệu kỹ thuật mới chỉ được xem là chuẩn trên `integration/nhom12-65ktpm` sau khi PR tương ứng được review và merge; không mặc định file trên feature đã được tích hợp.
 
 AI không được tự coi đề xuất nghiệp vụ là quy tắc đã chốt, tự tạo model trùng, tự đổi ID fixture dùng chung hoặc tự gọi `updateStatus('COMPLETED')` để bỏ qua các điều kiện bàn giao.
 
