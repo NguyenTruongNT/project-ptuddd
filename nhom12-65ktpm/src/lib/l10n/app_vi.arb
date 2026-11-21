@@ -1,0 +1,21 @@
+{
+  "@@locale": "vi",
+  "navHome": "Trang chủ",
+  "navExplore": "Khám phá",
+  "navPublish": "Đăng tin",
+  "navTransactions": "Giao dịch",
+  "navProfile": "Cá nhân",
+  "welcomeMessage": "Chào mừng đến StudyShare. Các chức năng nghiệp vụ sẽ được triển khai ở các PR tiếp theo.",
+  "placeholderMessage": "Màn hình nền tảng tạm thời; chưa kết nối Supabase hoặc thực hiện giao dịch.",
+  "settingsTitle": "Cài đặt",
+  "themeLabel": "Chế độ hiển thị",
+  "themeSystem": "Theo hệ thống",
+  "themeLight": "Sáng",
+  "themeDark": "Tối",
+  "paletteLabel": "Bảng màu giao diện",
+  "languageLabel": "Ngôn ngữ",
+  "gridLabel": "Nền lưới ô vuông",
+  "leavesLabel": "Hiệu ứng lá rơi",
+  "leavesHint": "Chỉ dùng trên Trang chủ và tự ẩn nếu giảm chuyển động.",
+  "sessionOnlyNotice": "Bản thử nghiệm: lựa chọn hiện chỉ lưu trong phiên ứng dụng. Lưu cục bộ sẽ được bổ sung ở nhiệm vụ tiếp theo."
+}

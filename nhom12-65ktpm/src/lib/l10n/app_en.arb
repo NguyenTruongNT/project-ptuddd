@@ -1,0 +1,21 @@
+{
+  "@@locale": "en",
+  "navHome": "Home",
+  "navExplore": "Explore",
+  "navPublish": "Post",
+  "navTransactions": "Transactions",
+  "navProfile": "Profile",
+  "welcomeMessage": "Welcome to StudyShare. Business features will be implemented in subsequent pull requests.",
+  "placeholderMessage": "Foundation placeholder; no Supabase connection or transaction actions yet.",
+  "settingsTitle": "Settings",
+  "themeLabel": "Appearance",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "paletteLabel": "Color palette",
+  "languageLabel": "Language",
+  "gridLabel": "Grid paper background",
+  "leavesLabel": "Falling leaves",
+  "leavesHint": "Home only; hidden when reduced motion is enabled.",
+  "sessionOnlyNotice": "Prototype: choices are stored in memory only. Local persistence will be added in a later task."
+}
