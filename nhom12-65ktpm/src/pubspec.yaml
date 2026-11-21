@@ -36,6 +36,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^3.5.0
   go_router: ^18.1.4
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.3
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +61,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  generate: true
+  assets:
+    - assets/branding/logo_dark_original.png
+    - assets/branding/logo_light_original.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
