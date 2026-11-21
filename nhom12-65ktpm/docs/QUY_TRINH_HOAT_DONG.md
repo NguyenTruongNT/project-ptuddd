@@ -1,14 +1,14 @@
 # QUY TRÌNH HOẠT ĐỘNG STUDYSHARE
 
 > **Mã tài liệu:** SS-WF  
-> **Phiên bản:** 1.1 – **BẢN DỰ THẢO ĐỂ REVIEW**, chưa khóa Dart Contracts / SQL schema  
+> **Phiên bản:** 1.2 – **BẢN CẬP NHẬT ĐỂ REVIEW**, hai quyết định mới đã chốt; chưa khóa Dart Contracts / SQL schema
 > **Dự án:** StudyShare – Ứng dụng di động hỗ trợ cho mượn, chuyển nhượng tài liệu học tập và xác thực giao nhận giữa sinh viên  
 > **Nhóm:** 12 – Lớp 65KTPM  
 > **Nền tảng:** Flutter/Dart – **Android**, không có giao diện Web  
 > **Người tổng hợp:** Nguyễn Văn Trường (nhóm trưởng)  
 > **Các thành viên:** Nguyễn Văn Trường, **Vũ Tuấn Khanh**, Vũ Hải Đăng, Lý Đình Sơn  
 > **Ngày:** 21/11/2026  
-> **Tài liệu quy tắc tham chiếu:** [`QUY_TAC_NGHIEP_VU.md`](./QUY_TAC_NGHIEP_VU.md) (SS-BR v1.1)
+> **Tài liệu quy tắc tham chiếu:** [`QUY_TAC_NGHIEP_VU.md`](./QUY_TAC_NGHIEP_VU.md) (SS-BR v1.2)
 
 ---
 
@@ -30,7 +30,7 @@ Tài liệu này trả lời câu hỏi **“Ai vào màn hình nào, làm gì, 
 - **[ĐỀ XUẤT]**: thiết kế thực thi đang chờ nhóm xác nhận; **AI không được tự coi là yêu cầu đã khóa**.
 - **[CẦN CHỐT]**: câu hỏi chưa có quyết định, có mã `WF-OPEN-xx` cuối tài liệu.
 
-**Lưu ý về trạng thái:** Những tên enum viết hoa trong tài liệu này chỉ kế thừa hoặc gợi ý từ đề cương/SS-BR. Bảng trạng thái cuối cùng sẽ được khóa trong `TRANG_THAI_NGHIEP_VU.md`; không tự viết thêm enum vì chỉ thấy trong một ví dụ.
+**Lưu ý về trạng thái:** Các quyết định **BR-49** (hiển thị RESERVED) và **BR-50** (không bỏ qua QR sai) đã được nhóm trưởng chốt trong v1.2. Những tên enum viết hoa trong tài liệu này chỉ kế thừa hoặc gợi ý từ đề cương/SS-BR. Bảng trạng thái cuối cùng sẽ được khóa trong `TRANG_THAI_NGHIEP_VU.md`; không tự viết thêm enum vì chỉ thấy trong một ví dụ.
 
 ### 0.1. Quy tắc nền tảng không được phá vỡ
 
@@ -135,7 +135,7 @@ Các mã UI dưới đây bám theo **đề cương StudyShare**. Nếu một m�
 | P1.4 | A – UI-05 – Bấm **Lưu bản nháp** hoặc **Đăng công khai** | Kiểm tra chủ sở hữu, giới hạn Listing hiện hành | Tạo/cập nhật Material; tạo Listing ở DRAFT/PUBLISHED | Server từ chối nếu không có quyền / có Listing xung đột |
 | P1.5 | Server – định danh bản vật lý | Mỗi bản vật lý ID riêng | UUID Material và QR token; QR nội bộ có thể tạo rồi hiển thị trên UI-06 | ISBN giống nhau **không** gây trùng ID |
 | P1.6 | A – UI-06 – Xem và quản lý tài liệu | Chỉ tài liệu A có quyền | Hiển thị Listing, mã QR, tình trạng khả dụng từ dữ liệu server | Khi RESERVED/ON_LOAN không cho đổi giá/hình thức trái quy tắc |
-| P1.7 | B – UI-03 – Tìm thấy tài liệu | Listing PUBLISHED và Material chưa bị khóa để nhận yêu cầu | Kết quả tìm kiếm và chi tiết cập nhật | Nếu hết khả dụng: hiển thị nhưng ẩn/khóa nút yêu cầu theo chính sách **[ĐỀ XUẤT]** |
+| P1.7 | B – UI-03 – Tìm thấy tài liệu | Listing `PUBLISHED`, kể cả khi Material `RESERVED` | Nếu `RESERVED`, hiển thị nhãn **Đã được đặt**, nút **Gửi yêu cầu** bị khóa **[BR-49 ĐÃ CHỐT]** | Listing `ARCHIVED` không nằm trong khám phá thông thường; server từ chối yêu cầu khi Material không khả dụng |
 
 ### 4.2. Quy tắc khi sửa, ẩn và đăng lại
 
@@ -157,10 +157,10 @@ Các mã UI dưới đây bám theo **đề cương StudyShare**. Nếu một m�
 
 | Bước | Ai – UI – Hành động | Điều kiện/kiểm tra | Dữ liệu / trạng thái | Trường hợp lỗi |
 |---|---|---|---|---|
-| P2.1 | B – UI-03 – Tìm/lọc môn học, mượn/tặng/bán | Chỉ Listing công khai phù hợp | Kết quả danh sách | Empty/loading/error, thử lại |
-| P2.2 | B – UI-04 – Xem thông tin thật của bản sách | Có Listing hợp lệ | Xem ảnh, chủ sách, offer, giá/nội dung mượn | Đã RESERVED: không cho gửi yêu cầu mới **[BR-15 ĐỀ XUẤT]** |
+| P2.1 | B – UI-03 – Tìm/lọc môn học, mượn/tặng/bán | Listing `PUBLISHED`; `ARCHIVED` không hiển thị trong khám phá thông thường | Kết quả danh sách, bao gồm mục `RESERVED` có nhãn **Đã được đặt** **[BR-49 ĐÃ CHỐT]** | Empty/loading/error, thử lại |
+| P2.2 | B – UI-04 – Xem thông tin thật của bản sách | Có Listing `PUBLISHED` | Xem ảnh, chủ sách, offer; nếu `RESERVED` hiện nhãn **Đã được đặt** | `RESERVED`: khóa nút Gửi yêu cầu **[BR-49 ĐÃ CHỐT]** |
 | P2.3 | B – UI-07 – Điền yêu cầu | BORROW: đề xuất số ngày; SELL: giá hiển thị; DONATE: không có tiền | Form yêu cầu, ghi chú, khu vực nhận nếu chọn chia sẻ **[OPEN-05]** | Thiếu dữ liệu: validation |
-| P2.4 | B – UI-07 – **Gửi yêu cầu** | Session, không tự yêu cầu sách của mình; không gửi trùng PENDING **[BR-15 ĐỀ XUẤT]** | `ExchangeRequest(PENDING)` và `created_at` **do server tạo** | Listing thay đổi/hết khả dụng: báo lý do, không tạo yêu cầu |
+| P2.4 | B – UI-07 – **Gửi yêu cầu** | Session; Listing PUBLISHED và Material còn khả dụng **[BR-49 ĐÃ CHỐT]**; không tự yêu cầu sách mình/không gửi trùng **[BR-15 ĐỀ XUẤT]** | `ExchangeRequest(PENDING)` và `created_at` **do server tạo** | Nếu Material chuyển RESERVED giữa lúc xem và gửi, server từ chối; không tạo yêu cầu |
 | P2.5 | A – UI-08 – Mở danh sách yêu cầu đến | Là owner hiện hành, request PENDING | Thời điểm gửi, người yêu cầu, loại giao dịch; **sắp cũ nhất trước [ĐỀ XUẤT]** | Không dùng timestamp điện thoại để xếp hàng |
 
 **Không áp dụng FIFO bắt buộc:** A được chọn một người bất kỳ trong số yêu cầu hợp lệ; `created_at` chỉ hỗ trợ cân nhắc công bằng, không tự quyết người trúng.
@@ -195,7 +195,7 @@ Các mã UI dưới đây bám theo **đề cương StudyShare**. Nếu một m�
 |---|---|---|---|---|
 | P3.1 | Bên gửi – UI-10 – Chọn **Giao trực tiếp** | Transaction đang chờ bàn giao/chờ trả | Xác định `from_user_id`, `to_user_id`, điểm hẹn | Người gửi không đúng holder ghi nhận: từ chối |
 | P3.2 | Server – tạo Handover | Bên gửi và nhận khác nhau, thuộc Transaction, có quyền | `Handover(PENDING)` với ID ổn định | Không tạo nhiều Handover active trùng chặng **[ĐỀ XUẤT]** |
-| P3.3 | Bên gửi – UI-13 – Đối chiếu tài liệu | **Ưu tiên** QR Material → QR lượt giao → đối chiếu thủ công có lý do | Ghi cách đối chiếu `verification_method`; kết quả đối chiếu | QR sai: báo lỗi, không gọi là đã xác thực; thủ công phải ghi lý do |
+| P3.3 | Bên gửi – UI-13 – Đối chiếu tài liệu | Ưu tiên QR Material; **thiếu QR/camera không đọc được** thì dùng QR lượt giao hoặc thủ công có lý do **[BR-32]** | Ghi `verification_method` và kết quả đối chiếu hợp lệ | **QR đã đọc nhưng không khớp:** chặn bàn giao, không được chuyển thủ công để bỏ qua; đối chiếu lại **[BR-50]** |
 | P3.4 | Bên gửi – UI-13 – **Chụp ít nhất 1 ảnh** | Camera cấp quyền; hình là ảnh cho Handover này | Ảnh cục bộ gắn `handover_id` | Từ chối quyền camera/chưa có ảnh: không gửi xác nhận |
 | P3.5 | Bên gửi – **Gửi minh chứng** | Ảnh tải lên Storage private và được server ghi nhận; quyền đúng | Handover → `AWAITING_RECEIVER_CONFIRMATION`; tạo Evidence | Offline/upload lỗi: giữ bản nháp, không coi server đã nhận |
 | P3.6 | Bên nhận – UI-14 – Xem ảnh, tài liệu, người giao | Đúng tài khoản `to_user_id` | Hiển thị thông tin bản giao và ảnh private được cấp quyền | Chưa có evidence server: không bật Xác nhận |
@@ -353,7 +353,7 @@ Người tạo nhiệm vụ ở lượt trả có thể là **B đang giữ sác
 | E-02 | B muốn hủy request PENDING | UI-08 | Cho hủy khi còn PENDING **[ĐỀ XUẤT]** | Không tạo Transaction | Khanh |
 | E-03 | Hủy sau duyệt nhưng chưa bàn giao/tiền | UI-09 | Kiểm tra điều kiện server; rollback nghiệp vụ hủy theo chính sách **[BR-45 ĐỀ XUẤT]** | Giải phóng Material khi an toàn, ghi event | Sơn |
 | E-04 | Hủy sau khi Handover đã gửi hoặc đã xác nhận | UI-09 | Không cho hủy một nút; có thể đã chuyển sách thật | Tạo Issue / trả sách / đối soát | Sơn + Đăng |
-| E-05 | QR tài liệu không khớp | UI-13 | Thông báo sai mã; **không coi QR đó là đối chiếu hợp lệ** | Quét lại hoặc chọn thủ công có lý do | Đăng |
+| E-05 | QR đã đọc nhưng không khớp Material/Handover | UI-13 | Thông báo sai mã; **chặn xác nhận lượt giao** **[BR-50]** | Kiểm tra lại sách và quét/đối chiếu đúng mã; **không được dùng thủ công để bỏ qua mã sai** | Đăng |
 | E-06 | Không có ảnh / ảnh upload lỗi | UI-13 | Không cho server chuyển sang chờ người nhận | Lưu nháp và thử gửi lại | Đăng |
 | E-07 | Người nhận không phản hồi | UI-14 / UI-09 | Giữ Handover đang chờ, **không tự xác nhận** | Nhắc, tạo Issue khi cần | Sơn + Đăng |
 | E-08 | Người nhận báo sai/hỏng/chưa nhận | UI-14 | Handover DISPUTED, không đổi holder, tạo Issue | Xác minh, tạo lượt giao thay thế/hoàn trả | Sơn + Đăng |
@@ -503,7 +503,7 @@ Mã quy tắc: BR-xx, pipeline Px.y:
 | `DUPLICATE_ACTIVE_TRANSACTION` | Thao tác duyệt trùng | Làm mới request/transaction, không tạo bản sao |
 | `REQUEST_NOT_PENDING` | Duyệt/hủy request đã xử lý | Làm mới yêu cầu |
 | `INVALID_HANDOVER_PARTICIPANT` | Người giao/nhận không khớp | Không cho xác nhận |
-| `QR_MISMATCH` | Mã quét sai tài liệu/lượt | Quét lại hoặc quy trình thủ công có lý do |
+| `QR_MISMATCH` | Đọc được mã nhưng không đúng Material/Handover | Dừng đối chiếu, báo sai tài liệu; **không cho fallback thủ công để bỏ qua** **[BR-50]** |
 | `EVIDENCE_REQUIRED` | Chưa có ảnh server | Yêu cầu chụp/upload lại |
 | `EVIDENCE_UPLOAD_FAILED` | Lỗi upload | Giữ nháp, cho thử lại |
 | `RECEIVER_CONFIRMATION_REQUIRED` | Chưa có bên nhận xác nhận | Hiển thị đang chờ |
@@ -546,7 +546,10 @@ Các lỗi từ Supabase phải được **mapping có kiểm soát** sang mã l
 | WF-T03 | P2 | Duyệt đồng thời | Một Transaction duy nhất |
 | WF-T04 | P3 | Giao trực tiếp thiếu ảnh | Không submit/CONFIRMED |
 | WF-T05 | P3 | Người giao tự xác nhận thay B | Bị từ chối phía server |
-| WF-T06 | P3 | Sai QR, chuyển thủ công ghi lý do | Không chấp nhận mã sai; thủ công vẫn đòi ảnh và B xác nhận |
+| WF-T06 | P3 | Không có QR hoặc camera không đọc được QR | Có thể dùng QR lượt giao/thủ công có lý do; vẫn cần ảnh và B xác nhận |
+| WF-T21 | P3 | Quét được QR nhưng mã sai | Không thể gửi xác nhận bằng phương án thủ công để vượt qua QR sai; yêu cầu đối chiếu đúng |
+| WF-T22 | P1/P2 | Listing còn PUBLISHED nhưng sách RESERVED | Vẫn hiển thị **Đã được đặt**; không được gửi yêu cầu, server từ chối nếu gửi trực tiếp |
+| WF-T23 | P1/P2 | Listing ARCHIVED | Không xuất hiện trong khám phá thông thường |
 | WF-T07 | P4 | Giao hộ A→C→B | Hai Handover, hai ảnh, holder A→C→B |
 | WF-T08 | P4/P9 | C đã lấy nhưng giao thất bại | Holder vẫn C, có Issue |
 | WF-T09 | P5 | B nhận sách muộn so với ngày duyệt | `started_at` là thời điểm bàn giao B nhận thành công |
@@ -570,10 +573,10 @@ Các lỗi từ Supabase phải được **mapping có kiểm soát** sang mã l
 2. **Trường** kiểm tra P0/P1, Material/Listing và Mock nền; **Khanh** kiểm tra P2/P5; **Đăng** kiểm tra P3/P4/P8/P10; **Sơn** kiểm tra P6/P7/P9 và tác động Transaction.
 3. Với mỗi nội dung cần sửa, bình luận kèm mã `Px.y`, `BR-xx` hoặc `WF-OPEN-xx`, tình huống minh họa và đề xuất cụ thể.
 4. Chỉ sau khi chốt `WF-OPEN` quan trọng mới viết bảng state machine, signature Dart và migrations SQL, tránh tình trạng sửa bốn module vì một enum.
-5. Tài liệu được merge bằng **Pull Request nội bộ** vào nhánh `nhom12-65ktpm` trong Fork; tất cả file của nhóm nằm trong `nhom12-65ktpm/`. Không commit trực tiếp lên `main` của repository thầy.
+5. Theo quy trình Git của Nhóm 12, tạo PR **từ `feature/nhom12/...` vào `integration/nhom12-65ktpm`** để review/tích hợp; sau nghiệm thu, PR **từ `integration/nhom12-65ktpm` vào `nhom12-65ktpm`**. Chỉ nhánh nhóm chính thức được dùng để PR nộp vào `main` của kho giảng viên. Tất cả file nhóm nằm trong `nhom12-65ktpm/`. Xem `QUY_TRINH_GIT_NHOM.md`.
 6. Khi thay đổi quy trình đã merge, **cập nhật cùng lúc** quy tắc tương ứng, test liên quan và hướng dẫn UI; tăng version, tránh để AI dựa trên bản cũ.
 
-**Commit message đề xuất:** `docs(nhom12-65ktpm): bo sung quy trinh hoat dong StudyShare v1.1`.
+**Commit message đề xuất:** `docs(nhom12-65ktpm): dong bo quy trinh hoat dong voi quy tac v1.2`. Một PR có thể có nhiều commit có ý nghĩa; khi cần giữ lịch sử commit, chọn **Create a merge commit** thay vì Squash.
 
 ---
 

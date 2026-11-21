@@ -1,7 +1,7 @@
 # QUY TẮC NGHIỆP VỤ STUDYSHARE
 
 > **Mã tài liệu:** SS-BR  
-> **Phiên bản:** 1.1 – Bản dự thảo để nhóm rà soát trước khi khóa Dart Contracts  
+> **Phiên bản:** 1.2 – Bổ sung các quyết định đã chốt; vẫn còn mục đề xuất trước khi khóa Dart Contracts
 > **Dự án:** StudyShare – Ứng dụng di động hỗ trợ cho mượn, chuyển nhượng tài liệu học tập và xác thực giao nhận giữa sinh viên  
 > **Nhóm:** 12 – 65KTPM  
 > **Phụ trách tổng hợp:** Nguyễn Văn Trường (nhóm trưởng)  
@@ -77,8 +77,9 @@ Sinh viên có sách, giáo trình, vở ghi hoặc tài liệu học tập vậ
 | BR-12 | [ĐÃ CHỐT] | Khi A duyệt yêu cầu B, các yêu cầu PENDING còn lại của bản tài liệu đó **tự chuyển REJECTED**, lý do `MATERIAL_UNAVAILABLE`. |
 | BR-13 | [ĐÃ CHỐT] | Danh sách yêu cầu hiển thị **thời điểm gửi** (do server ghi nhận), hỗ trợ chủ sách lựa chọn người nhận. **[ĐỀ XUẤT]** Mặc định sắp **cũ nhất trước**; không bắt buộc duyệt theo FIFO. |
 | BR-14 | [ĐÃ CHỐT] | Duyệt yêu cầu, từ chối các yêu cầu cạnh tranh, giữ chỗ Material, tạo Transaction và ghi sự kiện phải diễn ra **nguyên tử trên server**: tất cả thành công hoặc tất cả thất bại. |
-| BR-15 | [ĐỀ XUẤT] | Không cho tự yêu cầu Material của mình hoặc gửi yêu cầu mới khi Material đã được giữ chỗ. Một người không nên có nhiều yêu cầu PENDING trùng nhau cho cùng Listing. |
+| BR-15 | [ĐỀ XUẤT] | Không cho tự yêu cầu Material của mình. Một người không nên có nhiều yêu cầu PENDING trùng nhau cho cùng Listing. Quy tắc tài liệu đã được giữ chỗ xem **BR-49 [ĐÃ CHỐT]**. |
 | BR-16 | [ĐỀ XUẤT] | `created_at`, `accepted_at`, người duyệt và lý do từ chối được ghi nhận từ server. `ACCEPTED` không được đổi ngược thành `PENDING`; hủy sau duyệt phải qua nghiệp vụ hủy Transaction. |
+| BR-49 | [ĐÃ CHỐT – v1.2] | `Listing.status = PUBLISHED` vẫn có thể hiển thị trong kết quả khám phá khi Material đã `RESERVED`, nhưng phải có nhãn **Đã được đặt** và **khóa nút Gửi yêu cầu**. Server phải từ chối tạo yêu cầu mới khi Material không khả dụng. Listing `ARCHIVED` **không hiển thị** trong danh sách khám phá thông thường. |
 
 **Vị trí của người yêu cầu:** [CHƯA QUYẾT ĐỊNH] Có cần hiển thị **khu vực mong muốn nhận sách** bên cạnh thời điểm gửi không? Nếu có, chỉ dùng khu vực/điểm hẹn được người dùng cung cấp có chủ đích; **không thu thập GPS âm thầm để xếp hạng yêu cầu**.
 
@@ -113,7 +114,8 @@ Sinh viên có sách, giáo trình, vở ghi hoặc tài liệu học tập vậ
 |---|---|---|
 | BR-30 | [ĐÃ CHỐT] | **Mọi Handover** đều phải có ít nhất **một ảnh minh chứng**, bao gồm giao trực tiếp, A→C, C→B, trả trực tiếp và trả qua C. |
 | BR-31 | [ĐÃ CHỐT] | Người **nhận được chỉ định** phải xác nhận thực sự đã nhận; người giao không được xác nhận thay. **[ĐỀ XUẤT]** Người giao là bên chụp/gửi ảnh cho mỗi lượt bàn giao. |
-| BR-32 | [ĐÃ CHỐT] | Ưu tiên đối chiếu **QR tài liệu → QR lượt bàn giao → thủ công có lý do**; nếu thủ công vẫn bắt buộc ảnh và xác nhận bên nhận. |
+| BR-32 | [ĐÃ CHỐT] | Ưu tiên **QR tài liệu**; nếu **không có mã dán** hoặc **camera không đọc được mã**, cho phép đối chiếu bằng **QR lượt bàn giao** hoặc **thủ công có ghi lý do**. Dù dùng cách thủ công, vẫn phải có ảnh và người nhận xác nhận. **Mã QR đọc được nhưng không khớp không phải lý do để bỏ qua xác thực** (xem BR-50). |
+| BR-50 | [ĐÃ CHỐT – v1.2] | Nếu hệ thống **đọc được QR nhưng mã không khớp** với Material/Handover cần bàn giao, **chặn xác nhận lượt bàn giao hiện tại**, báo sai mã và yêu cầu kiểm tra/đối chiếu lại đúng tài liệu. **Không cho chuyển sang thủ công để vượt qua kết quả không khớp đó.** |
 | BR-33 | [ĐÃ CHỐT] | Chỉ sau khi ảnh đã được server ghi nhận và người nhận xác nhận, Handover mới thành công và server cập nhật `holder_id`, lịch sử, trạng thái liên quan. |
 | BR-34 | [ĐÃ CHỐT] | Nếu người nhận báo sai/hỏng/chưa nhận, Handover là `DISPUTED`; **không** đổi `holder_id` theo lượt bàn giao chưa xác nhận và phải ghi Issue. |
 | BR-35 | [ĐÃ CHỐT] | Khi mất mạng hoặc upload lỗi: lưu ảnh/bản nháp trên điện thoại, hiển thị “chưa gửi/chưa xác nhận”; **không** tự thông báo bàn giao hoàn tất. |
@@ -207,7 +209,10 @@ Sinh viên có sách, giáo trình, vở ghi hoặc tài liệu học tập vậ
 | TC-03 | Hai thao tác duyệt đồng thời | Chỉ một Transaction được tạo. |
 | TC-04 | B nhận sách mượn muộn | Thời gian mượn tính từ xác nhận nhận thành công. |
 | TC-05 | Bàn giao thiếu ảnh | Không cho gửi/hoàn tất Handover. |
-| TC-06 | Sai QR, hoặc dùng xác nhận thủ công có lý do | Sai QR bị từ chối; thủ công hợp lệ vẫn đòi ảnh và xác nhận bên nhận. |
+| TC-06 | Không có QR dán hoặc camera không đọc được mã | Cho đối chiếu QR lượt giao hoặc thủ công có lý do; vẫn phải có ảnh và xác nhận bên nhận. |
+| TC-17 | Đã quét được QR nhưng mã không khớp | Không được xác nhận bàn giao, không cho dùng thủ công để bỏ qua mã sai; người dùng phải đối chiếu lại. |
+| TC-18 | Listing PUBLISHED nhưng Material RESERVED | Vẫn xuất hiện trong tìm kiếm với nhãn **Đã được đặt**, khóa nút gửi yêu cầu; server cũng từ chối yêu cầu mới. |
+| TC-19 | Listing đã ARCHIVED | Không xuất hiện trong danh sách khám phá thông thường. |
 | TC-07 | C đã nhận sách, B chưa xác nhận | Holder được ghi nhận vẫn là C; trạng thái bàn giao đang chờ. |
 | TC-08 | C giao thất bại | Có Issue; holder vẫn là C; không tự giải phóng Material. |
 | TC-09 | Mất Internet khi chụp/upload ảnh | Có bản nháp local; server chưa coi đã giao. |
@@ -244,4 +249,6 @@ Sinh viên có sách, giáo trình, vở ghi hoặc tài liệu học tập vậ
 4. Người chịu trách nhiệm tạo PR sửa tài liệu này cùng tài liệu/kiểm thử chịu ảnh hưởng.
 5. Khi merge, cập nhật phiên bản và thông báo cả bốn thành viên, kể cả AI coding assistants phải dùng phiên bản mới nhất.
 
-**Tài liệu nên được đọc cùng:** `QUY_TRINH_HOAT_DONG.md` (sẽ viết), `TRANG_THAI_NGHIEP_VU.md` (sẽ viết), `MO_HINH_DU_LIEU.md` (sẽ viết), `HOP_DONG_LAP_TRINH.md` (sẽ viết). Những tên file này là **đề xuất**, chưa tạo trong repository.
+**Tài liệu đọc cùng:** `QUY_TRINH_HOAT_DONG.md` (**đã có, v1.2**) và `QUY_TRINH_GIT_NHOM.md` (**đã soạn, chờ PR**). Tài liệu dự kiến chưa khóa/tạo gồm `TRANG_THAI_NGHIEP_VU.md`, `MO_HINH_DU_LIEU.md`, `HOP_DONG_LAP_TRINH.md`.
+
+**Lịch sử:** v1.2 bổ sung BR-49 (hiển thị tài liệu được giữ chỗ) và BR-50 (QR sai không được bỏ qua), giữ nguyên ID BR cũ để tránh phá liên kết của nhóm và AI.
