@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/app_routes.dart';
 import '../../core/preferences/app_preferences.dart';
 import '../../design_system/decorations/grid_paper.dart';
 import '../../design_system/decorations/leaf_fall_overlay.dart';
@@ -11,7 +12,6 @@ enum TabSection { home, explore, publish, transactions, profile }
 
 class TabContent extends ConsumerWidget {
   const TabContent({super.key, required this.section});
-
   final TabSection section;
 
   @override
@@ -62,13 +62,21 @@ class TabContent extends ConsumerWidget {
                   ),
                 ),
               ),
-              if (section == TabSection.profile)
+              if (section == TabSection.profile) ...[
                 ListTile(
                   leading: const Icon(Icons.settings_outlined),
                   title: Text(l10n.settingsTitle),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/settings'),
+                  onTap: () => context.push(AppRoutes.settings),
                 ),
+                // Lối vào kiểm thử, sẽ được ẩn/gỡ khi hoàn thiện release.
+                ListTile(
+                  leading: const Icon(Icons.route_outlined),
+                  title: const Text('Danh mục 26 màn hình (demo)'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push(AppRoutes.screenCatalog),
+                ),
+              ],
             ],
           ),
         ),
