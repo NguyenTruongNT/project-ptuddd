@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/home/mock_data_preview_page.dart';
 import '../features/home/tab_content.dart';
 import '../features/profile_settings/settings_page.dart';
 import 'app_routes.dart';
@@ -82,6 +83,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           builder: (context, state) => const SettingsPage()),
       GoRoute(path: AppRoutes.screenCatalog,
           builder: (context, state) => const RouteCatalogPage()),
+      GoRoute(path: AppRoutes.mockPreview,
+          builder: (context, state) => const MockDataPreviewPage()),
     ],
   );
   ref.onDispose(router.dispose);

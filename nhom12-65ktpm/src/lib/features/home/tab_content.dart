@@ -76,6 +76,12 @@ class TabContent extends ConsumerWidget {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push(AppRoutes.screenCatalog),
                 ),
+                ListTile(
+                  leading: const Icon(Icons.storage_outlined),
+                  title: const Text('Xem dữ liệu mô phỏng (demo)'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push(AppRoutes.mockPreview),
+                ),
               ],
             ],
           ),
