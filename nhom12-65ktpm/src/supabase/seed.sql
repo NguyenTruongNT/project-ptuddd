@@ -1,0 +1,3 @@
+-- Dữ liệu seed cục bộ cho Supabase (tạm thời để trống).
+-- Không đưa email, mật khẩu hay dữ liệu cá nhân thật vào file này.
+-- Các dữ liệu mock UI đã nằm riêng trong lib/core/mock/.
