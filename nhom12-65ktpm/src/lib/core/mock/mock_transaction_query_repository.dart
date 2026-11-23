@@ -2,13 +2,18 @@ import '../contracts/domain_enums.dart';
 import '../contracts/models/models.dart';
 import '../contracts/repositories/transaction_repository.dart';
 import 'mock_fixtures.dart';
+import 'mock_transaction_store.dart';
 
-// Mock CHỈ ĐỌC. allowedActions ở đây mô phỏng gợi ý của server,
-// không phải quyết định cuối: RPC thật vẫn phải kiểm tra lại.
+// Repository ĐỌC. allowedActions ở đây mô phỏng gợi ý của server,
+// không phải quyết định cuối: RPC/mock command vẫn kiểm tra lại.
 class MockTransactionQueryRepository implements TransactionQueryRepository {
-  const MockTransactionQueryRepository({required this.demoViewerId});
+  MockTransactionQueryRepository({
+    required this.demoViewerId,
+    MockTransactionStore? store,
+  }) : store = store ?? MockTransactionStore.fromFixtures();
 
   final String demoViewerId;
+  final MockTransactionStore store;
 
   // Chỉ A hoặc B; C không xem toàn bộ Transaction chỉ vì là courier.
   bool _canSee(StudyTransaction txn) =>
@@ -16,25 +21,20 @@ class MockTransactionQueryRepository implements TransactionQueryRepository {
 
   @override
   Future<List<TransactionDetails>> getMyTransactions() async =>
-      List.unmodifiable(
-        MockFixtures.transactions.where(_canSee).map(_toDetails),
-      );
+      List.unmodifiable(store.transactions.where(_canSee).map(_toDetails));
 
   @override
   Future<TransactionDetails?> getTransactionDetails(String transactionId) async {
-    for (final txn in MockFixtures.transactions) {
-      if (txn.id == transactionId && _canSee(txn)) return _toDetails(txn);
-    }
-    return null; // Không lộ thông tin giao dịch cho người không liên quan.
+    final txn = store.transaction(transactionId);
+    if (txn == null || !_canSee(txn)) return null; // Không lộ dữ liệu.
+    return _toDetails(txn);
   }
 
   @override
   Future<List<TransactionEventItem>> getTimeline(String transactionId) async {
     final details = await getTransactionDetails(transactionId);
     if (details == null) return const []; // Không có quyền -> không trả gì.
-    final events = MockFixtures.transactionEvents
-        .where((event) => event.transactionId == transactionId)
-        .toList()
+    final events = [...store.events(transactionId)]
       ..sort((a, b) {
         final byTime = a.serverAt.compareTo(b.serverAt);
         return byTime != 0 ? byTime : a.id.compareTo(b.id);
@@ -43,28 +43,21 @@ class MockTransactionQueryRepository implements TransactionQueryRepository {
   }
 
   TransactionDetails _toDetails(StudyTransaction txn) {
-    final material =
-        MockFixtures.materials.firstWhere((item) => item.id == txn.materialId);
+    final material = store.material(txn.materialId);
     final borrowing = _firstOrNull(
       MockFixtures.borrowingRecords,
       (BorrowingRecord item) => item.transactionId == txn.id,
     );
-    final payment = _firstOrNull(
-      MockFixtures.payments,
-      (PaymentConfirmation item) => item.transactionId == txn.id,
-    );
-    final openIssues = MockFixtures.issues
-        .where((issue) =>
-            issue.transactionId == txn.id && issue.status == IssueStatus.open)
-        .length;
+    final payment = store.payment(txn.id);
     final role = txn.ownerAtAcceptance == demoViewerId
         ? TransactionViewerRole.owner
         : TransactionViewerRole.receiver;
+    final proposal = store.cancellation(txn.id);
 
     return TransactionDetails(
       transaction: txn,
-      materialTitle: material.title,
-      materialSubject: material.subject,
+      materialTitle: material?.title ?? 'Tài liệu',
+      materialSubject: material?.subject ?? '',
       ownerDisplayName:
           MockFixtures.displayNames[txn.ownerAtAcceptance] ?? 'Người dùng',
       receiverDisplayName:
@@ -74,8 +67,9 @@ class MockTransactionQueryRepository implements TransactionQueryRepository {
           DateTime.utc(2026, 11, 20),
       borrowing: txn.type == OfferType.borrow ? borrowing : null,
       payment: txn.type == OfferType.sell ? payment : null,
-      openIssueCount: openIssues,
-      allowedActions: _allowedActions(txn, role, payment),
+      openIssueCount: store.openIssueCount(txn.id),
+      cancellationProposal: proposal,
+      allowedActions: _allowedActions(txn, role, payment, proposal),
     );
   }
 
@@ -84,13 +78,20 @@ class MockTransactionQueryRepository implements TransactionQueryRepository {
     StudyTransaction txn,
     TransactionViewerRole role,
     PaymentConfirmation? payment,
+    CancellationProposal? proposal,
   ) {
     if (txn.status.isTerminal) return const {};
     final isOwner = role == TransactionViewerRole.owner;
-    final actions = <TransactionAction>{
-      TransactionAction.reportIssue,
-      TransactionAction.proposeCancellation,
-    };
+    final actions = <TransactionAction>{TransactionAction.reportIssue};
+
+    // Hủy: một bên đề nghị, bên còn lại phản hồi (BR-45).
+    if (proposal == null) {
+      actions.add(TransactionAction.proposeCancellation);
+    } else if (proposal.proposedBy == role) {
+      actions.add(TransactionAction.withdrawCancellation);
+    } else {
+      actions.add(TransactionAction.respondCancellation);
+    }
 
     switch (txn.type) {
       case OfferType.sell:
@@ -107,6 +108,17 @@ class MockTransactionQueryRepository implements TransactionQueryRepository {
             txn.status == TransactionStatus.awaitingHandover &&
             isOwner) {
           actions.add(TransactionAction.startHandover);
+        }
+        // Hoàn tiền chỉ phát sinh khi đang đề nghị hủy SELL đã nhận tiền.
+        if (proposal != null && sellerConfirmed) {
+          if (isOwner && payment?.refundReportedAt == null) {
+            actions.add(TransactionAction.reportSellerRefund);
+          }
+          if (!isOwner &&
+              payment?.refundReportedAt != null &&
+              payment?.buyerRefundConfirmedAt == null) {
+            actions.add(TransactionAction.confirmRefundReceived);
+          }
         }
       case OfferType.donate:
         if (txn.status == TransactionStatus.awaitingHandover && isOwner) {
