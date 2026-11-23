@@ -135,6 +135,53 @@ void main() {
     });
   });
 
+  group('Đề nghị hủy và hoàn tiền', () {
+    test('Nhãn đề nghị hủy theo góc nhìn người xem', () {
+      final proposal = CancellationProposal(
+        proposedBy: TransactionViewerRole.owner,
+        reason: 'Lý do',
+        proposedAt: DateTime.utc(2026, 11, 22),
+      );
+      TransactionDetails withProposal(TransactionViewerRole role) => TransactionDetails(
+            transaction: _details().transaction,
+            materialTitle: 'Sách',
+            materialSubject: 'Môn',
+            ownerDisplayName: 'A',
+            receiverDisplayName: 'B',
+            viewerRole: role,
+            createdAt: DateTime.utc(2026, 11, 20),
+            cancellationProposal: proposal,
+          );
+      expect(hasPendingCancellation(_details()), isFalse);
+      expect(cancellationStatusVi(_details()), isEmpty);
+      expect(cancellationStatusVi(withProposal(TransactionViewerRole.owner)),
+          startsWith('Bạn đã đề nghị hủy'));
+      expect(cancellationStatusVi(withProposal(TransactionViewerRole.receiver)),
+          startsWith('Bên còn lại đề nghị hủy'));
+    });
+
+    test('Tiến độ hoàn tiền chỉ có khi người bán đã nhận tiền', () {
+      PaymentConfirmation pay({DateTime? confirmed, DateTime? reported, DateTime? back}) =>
+          PaymentConfirmation(
+            transactionId: 'txn-t',
+            sellerConfirmedAt: confirmed,
+            refundReportedAt: reported,
+            buyerRefundConfirmedAt: back,
+          );
+      final t = DateTime.utc(2026, 11, 22);
+      TransactionDetails sell(PaymentConfirmation p) =>
+          _details(type: OfferType.sell, status: TransactionStatus.awaitingHandover, payment: p);
+
+      expect(refundStatusVi(sell(pay())), isNull);
+      expect(pay().hasOutstandingRefund, isFalse);
+      expect(refundStatusVi(sell(pay(confirmed: t))), contains('cần hoàn tiền'));
+      expect(pay(confirmed: t).hasOutstandingRefund, isTrue);
+      expect(refundStatusVi(sell(pay(confirmed: t, reported: t))), contains('chờ người mua'));
+      expect(pay(confirmed: t, reported: t).hasOutstandingRefund, isTrue);
+      expect(pay(confirmed: t, reported: t, back: t).hasOutstandingRefund, isFalse);
+    });
+  });
+
   test('Mọi status đều có nhãn tiếng Việt', () {
     for (final status in TransactionStatus.values) {
       expect(statusLabelVi(status), isNotEmpty);
