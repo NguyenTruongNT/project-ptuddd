@@ -9,6 +9,7 @@ import '../../../design_system/widgets/study_async_view.dart';
 import '../../../design_system/widgets/study_empty.dart';
 import '../domain/transaction_labels.dart';
 import '../providers/transaction_providers.dart';
+import 'widgets/transaction_actions.dart';
 import 'widgets/transaction_status_chip.dart';
 import 'widgets/transaction_timeline.dart';
 
@@ -64,10 +65,11 @@ class _DetailsBody extends ConsumerWidget {
       children: [
         _HeaderCard(details: details, nowUtc: nowUtc),
         if (needsResolution(details)) _IssueBanner(details: details),
+        if (hasPendingCancellation(details)) _CancellationCard(details: details),
         _PartiesCard(details: details),
         if (txn.type == OfferType.borrow) _BorrowCard(details: details, nowUtc: nowUtc),
         if (txn.type == OfferType.sell) _SellPaymentCard(details: details),
-        _ActionsCard(details: details),
+        TransactionActionsCard(details: details),
         _TimelineSection(transactionId: details.id),
       ],
     );
@@ -144,6 +146,7 @@ class _HeaderCard extends StatelessWidget {
               overdue: isOverdue(details, nowUtc),
               reHandoverOverdue: isReHandoverOverdue(details, nowUtc),
               hasOpenIssue: needsResolution(details),
+              pendingCancellation: hasPendingCancellation(details),
             ),
             const SizedBox(height: 10),
             Text(waitingOnVi(details), style: textTheme.bodyMedium),
@@ -181,6 +184,45 @@ class _IssueBanner extends StatelessWidget {
         ),
         trailing: Icon(Icons.chevron_right, color: scheme.onErrorContainer),
         onTap: () => context.push(AppRoutes.issues),
+      ),
+    );
+  }
+}
+
+class _CancellationCard extends StatelessWidget {
+  const _CancellationCard({required this.details});
+  final TransactionDetails details;
+
+  @override
+  Widget build(BuildContext context) {
+    final proposal = details.cancellationProposal!;
+    final scheme = Theme.of(context).colorScheme;
+    final mine = proposal.proposedBy == details.viewerRole;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: scheme.tertiaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: DefaultTextStyle.merge(
+          style: TextStyle(color: scheme.onTertiaryContainer),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Đề nghị hủy giao dịch',
+                  style: Theme.of(context).textTheme.titleSmall
+                      ?.copyWith(color: scheme.onTertiaryContainer)),
+              const SizedBox(height: 6),
+              Text(cancellationStatusVi(details)),
+              const SizedBox(height: 6),
+              Text('${mine ? 'Bạn' : 'Bên còn lại'} đề nghị lúc '
+                  '${formatServerTimeVn(proposal.proposedAt)}'),
+              Text('Lý do: ${proposal.reason}'),
+              const SizedBox(height: 6),
+              const Text('Chỉ hủy được khi tài liệu đã ở người đăng, không còn tiền '
+                  'cần hoàn và không có sự cố đang mở.'),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -277,6 +319,8 @@ class _SellPaymentCard extends StatelessWidget {
       children: [
         _InfoRow('Giá đã chốt', price == null ? '—' : formatVnd(price)),
         _InfoRow('Trạng thái tiền', paymentState),
+        if (hasPendingCancellation(details) && refundStatusVi(details) != null)
+          _InfoRow('Hoàn tiền', refundStatusVi(details)!),
         if (locked)
           Padding(
             padding: const EdgeInsets.only(top: 6),
@@ -299,39 +343,6 @@ class _SellPaymentCard extends StatelessWidget {
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
-    );
-  }
-}
-
-class _ActionsCard extends StatelessWidget {
-  const _ActionsCard({required this.details});
-  final TransactionDetails details;
-
-  @override
-  Widget build(BuildContext context) {
-    // allowedActions chỉ là gợi ý; màn hình đích/RPC phải kiểm tra lại.
-    final buttons = <Widget>[
-      if (details.can(TransactionAction.startHandover))
-        FilledButton.icon(
-          onPressed: () => context.push(
-            '${AppRoutes.createDelivery}?transactionId=${Uri.encodeComponent(details.id)}',
-          ),
-          icon: const Icon(Icons.local_shipping_outlined),
-          label: const Text('Tạo nhiệm vụ giao hộ'),
-        ),
-      if (details.can(TransactionAction.reportIssue))
-        OutlinedButton.icon(
-          onPressed: () => context.push(
-            '${AppRoutes.createIssue}?transactionId=${Uri.encodeComponent(details.id)}',
-          ),
-          icon: const Icon(Icons.report_outlined),
-          label: const Text('Báo sự cố'),
-        ),
-    ];
-    if (buttons.isEmpty) return const SizedBox.shrink();
-    return _Section(
-      title: 'Thao tác',
-      children: [Wrap(spacing: 8, runSpacing: 8, children: buttons)],
     );
   }
 }

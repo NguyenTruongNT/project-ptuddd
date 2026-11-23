@@ -100,6 +100,36 @@ bool isReHandoverOverdue(TransactionDetails details, DateTime nowUtc) {
 /// NEEDS_RESOLUTION là nhãn suy ra từ Issue OPEN (MVP-D01).
 bool needsResolution(TransactionDetails details) => details.openIssueCount > 0;
 
+bool hasPendingCancellation(TransactionDetails details) =>
+    details.cancellationProposal != null;
+
+/// Trạng thái đề nghị hủy theo góc nhìn người xem; rỗng khi không có đề nghị.
+String cancellationStatusVi(TransactionDetails details) {
+  final proposal = details.cancellationProposal;
+  if (proposal == null) return '';
+  return proposal.proposedBy == details.viewerRole
+      ? 'Bạn đã đề nghị hủy. Đang chờ bên còn lại phản hồi.'
+      : 'Bên còn lại đề nghị hủy giao dịch. Bạn có thể đồng ý hoặc không đồng ý.';
+}
+
+/// Tiến độ hoàn tiền khi hủy SELL đã được người bán xác nhận nhận tiền.
+/// null khi không phát sinh nghĩa vụ hoàn tiền.
+String? refundStatusVi(TransactionDetails details) {
+  final payment = details.payment;
+  if (details.transaction.type != OfferType.sell ||
+      payment == null ||
+      !payment.isSellerConfirmed) {
+    return null;
+  }
+  if (payment.buyerRefundConfirmedAt != null) {
+    return 'Người mua đã xác nhận nhận lại đủ tiền.';
+  }
+  if (payment.refundReportedAt != null) {
+    return 'Người bán báo đã hoàn tiền – chờ người mua xác nhận đã nhận.';
+  }
+  return 'Người bán cần hoàn tiền ngoài ứng dụng trước khi hủy.';
+}
+
 /// Câu "đang chờ ai làm gì" theo vai trò người xem.
 /// Không bao giờ nói "thanh toán thành công" khi chỉ có B báo chuyển khoản.
 String waitingOnVi(TransactionDetails details) {

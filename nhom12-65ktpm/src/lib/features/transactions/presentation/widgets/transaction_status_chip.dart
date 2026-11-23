@@ -107,6 +107,7 @@ class TransactionChips extends StatelessWidget {
     required this.overdue,
     required this.hasOpenIssue,
     this.reHandoverOverdue = false,
+    this.pendingCancellation = false,
   });
 
   final OfferType type;
@@ -114,6 +115,7 @@ class TransactionChips extends StatelessWidget {
   final bool overdue;
   final bool hasOpenIssue;
   final bool reHandoverOverdue;
+  final bool pendingCancellation;
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +130,8 @@ class TransactionChips extends StatelessWidget {
           const WarningChip(label: 'Quá hạn tái bàn giao', icon: Icons.schedule),
         if (hasOpenIssue)
           const WarningChip(label: 'Có sự cố', icon: Icons.report_outlined),
+        if (pendingCancellation)
+          const WarningChip(label: 'Đang đề nghị hủy', icon: Icons.block),
       ],
     );
   }

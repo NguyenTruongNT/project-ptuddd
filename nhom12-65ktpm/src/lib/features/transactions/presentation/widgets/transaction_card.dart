@@ -48,6 +48,7 @@ class TransactionCard extends StatelessWidget {
                 overdue: isOverdue(details, nowUtc),
                 reHandoverOverdue: isReHandoverOverdue(details, nowUtc),
                 hasOpenIssue: needsResolution(details),
+                pendingCancellation: hasPendingCancellation(details),
               ),
               const SizedBox(height: 8),
               Text(waitingOnVi(details), style: textTheme.bodyMedium),
