@@ -2,8 +2,11 @@ import '../command_result.dart';
 import '../models/transaction.dart';
 
 abstract interface class TransactionQueryRepository {
-  Future<List<StudyTransaction>> getMyTransactions();
-  Future<StudyTransaction?> getTransactionDetails(String transactionId);
+  // Chỉ giao dịch mà actor đăng nhập là A hoặc B.
+  Future<List<TransactionDetails>> getMyTransactions();
+  // null khi không tồn tại HOẶC không có quyền: không phân biệt để tránh lộ dữ liệu.
+  Future<TransactionDetails?> getTransactionDetails(String transactionId);
+  // Sự kiện server, sắp xếp tăng dần theo serverAt.
   Future<List<TransactionEventItem>> getTimeline(String transactionId);
 }
 

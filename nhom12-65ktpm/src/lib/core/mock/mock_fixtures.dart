@@ -10,6 +10,13 @@ class MockFixtures {
   static const userC = 'demo-user-c'; // Người giao hộ C
   static const outsider = 'demo-user-outsider';
 
+  // Tên hiển thị ẢO; không dùng tên/MSSV thật.
+  static const displayNames = <String, String>{
+    userA: 'Bạn A (demo)',
+    userB: 'Bạn B (demo)',
+    userC: 'Bạn C (demo)',
+  };
+
   static List<Material> get materials => const [
     Material(id: 'mat-borrow-01', ownerId: userA, holderId: userB,
         title: 'Giáo trình Giải tích', subject: 'Toán cao cấp', condition: 'Tốt'),
@@ -64,6 +71,39 @@ class MockFixtures {
         type: OfferType.donate, ownerAtAcceptance: userA, receiverId: userB,
         status: TransactionStatus.awaitingHandover),
   ];
+
+  // Thời điểm server tạo Transaction (lúc A duyệt Request).
+  static Map<String, DateTime> get transactionCreatedAt => {
+    'txn-borrow-01': DateTime.utc(2026, 11, 20, 8),
+    'txn-sell-01': DateTime.utc(2026, 11, 20, 10),
+    'txn-delivery-01': DateTime.utc(2026, 11, 20, 12),
+  };
+
+  // Sự kiện server append-only; cố ý xếp lộn xộn để test sắp xếp theo serverAt.
+  static List<TransactionEventItem> get transactionEvents => [
+    TransactionEventItem(id: 'evt-borrow-03', transactionId: 'txn-borrow-01',
+      eventType: 'BORROW_STARTED', serverAt: DateTime.utc(2026, 11, 21, 9, 1),
+      safeDescription: 'Bắt đầu kỳ mượn 7 ngày, hạn trả 28/11/2026.'),
+    TransactionEventItem(id: 'evt-borrow-01', transactionId: 'txn-borrow-01',
+      eventType: 'REQUEST_ACCEPTED', serverAt: DateTime.utc(2026, 11, 20, 8),
+      safeDescription: 'A đã duyệt yêu cầu mượn.', actorDisplay: 'Bạn A (demo)'),
+    TransactionEventItem(id: 'evt-borrow-02', transactionId: 'txn-borrow-01',
+      eventType: 'HANDOVER_CONFIRMED', serverAt: DateTime.utc(2026, 11, 21, 9),
+      safeDescription: 'B đã xác nhận nhận tài liệu.', actorDisplay: 'Bạn B (demo)'),
+    TransactionEventItem(id: 'evt-sell-01', transactionId: 'txn-sell-01',
+      eventType: 'REQUEST_ACCEPTED', serverAt: DateTime.utc(2026, 11, 20, 10),
+      safeDescription: 'A đã duyệt yêu cầu mua.', actorDisplay: 'Bạn A (demo)'),
+    TransactionEventItem(id: 'evt-sell-02', transactionId: 'txn-sell-01',
+      eventType: 'PAYMENT_REPORTED', serverAt: DateTime.utc(2026, 11, 21),
+      safeDescription: 'B báo đã chuyển khoản. Chờ A kiểm tra và xác nhận.',
+      actorDisplay: 'Bạn B (demo)'),
+    TransactionEventItem(id: 'evt-delivery-01', transactionId: 'txn-delivery-01',
+      eventType: 'REQUEST_ACCEPTED', serverAt: DateTime.utc(2026, 11, 20, 12),
+      safeDescription: 'A đã duyệt yêu cầu nhận tặng.', actorDisplay: 'Bạn A (demo)'),
+  ];
+
+  // Chưa có Issue mẫu; module Issue sẽ bổ sung kịch bản riêng.
+  static List<Issue> get issues => const [];
 
   static List<BorrowingRecord> get borrowingRecords => [
     BorrowingRecord(transactionId: 'txn-borrow-01',

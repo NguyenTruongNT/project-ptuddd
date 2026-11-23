@@ -37,6 +37,6 @@ final publishedListingsProvider = FutureProvider<List<ListingCardModel>>(
 final myMaterialsPreviewProvider = FutureProvider<List<MaterialSummary>>(
   (ref) => ref.watch(materialQueryRepositoryProvider).getMyMaterials(),
 );
-final myTransactionsPreviewProvider = FutureProvider<List<StudyTransaction>>(
+final myTransactionsPreviewProvider = FutureProvider<List<TransactionDetails>>(
   (ref) => ref.watch(transactionQueryRepositoryProvider).getMyTransactions(),
 );
