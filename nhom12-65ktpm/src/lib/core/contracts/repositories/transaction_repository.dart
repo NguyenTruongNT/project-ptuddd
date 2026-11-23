@@ -16,8 +16,39 @@ abstract interface class BorrowRepository {
     String transactionId, {required String idempotencyKey});
 }
 
+// Tiền SELL chuyển NGOÀI ứng dụng; các lệnh dưới chỉ ghi nhận xác nhận của người.
 abstract interface class SellerPaymentRepository {
-  // A xác nhận đã thực nhận tiền; B self-report không mở Handover SELL.
-  Future<CommandResult<StudyTransaction>> confirmSellerPayment(
+  // B báo "Tôi đã chuyển khoản": chỉ ghi buyer_reported_at, KHÔNG rời AWAITING_PAYMENT.
+  Future<CommandResult<TransactionDetails>> reportBuyerTransfer(
+    String transactionId, {required String idempotencyKey});
+
+  // Chỉ A xác nhận đã thực nhận tiền -> AWAITING_HANDOVER (một lần duy nhất).
+  Future<CommandResult<TransactionDetails>> confirmSellerPayment(
+    String transactionId, {required String idempotencyKey});
+
+  // Khi đang đề nghị hủy SELL đã nhận tiền: A báo đã hoàn tiền ngoài app.
+  Future<CommandResult<TransactionDetails>> reportSellerRefund(
+    String transactionId, {required String idempotencyKey});
+
+  // Chỉ B xác nhận đã thực nhận đủ tiền hoàn.
+  Future<CommandResult<TransactionDetails>> confirmRefundReceived(
+    String transactionId, {required String idempotencyKey});
+}
+
+// Hủy Transaction cần A và B đồng thuận và không còn nghĩa vụ sách/tiền/Issue.
+abstract interface class TransactionCancellationRepository {
+  Future<CommandResult<TransactionDetails>> proposeCancellation(
+    String transactionId, String reason, {required String idempotencyKey});
+
+  // Người đề nghị tự rút lại.
+  Future<CommandResult<TransactionDetails>> withdrawCancellation(
+    String transactionId, {required String idempotencyKey});
+
+  // Bên còn lại không đồng ý hủy.
+  Future<CommandResult<TransactionDetails>> declineCancellation(
+    String transactionId, {required String idempotencyKey});
+
+  // Bên còn lại đồng ý; server chỉ CANCELLED khi hết nghĩa vụ.
+  Future<CommandResult<TransactionDetails>> acceptCancellation(
     String transactionId, {required String idempotencyKey});
 }

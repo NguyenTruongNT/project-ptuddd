@@ -48,14 +48,38 @@ class PaymentConfirmation {
     required this.transactionId,
     this.buyerReportedAt,
     this.sellerConfirmedAt,
+    this.refundReportedAt,
+    this.buyerRefundConfirmedAt,
   });
 
   final String transactionId;
   final DateTime? buyerReportedAt;
   final DateTime? sellerConfirmedAt;
+  // A báo đã hoàn tiền NGOÀI ứng dụng (cột refund_proposed_at).
+  final DateTime? refundReportedAt;
+  // Chỉ B xác nhận đã thực nhận tiền hoàn; app không tự chuyển/hoàn tiền.
+  final DateTime? buyerRefundConfirmedAt;
 
   // B báo đã chuyển tiền KHÔNG tương đương A đã xác nhận nhận tiền.
   bool get isSellerConfirmed => sellerConfirmedAt != null;
+
+  // Đã nhận tiền mà chưa được B xác nhận hoàn lại -> còn nghĩa vụ tiền khi hủy.
+  bool get hasOutstandingRefund =>
+      sellerConfirmedAt != null && buyerRefundConfirmedAt == null;
+}
+
+// Đề nghị hủy Transaction đang chờ bên còn lại phản hồi (BR-45).
+// Một bên đề nghị không đủ để hủy; server kiểm tra đồng thuận + nghĩa vụ.
+class CancellationProposal {
+  const CancellationProposal({
+    required this.proposedBy,
+    required this.reason,
+    required this.proposedAt,
+  });
+
+  final TransactionViewerRole proposedBy;
+  final String reason;
+  final DateTime proposedAt;
 }
 
 class TransactionEventItem {
@@ -85,7 +109,11 @@ enum TransactionAction {
   startHandover('CAN_START_HANDOVER'),
   requestReturn('CAN_REQUEST_RETURN'),
   reportIssue('CAN_REPORT_ISSUE'),
-  proposeCancellation('CAN_PROPOSE_CANCELLATION');
+  proposeCancellation('CAN_PROPOSE_CANCELLATION'),
+  withdrawCancellation('CAN_WITHDRAW_CANCELLATION'),
+  respondCancellation('CAN_RESPOND_CANCELLATION'),
+  reportSellerRefund('CAN_REPORT_SELLER_REFUND'),
+  confirmRefundReceived('CAN_CONFIRM_REFUND_RECEIVED');
 
   const TransactionAction(this.wire);
   final String wire;
@@ -116,6 +144,7 @@ class TransactionDetails {
     this.borrowing,
     this.payment,
     this.openIssueCount = 0,
+    this.cancellationProposal,
     this.allowedActions = const {},
   });
 
@@ -129,6 +158,7 @@ class TransactionDetails {
   final BorrowingRecord? borrowing; // Chỉ BORROW.
   final PaymentConfirmation? payment; // Chỉ SELL.
   final int openIssueCount;
+  final CancellationProposal? cancellationProposal; // Đề nghị hủy đang chờ.
   final Set<TransactionAction> allowedActions;
 
   String get id => transaction.id;
