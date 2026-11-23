@@ -5,3 +5,4 @@ export 'mock_listing_query_repository.dart';
 export 'mock_material_query_repository.dart';
 export 'mock_notification_query_repository.dart';
 export 'mock_transaction_query_repository.dart';
+export 'mock_transaction_store.dart';

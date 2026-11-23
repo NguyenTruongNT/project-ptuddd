@@ -78,7 +78,7 @@ class MockDataPreviewPage extends ConsumerWidget {
                 for (final item in items)
                   ListTile(
                     title: Text('Giao dịch ${item.id}'),
-                    subtitle: Text('Trạng thái: ${item.status.name}'),
+                    subtitle: Text('Trạng thái: ${item.transaction.status.name}'),
                     onTap: () => context.push(
                       AppRoutes.transactionDetails(item.id),
                     ),

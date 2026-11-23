@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../features/home/mock_data_preview_page.dart';
 import '../features/home/tab_content.dart';
 import '../features/profile_settings/settings_page.dart';
+import '../features/transactions/presentation/my_transactions_page.dart';
+import '../features/transactions/presentation/transaction_details_page.dart';
 import 'app_routes.dart';
 import 'route_catalog_page.dart';
 import 'shared_screen_placeholder.dart';
@@ -46,9 +48,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     const TabContent(section: TabSection.publish)),
           ]),
           StatefulShellBranch(routes: [
+            // SCR-13 – module Transaction (Sơn).
             GoRoute(path: AppRoutes.transactions,
-                builder: (context, state) =>
-                    const TabContent(section: TabSection.transactions)),
+                builder: (context, state) => const MyTransactionsPage()),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(path: AppRoutes.profile,
@@ -68,7 +70,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       _placeholder(AppRoutes.materialDetailsPattern, 'SCR-09', 'Chi tiết tài liệu/QR'),
       _placeholder(AppRoutes.createRequestPattern, 'SCR-11', 'Gửi yêu cầu'),
       _placeholder(AppRoutes.requestCenter, 'SCR-12', 'Trung tâm yêu cầu'),
-      _placeholder(AppRoutes.transactionDetailsPattern, 'SCR-14', 'Chi tiết giao dịch'),
+      // SCR-14 – module Transaction (Sơn).
+      GoRoute(path: AppRoutes.transactionDetailsPattern,
+          builder: (context, state) => TransactionDetailsPage(
+              transactionId: state.pathParameters['transactionId']!)),
       _placeholder(AppRoutes.deliveries, 'SCR-15', 'Danh sách giao hộ'),
       _placeholder(AppRoutes.createDelivery, 'SCR-16', 'Tạo nhiệm vụ giao hộ'),
       _placeholder(AppRoutes.deliveryDetailsPattern, 'SCR-17', 'Chi tiết giao hộ'),

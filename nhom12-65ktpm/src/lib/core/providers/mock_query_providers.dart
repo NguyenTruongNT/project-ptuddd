@@ -10,6 +10,7 @@ import '../mock/mock_fixtures.dart';
 import '../mock/mock_listing_query_repository.dart';
 import '../mock/mock_material_query_repository.dart';
 import '../mock/mock_transaction_query_repository.dart';
+import '../mock/mock_transaction_store.dart';
 
 // ID này chỉ dành cho trang preview. Không dùng làm actor cho Supabase RPC.
 final demoViewerIdProvider = Provider<String>((ref) => MockFixtures.userA);
@@ -24,9 +25,15 @@ final materialQueryRepositoryProvider = Provider<MaterialQueryRepository>(
     demoViewerId: ref.watch(demoViewerIdProvider),
   ),
 );
+// Một store mô phỏng dùng chung cho đọc + lệnh mock; không phụ thuộc viewer
+// để đổi tài khoản demo A/B vẫn thấy cùng trạng thái.
+final mockTransactionStoreProvider = Provider<MockTransactionStore>(
+  (ref) => MockTransactionStore.fromFixtures(),
+);
 final transactionQueryRepositoryProvider = Provider<TransactionQueryRepository>(
   (ref) => MockTransactionQueryRepository(
     demoViewerId: ref.watch(demoViewerIdProvider),
+    store: ref.watch(mockTransactionStoreProvider),
   ),
 );
 
@@ -37,6 +44,6 @@ final publishedListingsProvider = FutureProvider<List<ListingCardModel>>(
 final myMaterialsPreviewProvider = FutureProvider<List<MaterialSummary>>(
   (ref) => ref.watch(materialQueryRepositoryProvider).getMyMaterials(),
 );
-final myTransactionsPreviewProvider = FutureProvider<List<StudyTransaction>>(
+final myTransactionsPreviewProvider = FutureProvider<List<TransactionDetails>>(
   (ref) => ref.watch(transactionQueryRepositoryProvider).getMyTransactions(),
 );
