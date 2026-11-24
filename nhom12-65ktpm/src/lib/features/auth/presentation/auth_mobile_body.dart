@@ -44,24 +44,25 @@ class AuthMobileBody extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (expanded)
-                  const Positioned.fill(
-                    child: ExcludeSemantics(
-                      child: IgnorePointer(
+                const Positioned.fill(
+                  child: ExcludeSemantics(
+                    child: IgnorePointer(
+                      child: ClipRect(
                         child: CustomPaint(painter: _BookPattern()),
                       ),
                     ),
                   ),
+                ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 44),
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 72,
-                            height: 54,
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final logo = Container(
+                            width: 88,
+                            height: 66,
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -72,26 +73,40 @@ class AuthMobileBody extends StatelessWidget {
                               fit: BoxFit.contain,
                               semanticLabel: 'StudyShare',
                             ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Text(
-                              text.brandTagline,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: Colors.white.withValues(alpha: .88),
-                              ),
+                          );
+                          final tagline = Text(
+                            text.brandTagline,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withValues(alpha: .88),
                             ),
-                          ),
-                        ],
+                          );
+                          if (constraints.maxWidth < 240) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                logo,
+                                const SizedBox(height: 8),
+                                tagline,
+                              ],
+                            );
+                          }
+                          return Row(
+                            children: [
+                              logo,
+                              const SizedBox(width: 16),
+                              Expanded(child: tagline),
+                            ],
+                          );
+                        },
                       ),
                       if (expanded) ...[
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                         Text(
                           text.brandHeading,
                           key: const ValueKey('auth-mobile-headline'),
                           style: theme.textTheme.headlineMedium?.copyWith(
-                            fontSize: 32,
-                            height: 1.12,
+                            fontSize: 28,
+                            height: 1.2,
                             color: Colors.white,
                             letterSpacing: -.8,
                           ),
@@ -140,10 +155,43 @@ class AuthMobileBody extends StatelessWidget {
               ),
             ),
           ),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: ExcludeSemantics(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: _NotebookPattern(theme.colorScheme.primary),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
+}
+
+/// Only the remaining empty area is painted; fields and text stay on solid fill.
+class _NotebookPattern extends CustomPainter {
+  const _NotebookPattern(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final line = Paint()
+      ..color = color.withValues(alpha: .045)
+      ..strokeWidth = .7;
+    for (var x = 0.0; x < size.width; x += 24) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), line);
+    }
+    for (var y = 0.0; y < size.height; y += 24) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), line);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _NotebookPattern oldDelegate) =>
+      color != oldDelegate.color;
 }
 
 /// Decorative books, not a replacement for the approved logo.

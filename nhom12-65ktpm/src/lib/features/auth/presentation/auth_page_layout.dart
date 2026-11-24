@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../design_system/theme/studyshare_theme.dart';
 import '../../../l10n/app_localizations.dart';
 import 'auth_mobile_body.dart';
+import 'auth_theme.dart';
 
 class AuthPageLayout extends StatelessWidget {
   const AuthPageLayout({
@@ -22,7 +23,15 @@ class AuthPageLayout extends StatelessWidget {
   final bool showMobileMessage;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => Theme(
+    data: AuthTheme.apply(
+      Theme.of(context),
+      reduceMotion: MediaQuery.disableAnimationsOf(context),
+    ),
+    child: Builder(builder: _buildPage),
+  );
+
+  Widget _buildPage(BuildContext context) {
     final text = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
@@ -65,12 +74,12 @@ class AuthPageLayout extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 8),
                               ],
                               Text(
                                 title,
                                 style: theme.textTheme.headlineMedium?.copyWith(
-                                  fontSize: wide ? 28 : 24,
+                                  fontSize: wide ? 28 : 26,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -80,7 +89,7 @@ class AuthPageLayout extends StatelessWidget {
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
-                              const SizedBox(height: 28),
+                              const SizedBox(height: 24),
                               ...children,
                             ],
                           ),

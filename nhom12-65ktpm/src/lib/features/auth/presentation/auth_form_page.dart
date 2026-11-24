@@ -40,11 +40,14 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
   final _name = TextEditingController();
   final _password = TextEditingController();
   final _confirmation = TextEditingController();
+  final _passwordFocus = FocusNode();
   bool _busy = false;
   bool _obscure = true;
   bool _obscureConfirmation = true;
   bool _validationAttempted = false;
   String? _error;
+  String? _emailError;
+  String? _passwordError;
   String? _message;
   Timer? _cooldown;
 
@@ -61,6 +64,7 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
     _name.dispose();
     _password.dispose();
     _confirmation.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
@@ -73,7 +77,11 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
 
   Future<void> _submit() async {
     if (_busy) return;
-    setState(() => _validationAttempted = true);
+    setState(() {
+      _validationAttempted = true;
+      _emailError = null;
+      _passwordError = null;
+    });
     final form = _form.currentState;
     if (form == null) return;
     final invalid = form.validateGranularly();
@@ -101,6 +109,8 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
     setState(() {
       _busy = true;
       _error = null;
+      _emailError = null;
+      _passwordError = null;
       _message = null;
     });
     try {
@@ -166,7 +176,19 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
           if (mounted) context.go(AppRoutes.signIn, extra: 'password-updated');
       }
     } catch (error) {
-      if (mounted) setState(() => _error = authErrorMessage(error, text));
+      if (mounted) {
+        setState(() {
+          final message = authErrorMessage(error, text);
+          switch (authErrorTarget(error)) {
+            case AuthErrorTarget.email:
+              _emailError = message;
+            case AuthErrorTarget.password:
+              _passwordError = message;
+            case null:
+              _error = message;
+          }
+        });
+      }
     } finally {
       // Giữ email khi lỗi; không giữ plaintext password sau submit.
       if (mounted) {
@@ -210,7 +232,7 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
       AuthFlow.resetPassword => text.authUpdatePassword,
     };
     return AuthPageLayout(
-      showMobileMessage: widget.flow == AuthFlow.signIn,
+      showMobileMessage: widget.flow == AuthFlow.signIn || signUp,
       title: title,
       subtitle: switch (widget.flow) {
         AuthFlow.signIn => text.authContinueSharing,
@@ -266,13 +288,27 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
             decoration: InputDecoration(
               labelText: text.authEmail,
               prefixIcon: const Icon(Icons.mail_outline),
+              errorMaxLines: 4,
             ),
+            onChanged: (_) {
+              if (_emailError != null || _passwordError != null) {
+                setState(() {
+                  _emailError = null;
+                  _passwordError = null;
+                });
+              }
+            },
+            autovalidateMode: _validationAttempted
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
             onFieldSubmitted: (_) {
               if (!hasPassword) _submit();
             },
-            validator: (v) => AuthValidation.validEmail(v ?? '')
-                ? null
-                : text.authInvalidEmail,
+            validator: (v) =>
+                _emailError ??
+                (AuthValidation.validEmail(v ?? '')
+                    ? null
+                    : text.authInvalidEmail),
           ),
           const SizedBox(height: 16),
         ],
@@ -280,6 +316,7 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
           TextFormField(
             key: const ValueKey('auth-password'),
             controller: _password,
+            focusNode: _passwordFocus,
             enabled: !_busy,
             obscureText: _obscure,
             textInputAction: signUp || reset
@@ -310,10 +347,16 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
                 ),
               ),
             ),
+            onChanged: (_) {
+              if (_passwordError != null) {
+                setState(() => _passwordError = null);
+              }
+            },
             autovalidateMode: _validationAttempted
                 ? AutovalidateMode.onUserInteraction
                 : AutovalidateMode.disabled,
             validator: (v) {
+              if (_passwordError != null) return _passwordError;
               if ((v ?? '').isEmpty) return text.authRequiredPassword;
               if (!signUp && !reset) return null;
               final missing = AuthValidation.missingPasswordRequirements(v!);
@@ -345,9 +388,9 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
         if (signUp || reset) ...[
           PasswordRequirements(
             password: _password,
+            focusNode: _passwordFocus,
             showErrors: _validationAttempted,
           ),
-          const SizedBox(height: 16),
           TextFormField(
             key: const ValueKey('auth-confirmation'),
             controller: _confirmation,
@@ -360,19 +403,39 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
             decoration: InputDecoration(
               labelText: text.authConfirmPassword,
               prefixIcon: const Icon(Icons.lock_outline),
-              suffixIcon: IconButton(
-                tooltip: _obscureConfirmation
-                    ? text.authShowPassword
-                    : text.authHidePassword,
-                onPressed: _busy
-                    ? null
-                    : () => setState(
-                        () => _obscureConfirmation = !_obscureConfirmation,
+              suffixIcon: ListenableBuilder(
+                listenable: Listenable.merge([_password, _confirmation]),
+                builder: (context, _) => Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_confirmation.text.isNotEmpty &&
+                        _confirmation.text == _password.text)
+                      Semantics(
+                        label: text.authPasswordsMatch,
+                        child: Icon(
+                          Icons.check_circle_rounded,
+                          key: const ValueKey('auth-passwords-match'),
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 20,
+                        ),
                       ),
-                icon: Icon(
-                  _obscureConfirmation
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
+                    IconButton(
+                      tooltip: _obscureConfirmation
+                          ? text.authShowPassword
+                          : text.authHidePassword,
+                      onPressed: _busy
+                          ? null
+                          : () => setState(
+                              () =>
+                                  _obscureConfirmation = !_obscureConfirmation,
+                            ),
+                      icon: Icon(
+                        _obscureConfirmation
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -431,7 +494,13 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
               ),
             ],
           ),
-          const AuthOAuthButtons(onSelected: null),
+          AuthOAuthButtons(
+            onSelected: _busy
+                ? null
+                : (_) =>
+                      StudyFeedbackHost.of(context)
+                          ?.show(text.authSocialDeveloping),
+          ),
           if (!configured && snapshot?.failed != true)
             TextButton(
               onPressed: () {
@@ -441,7 +510,13 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
               child: Text(text.authDemo),
             ),
         ] else if (signUp)
-          const AuthOAuthButtons(onSelected: null)
+          AuthOAuthButtons(
+            onSelected: _busy
+                ? null
+                : (_) =>
+                      StudyFeedbackHost.of(context)
+                          ?.show(text.authSocialDeveloping),
+          )
         else
           TextButton(
             onPressed: _busy

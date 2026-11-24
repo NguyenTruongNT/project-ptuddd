@@ -27,6 +27,7 @@ void main() {
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
+        addTearDown(tester.view.resetViewInsets);
         final auth = FakeAuthRepository();
         addTearDown(auth.close);
         auth.snapshot = const AuthSnapshot.signedIn(
@@ -91,6 +92,10 @@ void main() {
                 lessThan(scenario.$2),
                 reason: 'CTA available without scrolling on mobile',
               );
+            }
+            if ((page.flow == AuthFlow.signIn ||
+                    page.flow == AuthFlow.signUp) &&
+                scenario.$1 < 900) {
               tester.view.viewInsets = const FakeViewPadding(bottom: 280);
               await tester.pumpAndSettle();
               expect(
@@ -98,11 +103,12 @@ void main() {
                 findsNothing,
               );
               await tester.ensureVisible(
-                find.byKey(const ValueKey('auth-submit')),
+                find.byKey(const ValueKey('auth-submit'), skipOffstage: false),
               );
               await tester.pumpAndSettle();
               expect(tester.takeException(), isNull);
               tester.view.resetViewInsets();
+              await tester.pumpAndSettle();
             }
             for (final provider in ['google', 'github']) {
               final button = find.byKey(ValueKey('auth-oauth-$provider'));

@@ -398,10 +398,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authOAuthDivider => 'Or continue with';
 
   @override
-  String get authContinueGoogle => 'Continue with Google';
+  String get authContinueGoogle => 'Google';
 
   @override
-  String get authContinueGithub => 'Continue with GitHub';
+  String get authContinueGithub => 'GitHub';
+
+  @override
+  String get authSocialDeveloping => 'This feature is under development.';
+
+  @override
+  String get authPasswordsMatch => 'Passwords match';
 
   @override
   String get authSocialUnavailable =>

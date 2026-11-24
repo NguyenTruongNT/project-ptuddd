@@ -211,7 +211,7 @@ Nguồn chính thức: [Redirect URLs](https://supabase.com/docs/guides/auth/red
 
 ## 12. Đăng nhập Google/GitHub — chuẩn bị OAuth
 
-Theo yêu cầu mới của Trường, hai nút Google/GitHub hiện **chỉ hiển thị UI, luôn vô hiệu hóa** trên cả đăng nhập và đăng ký (`onPressed = null`). Giữ logo, nhãn và vị trí đã duyệt; bấm nút không gọi Auth settings, không mở provider, không tạo user/session hoặc hiện toast lỗi. Email/mật khẩu tiếp tục là phương thức đăng nhập hoạt động.
+Theo yêu cầu mới nhất của Trường, hai nút Google/GitHub hiện là **UI xem trước** trên cả đăng nhập và đăng ký. Giữ logo và vị trí đã duyệt, nhãn rút gọn thành “Google”/“GitHub” dưới dòng “Hoặc tiếp tục với”. Có hover/focus; bấm chỉ hiện “Tính năng đang phát triển.” trong 3,5 giây, không gọi Auth settings, không mở provider, không tạo user/session. Hai nút tạm khóa khi form email đang xử lý. Email/mật khẩu tiếp tục là phương thức đăng nhập hoạt động.
 
 Adapter OAuth và các unit test đã chuẩn bị trước đó được giữ để có thể dùng lại, nhưng form hiện không gọi adapter. Bật provider trong Supabase không tự kích hoạt hai nút; cần yêu cầu triển khai tiếp và nối lại callback UI. Hướng dẫn dưới đây dành cho lần kích hoạt đó, không phải điều kiện để chạy bản UI hiện tại.
 

@@ -6,6 +6,17 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/auth/auth_repository.dart';
 import '../../../l10n/app_localizations.dart';
 
+enum AuthErrorTarget { email, password }
+
+AuthErrorTarget? authErrorTarget(Object error) {
+  if (error is! AuthException) return null;
+  return switch (error.code) {
+    'email_not_confirmed' => AuthErrorTarget.email,
+    'invalid_credentials' || 'weak_password' => AuthErrorTarget.password,
+    _ => null,
+  };
+}
+
 String authErrorMessage(Object error, AppLocalizations text) {
   if (error is RecoverySessionRequired) return text.authRecoveryExpired;
   if (error is SocialAuthUnavailable) return text.authSocialUnavailable;

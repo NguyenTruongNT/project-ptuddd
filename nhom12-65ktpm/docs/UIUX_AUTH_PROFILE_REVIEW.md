@@ -90,7 +90,7 @@ Cài đặt hiển thị “Đang lưu…”/“Đã lưu” cạnh phần giớ
 - Build web release và APK debug thành công. Duyệt Chrome 360/440 px: mật khẩu chỉ gồm số hiện lỗi thiếu hoa/thường/symbol ngay dưới ô, checklist hiển thị đúng và cuộn được; sửa đủ điều kiện mở dialog xác nhận. Đã hủy dialog, không tạo tài khoản từ lượt duyệt UI này. Preview web local được cập nhật tại `http://127.0.0.1:5180`.
 - Chưa cấu hình Supabase Cloud cá nhân. Tài liệu chạy và contracts ghi rõ cần đặt policy Cloud tương ứng trước khi triển khai. Không thay schema/RLS/RPC trong lần bổ sung validation này.
 
-## 10. Nút Google/GitHub theo bố cục Trường duyệt (25/11/2026)
+## 10. Lịch sử nút Google/GitHub theo bố cục Trường duyệt (25/11/2026)
 
 - Màn đăng nhập giữ thứ tự: Email → Mật khẩu → Quên mật khẩu → Đăng nhập → Chưa có tài khoản/Tạo tài khoản → phân cách “Hoặc tiếp tục với” → Google → GitHub. Màn đăng ký có cùng nhóm OAuth ở cuối form, sau nút tạo tài khoản.
 - Hai nút xếp dọc, cùng chiều rộng form, cao tối thiểu 52, cách nhau 12. Logo chính thức nằm trái, nhãn hành động căn giữa: “Tiếp tục với Google”, “Tiếp tục với GitHub”. Không thêm mô tả cấu hình, dòng hướng dẫn hoặc gợi ý dưới nút. Logo loại khỏi semantics vì nhãn nút đã chứa tên provider.
@@ -103,3 +103,20 @@ Cài đặt hiển thị “Đang lưu…”/“Đã lưu” cạnh phần giớ
 - Kiểm tra sau khi chuyển sang UI-only: `flutter analyze --no-pub` sạch; **131 test đạt, 2 integration test local opt-in bỏ qua**; build web thành công. Preview web đã cập nhật tại `http://127.0.0.1:5180/`; tải lại bằng Ctrl+F5 để xem. Lượt này không build lại APK. Commit cục bộ, chưa push hoặc tạo PR.
 
 Nguồn: [Google button branding](https://developers.google.com/identity/branding-guidelines), [GitHub brand assets](https://brand.github.com/foundations/logo), [Supabase Flutter OAuth](https://supabase.com/docs/reference/dart/auth-signinwithoauth).
+
+## 11. Tinh chỉnh thẩm mỹ và tương tác Auth (25/11/2026)
+
+Đặc tả hiện tại thay cho trạng thái hai nút disabled ở mục 10:
+
+- Giữ bố cục và thứ tự chức năng. Header mobile đăng nhập/đăng ký dùng cùng gradient Forest `#17411B`, sách chìm và vòng cung. Logo gốc tăng từ 72×54 lên 88×66, không sửa file artwork. Khi có bàn phím, màn thấp hoặc chữ lớn, header thu gọn; ở chiều ngang rất hẹp, logo/tagline chuyển thành cột.
+- Inter 4.1 từ upstream, bốn trọng lượng 400/500/600/700, nhúng cục bộ với giấy phép SIL OFL. Chỉ áp dụng trong Auth. Tiêu đề form 26–28, hero 28; khoảng cách chính 8/16/24. Input bo 16, nền xanh trắng rất nhạt, viền mảnh và focus xanh. Nút chính cao tối thiểu 56, bo 16; desktop card có bóng nhẹ. Không đổi theme các màn nghiệp vụ.
+- Nút chính Light dùng `#078333` với chữ trắng, tương phản tính theo sRGB khoảng 4,88:1. `#0FA241` chỉ khoảng 3,35:1 nên không dùng cho nền chữ trắng 16px. Dark dùng xanh sáng/chữ Forest. Hiệu ứng nút 180ms, tôn trọng tùy chọn giảm chuyển động. Họa tiết ô vở chỉ vẽ ở phần trống còn lại phía dưới biểu mẫu.
+- Checklist mật khẩu ẩn khi form còn trống, hiện lúc focus/nhập hoặc sau lần gửi sai; năm điều kiện cập nhật theo nội dung thực. Xác nhận mật khẩu có dấu tích kèm semantics khi hai giá trị không rỗng và khớp, tự bỏ dấu khi sửa khác. Không ghi lại controller hoặc con trỏ từ listener.
+- Validation tiếp tục chặn trước confirm/API. Lỗi sai thông tin đăng nhập/weak password đặt dưới ô mật khẩu; email chưa xác minh đặt dưới ô email. Ưu tiên thông báo server đã được ánh xạ an toàn khi mật khẩu được xóa sau submit. Sửa ô liên quan sẽ xóa lỗi server cũ; lần gửi tiếp theo kiểm tra lại bình thường. Lỗi chung/mạng vẫn có thông báo trong form.
+- Giữ cả Google và GitHub theo yêu cầu tương tác mới nhất. Sau một dòng “Hoặc tiếp tục với”, nhãn nút chỉ là “Google”/“GitHub”, có icon chính thức. Hover/focus đổi sắc xanh nhạt, pressed đậm hơn; bấm chỉ báo “Tính năng đang phát triển.” bằng toast góc trên phải tự đóng sau 3,5 giây. Không gọi OAuth hoặc tạo phiên. Tạm khóa khi email/mật khẩu đang xử lý.
+- `flutter analyze --no-pub`: sạch; `flutter test --no-pub`: **133 đạt, 2 integration test local opt-in bỏ qua**. Đã kiểm tra hai form với bàn phím ở 320/360/440 và chữ 200%, Light/Dark, vi/en, desktop 1440; chỉnh/xóa mật khẩu cập nhật checklist và dấu khớp; lỗi server đúng field và sửa được; hai nút preview không gọi repository và toast tự đóng.
+- Build web release với cấu hình Cloud development thành công. Chrome thật đã xem 360×800, 440×956, desktop 1440×1000, Dark/English; xác nhận hover, toast hai provider tự đóng và không có request `/auth/v1/` khi bấm; nhập/sửa/xóa mật khẩu cập nhật checklist và dấu khớp. Không gửi email hoặc tạo user Cloud trong lượt kiểm tra UI này.
+- Sau khi xem Dark, thêm `ClipRect` để họa tiết sách không vẽ ra ngoài header; chạy lại **5 test responsive đạt** và build web thành công. Lượt mở lại Chrome để xem riêng thay đổi clipping bị kiểm duyệt tự động từ chối (`blocked by policy`), nên phần clipping cuối được xác minh bằng widget test/build, chưa chụp lại trên Chrome. Ảnh/log tại `src/.dart_tool/auth-polish-*`, bị Git bỏ qua.
+- Preview cập nhật tại `http://127.0.0.1:5180/` (Ctrl+F5). APK debug được build với cùng cấu hình; kiểm tra bàn phím ở lượt này là widget test với inset, chưa thay cho thao tác Android trên thiết bị. Không đổi Supabase Cloud, schema/RLS/RPC. Commit cục bộ trên feature, chưa push hoặc tạo PR.
+
+Nguồn: [Flutter ButtonStyle overlay](https://api.flutter.dev/flutter/material/ButtonStyle/overlayColor.html), [W3C WCAG contrast](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html), [Inter 4.1](https://github.com/rsms/inter/releases/tag/v4.1). Font và giấy phép tại `src/assets/fonts/inter/`.

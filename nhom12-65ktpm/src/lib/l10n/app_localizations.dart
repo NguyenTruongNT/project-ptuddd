@@ -809,14 +809,26 @@ abstract class AppLocalizations {
   /// No description provided for @authContinueGoogle.
   ///
   /// In vi, this message translates to:
-  /// **'Tiếp tục với Google'**
+  /// **'Google'**
   String get authContinueGoogle;
 
   /// No description provided for @authContinueGithub.
   ///
   /// In vi, this message translates to:
-  /// **'Tiếp tục với GitHub'**
+  /// **'GitHub'**
   String get authContinueGithub;
+
+  /// No description provided for @authSocialDeveloping.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tính năng đang phát triển.'**
+  String get authSocialDeveloping;
+
+  /// No description provided for @authPasswordsMatch.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mật khẩu trùng khớp'**
+  String get authPasswordsMatch;
 
   /// No description provided for @authSocialUnavailable.
   ///

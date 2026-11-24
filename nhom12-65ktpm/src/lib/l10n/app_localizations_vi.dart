@@ -400,10 +400,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get authOAuthDivider => 'Hoặc tiếp tục với';
 
   @override
-  String get authContinueGoogle => 'Tiếp tục với Google';
+  String get authContinueGoogle => 'Google';
 
   @override
-  String get authContinueGithub => 'Tiếp tục với GitHub';
+  String get authContinueGithub => 'GitHub';
+
+  @override
+  String get authSocialDeveloping => 'Tính năng đang phát triển.';
+
+  @override
+  String get authPasswordsMatch => 'Mật khẩu trùng khớp';
 
   @override
   String get authSocialUnavailable =>

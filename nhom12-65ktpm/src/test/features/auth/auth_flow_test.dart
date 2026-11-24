@@ -73,13 +73,13 @@ void main() {
         );
         expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
       }
-      expect(find.text('Tiếp tục với Google'), findsOneWidget);
-      expect(find.text('Tiếp tục với GitHub'), findsOneWidget);
+      expect(find.text('Google'), findsOneWidget);
+      expect(find.text('GitHub'), findsOneWidget);
     },
   );
 
   testWidgets(
-    'OAuth chỉ hiển thị UI, không gọi Auth ở cả đăng nhập và đăng ký',
+    'Nút mạng xã hội chỉ báo đang phát triển, không gọi Auth ở hai form',
     (tester) async {
       final auth = FakeAuthRepository();
       addTearDown(auth.close);
@@ -95,9 +95,12 @@ void main() {
           final button = find.byKey(ValueKey('auth-oauth-$name'));
           await tester.ensureVisible(button);
           await tester.pumpAndSettle();
-          expect(tester.widget<OutlinedButton>(button).onPressed, isNull);
+          expect(tester.widget<OutlinedButton>(button).onPressed, isNotNull);
           await tester.tap(button);
           await frames(tester);
+          expect(find.text('Tính năng đang phát triển.'), findsOneWidget);
+          await tester.pump(const Duration(seconds: 4));
+          expect(find.byKey(const ValueKey('study-toast')), findsNothing);
         }
         expect(auth.socialCalls, isEmpty);
         expect(auth.loginCalls, 0);
@@ -163,6 +166,56 @@ void main() {
     await frames(tester);
     expect(auth.registerCalls, 1);
   });
+
+  testWidgets(
+    'Checklist hiện khi nhập; sửa và xóa mật khẩu cập nhật dấu khớp',
+    (tester) async {
+      final auth = FakeAuthRepository();
+      addTearDown(auth.close);
+      await start(tester, auth, FakeProfileRepository());
+      await tester.ensureVisible(find.text('Tạo tài khoản'));
+      await tester.tap(find.text('Tạo tài khoản'));
+      await frames(tester);
+      final requirements = find.byKey(
+        const ValueKey('auth-password-requirements'),
+      );
+      final match = find.byKey(const ValueKey('auth-passwords-match'));
+      final password = find.byKey(const ValueKey('auth-password'));
+      final confirmation = find.byKey(const ValueKey('auth-confirmation'));
+      expect(requirements, findsNothing);
+      await tester.enterText(password, 'Test-pass-123!');
+      await frames(tester);
+      expect(requirements, findsOneWidget);
+      expect(
+        find.descendant(
+          of: requirements,
+          matching: find.byIcon(Icons.check_circle),
+        ),
+        findsNWidgets(5),
+      );
+      await tester.enterText(confirmation, 'Test-pass-123!');
+      await frames(tester);
+      expect(match, findsOneWidget);
+      await tester.enterText(password, 'Testpass123');
+      await frames(tester);
+      expect(match, findsNothing);
+      expect(
+        find.descendant(
+          of: requirements,
+          matching: find.byIcon(Icons.check_circle),
+        ),
+        findsNWidgets(4),
+      );
+      await tester.enterText(password, '');
+      await tester.enterText(confirmation, '');
+      await frames(tester);
+      expect(tester.widget<TextFormField>(password).controller!.text, isEmpty);
+      expect(requirements, findsNothing);
+      expect(match, findsNothing);
+      expect(auth.registerCalls, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('Đặt lại mật khẩu áp dụng cùng policy, không gọi API khi sai', (
     tester,
   ) async {
@@ -333,8 +386,67 @@ void main() {
     auth.loginPending!.complete();
     await frames(tester);
     expect(find.text('Email hoặc mật khẩu không hợp lệ.'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(
+            find.descendant(
+              of: find.byKey(const ValueKey('auth-password')),
+              matching: find.byType(TextField),
+            ),
+          )
+          .decoration!
+          .errorText,
+      'Email hoặc mật khẩu không hợp lệ.',
+    );
     expect(find.textContaining('sensitive server details'), findsNothing);
     expect(auth.submittedEmail, 'a@example.test');
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-password')),
+      'new-password',
+    );
+    await frames(tester);
+    expect(find.text('Email hoặc mật khẩu không hợp lệ.'), findsNothing);
+  });
+
+  testWidgets('Email chưa xác minh hiện lỗi tại ô email và cho phép sửa lại', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository()
+      ..loginError = const AuthException(
+        'internal',
+        code: 'email_not_confirmed',
+      );
+    addTearDown(auth.close);
+    await start(tester, auth, FakeProfileRepository());
+    final email = find.byKey(const ValueKey('auth-email'));
+    await tester.enterText(email, 'a@example.test');
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-password')),
+      'Test-pass-123!',
+    );
+    await submit(tester);
+    expect(
+      tester
+          .widget<TextField>(
+            find.descendant(of: email, matching: find.byType(TextField)),
+          )
+          .decoration!
+          .errorText,
+      'Vui lòng xác minh email trước khi đăng nhập.',
+    );
+    expect(auth.snapshot.isAuthenticated, isFalse);
+    await tester.enterText(email, 'b@example.test');
+    await frames(tester);
+    expect(
+      tester
+          .widget<TextField>(
+            find.descendant(of: email, matching: find.byType(TextField)),
+          )
+          .decoration!
+          .errorText,
+      isNull,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Signup cần xác minh không tự coi là đã login', (tester) async {
