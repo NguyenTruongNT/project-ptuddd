@@ -9,10 +9,13 @@ class StudyShareTheme {
   static const lightCanvas = Color(0xFFF4F7F4);
 
   static ThemeData build(Brightness brightness, {Color seed = brandGreen}) {
-    final colorScheme = ColorScheme.fromSeed(
+    final generated = ColorScheme.fromSeed(
       seedColor: seed,
       brightness: brightness,
     );
+    final colorScheme = brightness == Brightness.light
+        ? generated.copyWith(surface: Colors.white)
+        : generated;
     final base = ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,

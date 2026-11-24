@@ -257,6 +257,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     const SizedBox(height: 16),
                     _section(Icons.language_outlined, text.languageLabel, [
                       DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        itemHeight: null,
                         key: ValueKey('language-${_draft.localeCode}'),
                         initialValue: _draft.localeCode,
                         decoration: InputDecoration(

@@ -20,6 +20,8 @@ void main() {
     await tester.tap(find.text('Cá nhân').first);
     await tester.pump(const Duration(milliseconds: 400));
 
+    await tester.ensureVisible(find.text('Danh mục 26 màn hình (demo)'));
+    await tester.pump();
     await tester.tap(find.text('Danh mục 26 màn hình (demo)'));
     await tester.pump(const Duration(milliseconds: 400));
 

@@ -138,8 +138,9 @@ class AppPreferencesController extends Notifier<AppPreferences> {
       _save((s) => s.copyWith(showLeaves: visible));
 
   Future<void> savePreferences(AppPreferences value) {
-    if (value.localeCode != 'vi' && value.localeCode != 'en')
+    if (value.localeCode != 'vi' && value.localeCode != 'en') {
       throw ArgumentError('locale');
+    }
     return _save((_) => value);
   }
 }

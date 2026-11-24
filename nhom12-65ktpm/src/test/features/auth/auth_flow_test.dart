@@ -43,6 +43,75 @@ Future<void> submit(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('Hủy đăng ký không gọi API và giữ nội dung form', (tester) async {
+    final auth = FakeAuthRepository();
+    addTearDown(auth.close);
+    await start(tester, auth, FakeProfileRepository());
+    await tester.ensureVisible(find.text('Tạo tài khoản'));
+    await tester.tap(find.text('Tạo tài khoản'));
+    await frames(tester);
+    await tester.enterText(find.byKey(const ValueKey('auth-name')), 'Trường');
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-email')),
+      'a@example.test',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-password')),
+      'test-pass-123',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-confirmation')),
+      'test-pass-123',
+    );
+    await submit(tester);
+    await tester.tap(find.text('Hủy'));
+    await frames(tester);
+    expect(auth.registerCalls, 0);
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const ValueKey('auth-password')))
+          .controller!
+          .text,
+      'test-pass-123',
+    );
+  });
+
+  testWidgets(
+    'Hồ sơ không lưu khi chưa sửa; bỏ bản nháp không gọi repository',
+    (tester) async {
+      final auth = FakeAuthRepository();
+      final profiles = FakeProfileRepository();
+      addTearDown(auth.close);
+      auth.snapshot = const AuthSnapshot.signedIn(
+        AuthIdentity(id: 'user-a', displayName: 'Tên cũ'),
+      );
+      await start(tester, auth, profiles);
+      await tester.tap(find.text('Cá nhân').first);
+      await frames(tester);
+      await tester.tap(find.byKey(const ValueKey('profile-edit')));
+      await frames(tester);
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const ValueKey('profile-save')))
+            .onPressed,
+        isNull,
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('profile-name')),
+        'Nháp',
+      );
+      await frames(tester);
+      await tester.tap(find.text('Hủy'));
+      await frames(tester);
+      expect(find.text('Bỏ thay đổi chưa lưu?'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('confirm-action')));
+      await frames(tester);
+      expect(profiles.updateCalls, 0);
+      expect(find.text('Tên cũ'), findsOneWidget);
+      expect(find.byKey(const ValueKey('profile-edit-dialog')), findsNothing);
+    },
+  );
+
   testWidgets(
     'Hoàn tất request sau khi đóng form không dùng controller đã dispose',
     (tester) async {
