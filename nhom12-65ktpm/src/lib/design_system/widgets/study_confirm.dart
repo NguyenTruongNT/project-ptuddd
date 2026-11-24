@@ -18,8 +18,8 @@ Future<bool> showStudyConfirm(
         icon: Icon(
           icon,
           color: destructive
-              ? Theme.of(context).colorScheme.error
-              : Theme.of(context).colorScheme.primary,
+              ? Theme.of(dialogContext).colorScheme.error
+              : Theme.of(dialogContext).colorScheme.primary,
         ),
         title: Text(title),
         content: Text(message),
@@ -32,8 +32,10 @@ Future<bool> showStudyConfirm(
             key: const ValueKey('confirm-action'),
             style: destructive
                 ? FilledButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                    foregroundColor: Theme.of(context).colorScheme.onError,
+                    backgroundColor: Theme.of(dialogContext).colorScheme.error,
+                    foregroundColor: Theme.of(dialogContext)
+                        .colorScheme
+                        .onError,
                   )
                 : null,
             onPressed: () => Navigator.pop(dialogContext, true),

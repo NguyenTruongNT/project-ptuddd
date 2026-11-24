@@ -53,8 +53,9 @@ class _ProfileEditDialogState extends ConsumerState<ProfileEditDialog> {
   }
 
   Future<void> _save() async {
-    if (_busy || !_changed || !(_form.currentState?.validate() ?? false))
+    if (_busy || !_changed || !(_form.currentState?.validate() ?? false)) {
       return;
+    }
     final text = AppLocalizations.of(context)!;
     final feedback = StudyFeedbackHost.of(context);
     final value = _name.text.trim();
@@ -73,15 +74,17 @@ class _ProfileEditDialogState extends ConsumerState<ProfileEditDialog> {
       );
       if (!confirmed || !mounted) return;
       if (ref.read(authSnapshotProvider).asData?.value.identity?.id !=
-          widget.profile.userId)
+          widget.profile.userId) {
         return;
+      }
       final repository = ref.read(profileRepositoryProvider);
       if (repository == null) return;
       await repository.updateMyDisplayName(value);
       if (!mounted ||
           ref.read(authSnapshotProvider).asData?.value.identity?.id !=
-              widget.profile.userId)
+              widget.profile.userId) {
         return;
+      }
       ref.invalidate(currentProfileProvider);
       feedback?.show(text.profileSaved);
       setState(() => _allowPop = true);
@@ -99,8 +102,9 @@ class _ProfileEditDialogState extends ConsumerState<ProfileEditDialog> {
     ref.listen(authSnapshotProvider, (_, next) {
       if (next.asData?.value.identity?.id != widget.profile.userId) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && ModalRoute.of(context)?.isCurrent == true)
+          if (mounted && ModalRoute.of(context)?.isCurrent == true) {
             Navigator.pop(context);
+          }
         });
       }
     });
