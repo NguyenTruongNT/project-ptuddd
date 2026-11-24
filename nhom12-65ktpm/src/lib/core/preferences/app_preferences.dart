@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,6 +32,21 @@ class AppPreferences {
   final bool showGrid;
   final bool showLeaves;
 
+  bool sameAs(AppPreferences other) =>
+      themeMode == other.themeMode &&
+      localeCode == other.localeCode &&
+      palette == other.palette &&
+      showGrid == other.showGrid &&
+      showLeaves == other.showLeaves;
+
+  Map<String, Object> toJson() => {
+    'theme': themeMode.name,
+    'locale': localeCode,
+    'palette': palette.name,
+    'grid': showGrid,
+    'leaves': showLeaves,
+  };
+
   AppPreferences copyWith({
     ThemeMode? themeMode,
     String? localeCode,
@@ -59,54 +76,70 @@ class AppPreferencesController extends Notifier<AppPreferences> {
   @override
   AppPreferences build() {
     final store = ref.watch(preferencesStoreProvider);
+    Map<String, dynamic> saved = {};
+    try {
+      final decoded = jsonDecode(store?.getString('ui.preferences.v1') ?? '{}');
+      if (decoded is Map<String, dynamic>) saved = decoded;
+    } on FormatException {
+      /* Fall back to legacy keys. */
+    }
+    String? text(String key) => saved[key] is String
+        ? saved[key] as String
+        : store?.getString('ui.$key');
+    bool boolean(String key) => saved[key] is bool
+        ? saved[key] as bool
+        : store?.getBool('ui.$key') ?? true;
     return AppPreferences(
       themeMode:
-          ThemeMode.values
-              .where((v) => v.name == store?.getString('ui.theme'))
-              .firstOrNull ??
+          ThemeMode.values.where((v) => v.name == text('theme')).firstOrNull ??
           ThemeMode.system,
       palette:
           StudySharePalette.values
-              .where((v) => v.name == store?.getString('ui.palette'))
+              .where((v) => v.name == text('palette'))
               .firstOrNull ??
           StudySharePalette.green,
-      localeCode: store?.getString('ui.locale') == 'en' ? 'en' : 'vi',
-      showGrid: store?.getBool('ui.grid') ?? true,
-      showLeaves: store?.getBool('ui.leaves') ?? true,
+      localeCode: text('locale') == 'en' ? 'en' : 'vi',
+      showGrid: boolean('grid'),
+      showLeaves: boolean('leaves'),
     );
   }
 
   Future<void> _pending = Future.value();
-  Future<void> _save(
-    String key,
-    Object value,
-    AppPreferences Function(AppPreferences) change,
-  ) {
+  Future<void> _save(AppPreferences Function(AppPreferences) change) {
     // Tuần tự hóa thao tác để đổi theme + locale nhanh không ghi đè nhau.
     _pending = _pending.catchError((Object _) {}).then((_) async {
       final store = ref.read(preferencesStoreProvider);
+      final next = change(state);
       if (store != null) {
-        final saved = value is bool
-            ? await store.setBool(key, value)
-            : await store.setString(key, value as String);
+        // One write prevents a partially saved theme/locale/effects selection.
+        final saved = await store.setString(
+          'ui.preferences.v1',
+          jsonEncode(next.toJson()),
+        );
         if (!saved) throw StateError('Preferences were not saved');
       }
-      state = change(state);
+      state = next;
     });
     return _pending;
   }
 
   Future<void> setThemeMode(ThemeMode mode) =>
-      _save('ui.theme', mode.name, (s) => s.copyWith(themeMode: mode));
+      _save((s) => s.copyWith(themeMode: mode));
   Future<void> setLocale(String code) {
     if (code != 'vi' && code != 'en') throw ArgumentError('locale');
-    return _save('ui.locale', code, (s) => s.copyWith(localeCode: code));
+    return _save((s) => s.copyWith(localeCode: code));
   }
 
   Future<void> setPalette(StudySharePalette palette) =>
-      _save('ui.palette', palette.name, (s) => s.copyWith(palette: palette));
+      _save((s) => s.copyWith(palette: palette));
   Future<void> setGrid(bool visible) =>
-      _save('ui.grid', visible, (s) => s.copyWith(showGrid: visible));
+      _save((s) => s.copyWith(showGrid: visible));
   Future<void> setLeaves(bool visible) =>
-      _save('ui.leaves', visible, (s) => s.copyWith(showLeaves: visible));
+      _save((s) => s.copyWith(showLeaves: visible));
+
+  Future<void> savePreferences(AppPreferences value) {
+    if (value.localeCode != 'vi' && value.localeCode != 'en')
+      throw ArgumentError('locale');
+    return _save((_) => value);
+  }
 }

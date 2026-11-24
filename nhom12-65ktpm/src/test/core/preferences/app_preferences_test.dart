@@ -6,6 +6,50 @@ import 'package:studyshare/core/preferences/app_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'Bộ lựa chọn xác nhận được ghi cùng nhau và khôi phục sau mở lại',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'ui.theme': 'light',
+        'ui.locale': 'vi',
+      });
+      final store = await SharedPreferences.getInstance();
+      final first = ProviderContainer(
+        overrides: [preferencesStoreProvider.overrideWithValue(store)],
+      );
+      expect(first.read(appPreferencesProvider).themeMode, ThemeMode.light);
+      await first
+          .read(appPreferencesProvider.notifier)
+          .savePreferences(
+            const AppPreferences(
+              themeMode: ThemeMode.dark,
+              localeCode: 'en',
+              palette: StudySharePalette.blue,
+              showGrid: false,
+              showLeaves: false,
+            ),
+          );
+      first.dispose();
+      final restored = ProviderContainer(
+        overrides: [preferencesStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(restored.dispose);
+      expect(
+        restored
+            .read(appPreferencesProvider)
+            .sameAs(
+              const AppPreferences(
+                themeMode: ThemeMode.dark,
+                localeCode: 'en',
+                palette: StudySharePalette.blue,
+                showGrid: false,
+                showLeaves: false,
+              ),
+            ),
+        isTrue,
+      );
+    },
+  );
   test('Khôi phục lựa chọn sau khi tạo lại container, không mất thay đổi đồng thời', () async {
     SharedPreferences.setMockInitialValues({});
     final store = await SharedPreferences.getInstance();
