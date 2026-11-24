@@ -638,6 +638,36 @@ abstract class AppLocalizations {
   /// **'Tối thiểu {count} ký tự'**
   String authPasswordHint(int count);
 
+  /// No description provided for @authPasswordUppercase.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chữ hoa (A–Z)'**
+  String get authPasswordUppercase;
+
+  /// No description provided for @authPasswordLowercase.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chữ thường (a–z)'**
+  String get authPasswordLowercase;
+
+  /// No description provided for @authPasswordDigit.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chữ số (0–9)'**
+  String get authPasswordDigit;
+
+  /// No description provided for @authPasswordSymbol.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ký tự đặc biệt (ví dụ !@#)'**
+  String get authPasswordSymbol;
+
+  /// No description provided for @authPasswordNeeds.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mật khẩu còn thiếu: {requirements}.'**
+  String authPasswordNeeds(String requirements);
+
   /// No description provided for @commonBack.
   ///
   /// In vi, this message translates to:

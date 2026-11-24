@@ -306,6 +306,23 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get authPasswordUppercase => 'Chữ hoa (A–Z)';
+
+  @override
+  String get authPasswordLowercase => 'Chữ thường (a–z)';
+
+  @override
+  String get authPasswordDigit => 'Chữ số (0–9)';
+
+  @override
+  String get authPasswordSymbol => 'Ký tự đặc biệt (ví dụ !@#)';
+
+  @override
+  String authPasswordNeeds(String requirements) {
+    return 'Mật khẩu còn thiếu: $requirements.';
+  }
+
+  @override
   String get commonBack => 'Quay lại';
 
   @override

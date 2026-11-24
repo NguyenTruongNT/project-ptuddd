@@ -305,6 +305,23 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get authPasswordUppercase => 'Uppercase letter (A–Z)';
+
+  @override
+  String get authPasswordLowercase => 'Lowercase letter (a–z)';
+
+  @override
+  String get authPasswordDigit => 'Digit (0–9)';
+
+  @override
+  String get authPasswordSymbol => 'Special character (for example !@#)';
+
+  @override
+  String authPasswordNeeds(String requirements) {
+    return 'Password still needs: $requirements.';
+  }
+
+  @override
   String get commonBack => 'Back';
 
   @override

@@ -13,6 +13,7 @@ import '../../../l10n/app_localizations.dart';
 import '../domain/auth_validation.dart';
 import 'auth_error_message.dart';
 import 'auth_page_layout.dart';
+import 'password_requirements.dart';
 
 enum AuthFlow { signIn, signUp, forgotPassword, checkEmail, resetPassword }
 
@@ -41,6 +42,7 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
   bool _busy = false;
   bool _obscure = true;
   bool _obscureConfirmation = true;
+  bool _validationAttempted = false;
   String? _error;
   String? _message;
   Timer? _cooldown;
@@ -69,7 +71,26 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
   ).toString();
 
   Future<void> _submit() async {
-    if (_busy || !(_form.currentState?.validate() ?? false)) return;
+    if (_busy) return;
+    setState(() => _validationAttempted = true);
+    final form = _form.currentState;
+    if (form == null) return;
+    final invalid = form.validateGranularly();
+    if (invalid.isNotEmpty) {
+      final first = invalid.first;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && first.mounted) {
+          Scrollable.ensureVisible(
+            first.context,
+            alignment: .2,
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : const Duration(milliseconds: 200),
+          );
+        }
+      });
+      return;
+    }
     final repository = ref.read(authRepositoryProvider);
     if (repository == null) return;
     final text = AppLocalizations.of(context)!;
@@ -271,9 +292,7 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
             decoration: InputDecoration(
               labelText: text.authPassword,
               prefixIcon: const Icon(Icons.lock_outline),
-              helperText: signUp || reset
-                  ? text.authPasswordHint(AuthValidation.minimumPasswordLength)
-                  : null,
+              errorMaxLines: 6,
               suffixIcon: IconButton(
                 tooltip: _obscure
                     ? text.authShowPassword
@@ -288,11 +307,21 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
                 ),
               ),
             ),
-            validator: (v) => (v ?? '').isEmpty
-                ? text.authRequiredPassword
-                : (signUp || reset) && !AuthValidation.validNewPassword(v!)
-                ? text.authWeakPassword
-                : null,
+            autovalidateMode: _validationAttempted
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
+            validator: (v) {
+              if ((v ?? '').isEmpty) return text.authRequiredPassword;
+              if (!signUp && !reset) return null;
+              final missing = AuthValidation.missingPasswordRequirements(v!);
+              return missing.isEmpty
+                  ? null
+                  : text.authPasswordNeeds(
+                      missing
+                          .map((rule) => passwordRequirementLabel(rule, text))
+                          .join(', '),
+                    );
+            },
             onFieldSubmitted: (_) {
               if (!signUp && !reset) _submit();
             },
@@ -311,6 +340,11 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
             const SizedBox(height: 16),
         ],
         if (signUp || reset) ...[
+          PasswordRequirements(
+            password: _password,
+            showErrors: _validationAttempted,
+          ),
+          const SizedBox(height: 16),
           TextFormField(
             key: const ValueKey('auth-confirmation'),
             controller: _confirmation,

@@ -45,6 +45,87 @@ Future<void> submit(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('Đăng ký chặn mật khẩu thiếu từng điều kiện trước confirm/API', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository();
+    addTearDown(auth.close);
+    await start(tester, auth, FakeProfileRepository());
+    await tester.ensureVisible(find.text('Tạo tài khoản'));
+    await tester.tap(find.text('Tạo tài khoản'));
+    await frames(tester);
+    await tester.enterText(find.byKey(const ValueKey('auth-name')), 'Trường');
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-email')),
+      'truong@example.test',
+    );
+    for (final password in [
+      'abc123!@',
+      'ABC123!@',
+      'Abcdef!@',
+      'Abcdef12',
+      'Aa1!',
+    ]) {
+      await tester.enterText(
+        find.byKey(const ValueKey('auth-password')),
+        password,
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('auth-confirmation')),
+        password,
+      );
+      await submit(tester);
+      expect(auth.registerCalls, 0);
+      expect(find.byKey(const ValueKey('study-confirm')), findsNothing);
+      expect(find.textContaining('Mật khẩu còn thiếu:'), findsOneWidget);
+    }
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-password')),
+      'StrongPassword123!',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-confirmation')),
+      'StrongPassword123!',
+    );
+    await submit(tester);
+    expect(find.byKey(const ValueKey('study-confirm')), findsOneWidget);
+    expect(auth.registerCalls, 0);
+    await tester.tap(find.byKey(const ValueKey('confirm-action')));
+    await frames(tester);
+    expect(auth.registerCalls, 1);
+  });
+  testWidgets('Đặt lại mật khẩu áp dụng cùng policy, không gọi API khi sai', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository();
+    addTearDown(auth.close);
+    auth.snapshot = const AuthSnapshot.signedIn(
+      AuthIdentity(id: 'qa'),
+      recovering: true,
+    );
+    await start(tester, auth, FakeProfileRepository());
+    for (final password in [
+      'abc123!@',
+      'ABC123!@',
+      'Abcdef!@',
+      'Abcdef12',
+      'Aa1!',
+    ]) {
+      await tester.enterText(
+        find.byKey(const ValueKey('auth-password')),
+        password,
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('auth-confirmation')),
+        password,
+      );
+      await submit(tester);
+      expect(auth.recoveryCalls, 0);
+      expect(find.byKey(const ValueKey('study-confirm')), findsNothing);
+      expect(find.textContaining('Mật khẩu còn thiếu:'), findsOneWidget);
+    }
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
   testWidgets('Hủy đăng ký không gọi API và giữ nội dung form', (tester) async {
     final auth = FakeAuthRepository();
     addTearDown(auth.close);
@@ -59,11 +140,11 @@ void main() {
     );
     await tester.enterText(
       find.byKey(const ValueKey('auth-password')),
-      'test-pass-123',
+      'Test-pass-123!',
     );
     await tester.enterText(
       find.byKey(const ValueKey('auth-confirmation')),
-      'test-pass-123',
+      'Test-pass-123!',
     );
     await submit(tester);
     await tester.tap(find.text('Hủy'));
@@ -74,7 +155,7 @@ void main() {
           .widget<TextFormField>(find.byKey(const ValueKey('auth-password')))
           .controller!
           .text,
-      'test-pass-123',
+      'Test-pass-123!',
     );
   });
 
@@ -126,7 +207,7 @@ void main() {
       );
       await tester.enterText(
         find.byKey(const ValueKey('auth-password')),
-        'test-pass-123',
+        'Test-pass-123!',
       );
       auth.loginPending = Completer<void>();
       await submit(tester);
@@ -201,7 +282,7 @@ void main() {
     );
     await tester.enterText(
       find.byKey(const ValueKey('auth-password')),
-      'test-pass-123',
+      'Test-pass-123!',
     );
     await tester.enterText(
       find.byKey(const ValueKey('auth-confirmation')),
@@ -211,7 +292,7 @@ void main() {
     expect(auth.registerCalls, 0);
     await tester.enterText(
       find.byKey(const ValueKey('auth-confirmation')),
-      'test-pass-123',
+      'Test-pass-123!',
     );
     await submit(tester);
     expect(auth.registerCalls, 0);
@@ -335,11 +416,11 @@ void main() {
       expect(find.text('Đặt mật khẩu mới'), findsOneWidget);
       await tester.enterText(
         find.byKey(const ValueKey('auth-password')),
-        'new-test-pass-123',
+        'New-test-pass-123!',
       );
       await tester.enterText(
         find.byKey(const ValueKey('auth-confirmation')),
-        'new-test-pass-123',
+        'New-test-pass-123!',
       );
       await submit(tester);
       expect(auth.recoveryCalls, 0);

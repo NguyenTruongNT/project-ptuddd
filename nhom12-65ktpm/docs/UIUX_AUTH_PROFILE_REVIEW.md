@@ -80,3 +80,12 @@ Cài đặt hiển thị “Đang lưu…”/“Đã lưu” cạnh phần giớ
 - Build web release và APK debug thành công. Trình duyệt thật: đăng ký tài khoản thử qua confirm, đổi Dark + Blue tức thì, chọn English tự lưu, reload giữ cả ba lựa chọn, đăng xuất qua confirm; xem lại login 360x800 và 440x956.
 - Chỉ dùng Supabase local; tài khoản QA tạo riêng đã xóa sau đăng xuất. Cài đặt tiếp tục là dữ liệu theo thiết bị, không cần đổi schema/RLS/RPC hoặc cấu hình Supabase Cloud.
 - Ảnh/log ở `src/.dart_tool/` bị Git bỏ qua. Bản xem web trên máy ở `http://127.0.0.1:5180`. Commit theo từng nhiệm vụ trên feature hiện tại, chưa push/cập nhật PR; chờ Trường duyệt kết quả hiển thị.
+
+## 9. Ràng buộc đầu vào Auth (24/11/2026)
+
+- Rà soát phát hiện bản trước chỉ yêu cầu mật khẩu dài tối thiểu 6 ký tự; chưa bắt buộc chữ hoa/thường/số/ký tự đặc biệt. Bản bổ sung áp dụng tối thiểu 8 ký tự và đủ bốn nhóm ký tự cho đăng ký/đặt lại mật khẩu, đồng bộ policy Supabase local. Độ dài đếm Unicode code point như server.
+- Checklist năm điều kiện đặt ngay dưới ô mật khẩu, cập nhật khi gõ. Khi gửi sai, báo rõ điều kiện còn thiếu, cuộn đến field lỗi đầu tiên và không mở confirm/gọi API. Email phải đúng định dạng, tên không trống và tối đa 100 ký tự, nhập lại mật khẩu phải khớp. Đăng nhập vẫn để server xác thực tài khoản cũ, không áp policy tạo mới để khóa form đăng nhập.
+- `flutter analyze --no-pub`: sạch. `flutter test --no-pub`: **120 đạt, 2 bỏ qua** (hai test local opt-in); test đếm Unicode được chạy lại riêng sau điều chỉnh và đạt. Unit kiểm tra từng điều kiện thiếu và tập symbol; widget kiểm tra đăng ký/recovery sai bị chặn trước confirm/API, sửa đúng mới tiếp tục.
+- `tool/test_password_policy_local.ps1`: **1 integration test đạt trên Supabase local thật**. Gọi SDK trực tiếp: signup/updateUser thiếu từng điều kiện nhận `weak_password`; đổi sai không thay mật khẩu hiện tại, đổi đúng mới thay mật khẩu và mật khẩu cũ không đăng nhập được. Tài khoản QA do test tạo được xóa theo UUID riêng sau kiểm thử.
+- Build web release và APK debug thành công. Duyệt Chrome 360/440 px: mật khẩu chỉ gồm số hiện lỗi thiếu hoa/thường/symbol ngay dưới ô, checklist hiển thị đúng và cuộn được; sửa đủ điều kiện mở dialog xác nhận. Đã hủy dialog, không tạo tài khoản từ lượt duyệt UI này. Preview web local được cập nhật tại `http://127.0.0.1:5180`.
+- Chưa cấu hình Supabase Cloud cá nhân. Tài liệu chạy và contracts ghi rõ cần đặt policy Cloud tương ứng trước khi triển khai. Không thay schema/RLS/RPC trong lần bổ sung validation này.

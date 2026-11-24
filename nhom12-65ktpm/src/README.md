@@ -46,7 +46,11 @@ Phân công module, quy trình commit và checklist bàn giao: **`../docs/SHARED
 4. Email test ở `http://127.0.0.1:54324`. Khi mở liên kết email trên emulator, dùng `adb -s emulator-5554 reverse tcp:54321 tcp:54321` để địa chỉ localhost trong email trỏ về máy phát triển.
 5. Chạy `flutter analyze`, `flutter test`, `npx supabase test db`. Test PKCE/Auth thật được tách riêng: `powershell -ExecutionPolicy Bypass -File .\tool\test_auth_local.ps1`.
 
-Cloud cần tự cấu hình URL redirect `studyshare://auth/callback` trong Supabase Auth và SMTP phù hợp. Chỉ truyền publishable key cho app. Chính sách xác minh email theo server; Google Sign-In không nằm trong phần ngày 1. `AUTH_MIN_PASSWORD_LENGTH` mặc định 6 như config local; nếu server yêu cầu cao hơn, truyền cùng giá trị qua `--dart-define`.
+Cloud cần tự cấu hình URL redirect `studyshare://auth/callback` trong Supabase Auth và SMTP phù hợp. Chỉ truyền publishable key cho app. Chính sách xác minh email theo server; Google Sign-In không nằm trong phần ngày 1.
+
+Đăng ký/đặt mật khẩu mới yêu cầu **ít nhất 8 ký tự, có chữ hoa A–Z, chữ thường a–z, số 0–9 và ký tự đặc biệt**. Form liệt kê trực tiếp các điều kiện, báo điều kiện còn thiếu và chặn trước confirm/API; xác nhận mật khẩu phải khớp. Supabase local áp dụng cùng policy (`minimum_password_length = 8`, `password_requirements = "lower_upper_letters_digits_symbols"`) để chặn cả khi bỏ qua UI. Cấu hình Cloud phải đặt riêng cùng chính sách trước khi triển khai; sửa config local không thay đổi Cloud. `AUTH_MIN_PASSWORD_LENGTH` mặc định 8, không cho hạ dưới 8; nếu server yêu cầu dài hơn, truyền cùng giá trị qua `--dart-define`. Form đăng nhập chỉ bắt buộc nhập mật khẩu rồi để server xác thực, không chặn tài khoản cũ theo policy tạo mới.
+
+Sau khi đổi config, restart Supabase local như bước 2; chạy kiểm thử server trực tiếp bằng `powershell -ExecutionPolicy Bypass -File .\tool\test_password_policy_local.ps1`. Test chỉ dùng localhost/khóa công khai, tạo tài khoản QA riêng rồi xóa đúng UUID của nó. Tham khảo [Supabase Password security](https://supabase.com/docs/guides/auth/password-security).
 
 Luồng kiểm tra: đăng ký → xác minh nếu server yêu cầu → đăng nhập → Cá nhân → sửa tên → Cài đặt → đổi theme/ngôn ngữ → khởi động lại → logout. Khôi phục mật khẩu phải xuất phát từ email hợp lệ; mở đường dẫn reset trực tiếp không cấp quyền đổi mật khẩu.
 
