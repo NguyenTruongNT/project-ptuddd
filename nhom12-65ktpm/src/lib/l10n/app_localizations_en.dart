@@ -395,6 +395,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authJoinPrompt => 'New to StudyShare?';
 
   @override
+  String get authOAuthDivider => 'Or continue with';
+
+  @override
+  String get authContinueGoogle => 'Continue with Google';
+
+  @override
+  String get authContinueGithub => 'Continue with GitHub';
+
+  @override
+  String get authSocialUnavailable =>
+      'This sign-in method is currently unavailable. Please try again later.';
+
+  @override
   String get authContinueSharing => 'Continue your sharing journey.';
 
   @override

@@ -800,6 +800,30 @@ abstract class AppLocalizations {
   /// **'Chưa có tài khoản?'**
   String get authJoinPrompt;
 
+  /// No description provided for @authOAuthDivider.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hoặc tiếp tục với'**
+  String get authOAuthDivider;
+
+  /// No description provided for @authContinueGoogle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếp tục với Google'**
+  String get authContinueGoogle;
+
+  /// No description provided for @authContinueGithub.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếp tục với GitHub'**
+  String get authContinueGithub;
+
+  /// No description provided for @authSocialUnavailable.
+  ///
+  /// In vi, this message translates to:
+  /// **'Phương thức đăng nhập này hiện chưa khả dụng. Vui lòng thử lại sau.'**
+  String get authSocialUnavailable;
+
   /// No description provided for @authContinueSharing.
   ///
   /// In vi, this message translates to:

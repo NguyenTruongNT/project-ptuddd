@@ -1,14 +1,26 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../config/supabase_settings.dart';
 import 'auth_repository.dart';
 
 /// Chỉ bao bọc thao tác đăng nhập cơ bản, dễ dùng từ các màn Auth sau này.
 /// Server Supabase chịu trách nhiệm kiểm tra mật khẩu và phiên đăng nhập.
 class AuthSessionService implements AuthRepository {
-  AuthSessionService(this._client);
+  AuthSessionService(
+    this._client, {
+    this._settings = SupabaseSettings.fromEnvironment,
+    this._oauthSettingsClient,
+    this._oauthLauncher,
+  });
 
   final SupabaseClient _client;
+  final SupabaseSettings _settings;
+  final http.Client? _oauthSettingsClient;
+  final Future<bool> Function(OAuthProvider, String)? _oauthLauncher;
   bool _recovering = false;
   static const callbackUrl = 'studyshare://auth/callback';
 
@@ -25,6 +37,33 @@ class AuthSessionService implements AuthRepository {
       email: email.trim(),
       password: password,
     );
+  }
+
+  @override
+  Future<void> signInWithProvider(SocialAuthProvider provider) async {
+    // Check the public provider status before opening a browser. A disabled
+    // provider must not navigate the user to a raw Auth error page.
+    final url = Uri.parse('${_settings.url}/auth/v1/settings');
+    final headers = {'apikey': _settings.publishableKey};
+    final response =
+        await (_oauthSettingsClient?.get(url, headers: headers) ??
+                http.get(url, headers: headers))
+            .timeout(const Duration(seconds: 10));
+    if (response.statusCode != 200) throw const SocialAuthUnavailable();
+    final settings = jsonDecode(response.body) as Map<String, dynamic>;
+    final external = settings['external'] as Map<String, dynamic>?;
+    if (external?[provider.name] != true) throw const SocialAuthUnavailable();
+    final oauthProvider = switch (provider) {
+      SocialAuthProvider.google => OAuthProvider.google,
+      SocialAuthProvider.github => OAuthProvider.github,
+    };
+    final redirect = callbackUrlForPlatform();
+    final launched =
+        await (_oauthLauncher?.call(oauthProvider, redirect) ??
+            _client.auth.signInWithOAuth(oauthProvider, redirectTo: redirect));
+    if (!launched) throw const SocialAuthUnavailable();
+    // Opening the provider is not authentication. watchSession receives the
+    // verified SDK callback and drives the router after sign-in succeeds.
   }
 
   Future<AuthResponse> signUp({
@@ -47,7 +86,12 @@ class AuthSessionService implements AuthRepository {
       return const AuthSnapshot.signedOut();
     }
     final user = session.user;
-    final name = user.userMetadata?['display_name'];
+    final metadata = user.userMetadata;
+    final name =
+        metadata?['display_name'] ??
+        metadata?['full_name'] ??
+        metadata?['name'] ??
+        metadata?['user_name'];
     return AuthSnapshot.signedIn(
       AuthIdentity(
         id: user.id,

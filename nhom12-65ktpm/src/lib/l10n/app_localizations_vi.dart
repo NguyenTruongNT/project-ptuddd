@@ -397,6 +397,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get authJoinPrompt => 'Chưa có tài khoản?';
 
   @override
+  String get authOAuthDivider => 'Hoặc tiếp tục với';
+
+  @override
+  String get authContinueGoogle => 'Tiếp tục với Google';
+
+  @override
+  String get authContinueGithub => 'Tiếp tục với GitHub';
+
+  @override
+  String get authSocialUnavailable =>
+      'Phương thức đăng nhập này hiện chưa khả dụng. Vui lòng thử lại sau.';
+
+  @override
   String get authContinueSharing => 'Tiếp tục hành trình chia sẻ của bạn.';
 
   @override

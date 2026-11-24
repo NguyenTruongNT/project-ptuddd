@@ -11,6 +11,9 @@ class FakeAuthRepository implements AuthRepository {
   int registerCalls = 0;
   int signOutCalls = 0;
   int recoveryCalls = 0;
+  final socialCalls = <SocialAuthProvider>[];
+  Completer<void>? socialPending;
+  Object? socialError;
   String? submittedEmail;
   String? submittedName;
   Object? loginError;
@@ -23,6 +26,14 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   Future<void> close() => _events.close();
+  @override
+  Future<void> signInWithProvider(SocialAuthProvider provider) async {
+    socialCalls.add(provider);
+    await socialPending?.future;
+    if (socialError != null) throw socialError!;
+    // A launched OAuth browser must not emit an authenticated session.
+  }
+
   @override
   Stream<AuthSnapshot> watchSession() => Stream.multi((sink) {
     final subscription = _events.stream.listen(sink.add);

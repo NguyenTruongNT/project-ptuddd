@@ -37,10 +37,13 @@ class RegistrationOutcome {
   final bool needsEmailConfirmation;
 }
 
+enum SocialAuthProvider { google, github }
+
 /// Session/actor do Supabase xác thực, không lấy từ dữ liệu demo.
 abstract interface class AuthRepository {
   Stream<AuthSnapshot> watchSession();
   Future<void> signIn({required String email, required String password});
+  Future<void> signInWithProvider(SocialAuthProvider provider);
   Future<RegistrationOutcome> register({
     required String displayName,
     required String email,
@@ -54,4 +57,8 @@ abstract interface class AuthRepository {
 
 class RecoverySessionRequired implements Exception {
   const RecoverySessionRequired();
+}
+
+class SocialAuthUnavailable implements Exception {
+  const SocialAuthUnavailable();
 }

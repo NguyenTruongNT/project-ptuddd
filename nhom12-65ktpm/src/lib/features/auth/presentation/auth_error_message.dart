@@ -8,6 +8,7 @@ import '../../../l10n/app_localizations.dart';
 
 String authErrorMessage(Object error, AppLocalizations text) {
   if (error is RecoverySessionRequired) return text.authRecoveryExpired;
+  if (error is SocialAuthUnavailable) return text.authSocialUnavailable;
   if (error is SocketException || error is TimeoutException) {
     return text.authNetworkError;
   }
