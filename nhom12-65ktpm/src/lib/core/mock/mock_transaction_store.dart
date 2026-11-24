@@ -10,10 +10,15 @@ class MockTransactionStore {
   MockTransactionStore.fromFixtures({
     DateTime Function()? clock,
     List<Issue>? seedIssues,
+    List<Handover>? seedHandovers,
   })  : clock = clock ?? (() => DateTime.now().toUtc()),
         _issues = {
           for (final issue in seedIssues ?? MockFixtures.issues)
             issue.id: issue,
+        },
+        _handovers = {
+          for (final handover in seedHandovers ?? MockFixtures.handovers)
+            handover.id: handover,
         },
         _transactions = {
           for (final txn in MockFixtures.transactions) txn.id: txn,
@@ -34,6 +39,8 @@ class MockTransactionStore {
   final Map<String, MockCommandReceipt> _receipts = {};
   // Issue nằm cùng store với Transaction vì openIssueCount phải phản ánh Issue mới tạo.
   final Map<String, Issue> _issues;
+  // Chặng bàn giao để xác định C có trực tiếp liên quan tới một Issue hay không.
+  final Map<String, Handover> _handovers;
   final Map<String, MockIssueProposal> _issueProposals = {};
   final List<IssueEventItem> _issueEvents = [];
   int _eventCounter = 0;
@@ -95,7 +102,9 @@ class MockTransactionStore {
   }
 
   // Handover chưa kết thúc nghĩa là sách có thể đang trên đường.
-  bool hasActiveHandover(String transactionId) => MockFixtures.handovers.any(
+  Handover? handover(String id) => _handovers[id];
+
+  bool hasActiveHandover(String transactionId) => _handovers.values.any(
         (handover) =>
             handover.transactionId == transactionId &&
             (handover.status == HandoverStatus.pending ||
@@ -134,7 +143,14 @@ class MockTransactionStore {
   void putPayment(PaymentConfirmation payment) =>
       _payments[payment.transactionId] = payment;
 
-  String nextIssueId() => 'issue-mock-${++_issueCounter}';
+  // Bỏ qua ID đã có (vd. Issue seed) để Issue mới không bao giờ ghi đè Issue cũ.
+  String nextIssueId() {
+    String id;
+    do {
+      id = 'issue-mock-${++_issueCounter}';
+    } while (_issues.containsKey(id));
+    return id;
+  }
 
   void putIssue(Issue issue) => _issues[issue.id] = issue;
 
