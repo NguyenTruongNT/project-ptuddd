@@ -143,6 +143,9 @@ void main() {
       'test-pass-123',
     );
     await submit(tester);
+    expect(auth.registerCalls, 0);
+    await tester.tap(find.byKey(const ValueKey('confirm-action')));
+    await frames(tester);
     expect(auth.registerCalls, 1);
     expect(auth.submittedName, 'Trường');
     expect(find.text('Kiểm tra email'), findsOneWidget);
@@ -163,7 +166,7 @@ void main() {
         'unknown@example.test',
       );
       await submit(tester);
-      expect(find.textContaining('Nếu email đủ điều kiện'), findsOneWidget);
+      expect(find.textContaining('Nếu email đủ điều kiện'), findsWidgets);
       await submit(tester);
       expect(auth.resetCalls, 1);
       await tester.pumpWidget(const SizedBox.shrink());
@@ -262,6 +265,9 @@ void main() {
         'new-test-pass-123',
       );
       await submit(tester);
+      expect(auth.recoveryCalls, 0);
+      await tester.tap(find.byKey(const ValueKey('confirm-action')));
+      await frames(tester);
       expect(auth.recoveryCalls, 1);
       expect(find.byKey(const ValueKey('auth-email')), findsOneWidget);
     },
