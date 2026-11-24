@@ -13,7 +13,7 @@ flutter devices
 flutter run -d emulator-5554
 ```
 
-Nếu mã thiết bị khác `emulator-5554`, lấy mã chính xác bằng `flutter devices` rồi thay thế. Không cần Supabase Cloud để xem giao diện mock.
+Nếu mã thiết bị khác `emulator-5554`, lấy mã chính xác bằng `flutter devices` rồi thay thế. Khi chưa có cấu hình Supabase, màn đăng nhập có nút **Xem bản demo**. Chế độ này có nhãn dữ liệu mô phỏng và không tạo phiên Supabase giả.
 
 ## Chạy với Supabase
 
@@ -31,8 +31,21 @@ Tại thư mục gốc repository:
 
 ## Phạm vi hiện tại
 
-- Có 5 tab, 26 route, màn placeholder, theme/l10n, mock repositories **chỉ đọc**, Supabase foundation và bộ test nền tảng.
-- **Chưa có** UI và RPC nghiệp vụ hoàn chỉnh cho Auth, Material/Listing, ExchangeRequest, giao nhận, thanh toán, Issue hay Notification.
+- Có 5 tab, 26 route chính, theme/l10n, Supabase foundation và module Transaction mock (PR #21).
+- Nhánh Auth/Profile bổ sung Splash, đăng nhập/đăng ký, xác minh email, quên/đổi mật khẩu qua PKCE deep link, auth guard, hồ sơ cá nhân và logout; lưu tùy chọn giao diện trên thiết bị.
+- Material/Listing, ExchangeRequest, Handover, thanh toán, Issue và Notification chưa có backend nghiệp vụ hoàn chỉnh. Auth/Profile thật không lấy tài khoản A/B từ mock làm actor; cache riêng tư được tái tạo khi đổi tài khoản hoặc logout.
 - Không suy diễn dữ liệu mock là giao dịch đã được xác nhận; quyền và state transition phải được kiểm tra tại server.
 
 Phân công module, quy trình commit và checklist bàn giao: **`../docs/SHARED_HANDOFF.md`** và **`../docs/QUY_TRINH_GIT_NHOM.md`**.
+
+## Chạy và kiểm tra Auth/Profile ngày 1
+
+1. Khởi động Docker Desktop; tại `src/`, chạy `npx supabase start`.
+2. Local dùng `studyshare://auth/callback` trong `supabase/config.toml`. Nếu stack đang chạy từ trước khi sửa config, `npx supabase stop` rồi `npx supabase start` để nạp allowlist mới; không cần reset database.
+3. Chạy Android với `--dart-define=SUPABASE_URL=http://10.0.2.2:54321` và `--dart-define=SUPABASE_PUBLISHABLE_KEY=<publishable-key-local>`.
+4. Email test ở `http://127.0.0.1:54324`. Khi mở liên kết email trên emulator, dùng `adb -s emulator-5554 reverse tcp:54321 tcp:54321` để địa chỉ localhost trong email trỏ về máy phát triển.
+5. Chạy `flutter analyze`, `flutter test`, `npx supabase test db`. Test PKCE/Auth thật được tách riêng: `powershell -ExecutionPolicy Bypass -File .\tool\test_auth_local.ps1`.
+
+Cloud cần tự cấu hình URL redirect `studyshare://auth/callback` trong Supabase Auth và SMTP phù hợp. Chỉ truyền publishable key cho app. Chính sách xác minh email theo server; Google Sign-In không nằm trong phần ngày 1. `AUTH_MIN_PASSWORD_LENGTH` mặc định 6 như config local; nếu server yêu cầu cao hơn, truyền cùng giá trị qua `--dart-define`.
+
+Luồng kiểm tra: đăng ký → xác minh nếu server yêu cầu → đăng nhập → Cá nhân → sửa tên → Cài đặt → đổi theme/ngôn ngữ → khởi động lại → logout. Khôi phục mật khẩu phải xuất phát từ email hợp lệ; mở đường dẫn reset trực tiếp không cấp quyền đổi mật khẩu.
