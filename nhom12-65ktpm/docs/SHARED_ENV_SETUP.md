@@ -92,3 +92,35 @@ Script không tự reset database, không deploy cloud, không push Git và khô
 ## 7. Nguyên tắc khi bàn giao
 
 Các thành viên phát triển **feature riêng** từ `integration/nhom12-65ktpm`, dùng chung các thư mục `core/contracts`, `core/providers`, `design_system` và `app/app_routes.dart`. Nếu cần thay đổi hợp đồng chung, mở PR nhỏ và nhờ các thành viên liên quan review trước. Chi tiết trong `SHARED_HANDOFF.md`.
+
+## 8. Ghi nhận triển khai Cloud development — 24/11/2026
+
+Project `studyshare-nhom12-dev`, region Singapore (`ap-southeast-1`), đã được liên kết bằng Supabase CLI **3.3.0** và áp dụng hai migration nền tảng:
+
+- `20261122000100_core_schema.sql`.
+- `20261122000200_rls_and_storage.sql`.
+
+Hai file khớp bản đã merge vào integration qua PR #18. Trước triển khai, ba file pgTAP local đạt **33/33 kiểm tra**, database lint không báo lỗi và dry-run chỉ liệt kê hai migration trên, không có seed/custom role. Triển khai dùng đích project Cloud tường minh và `--skip-vault`; không chuyển dữ liệu mock hoặc tài khoản local lên Cloud.
+
+Kiểm tra sau triển khai:
+
+- Lịch sử migration Cloud khớp cả hai phiên bản local.
+- Có 19 bảng `public`, cả 19 đều bật RLS.
+- Profile có ba policy SELECT/INSERT/UPDATE; role `authenticated` được đọc/tạo và sửa `display_name`, không được sửa `user_id` hoặc `created_at`.
+- Role `authenticated` không được đọc trực tiếp `transactions`/`material_qr_credentials`, không được tự INSERT `command_receipts`.
+- Hai bucket `studyshare-material-images` và `studyshare-handover-evidence` đều private, giới hạn mỗi ảnh 5 MB và MIME JPEG/PNG/WEBP. Chỉ có hai policy Storage đọc/upload ảnh tài liệu theo thư mục của chủ tài khoản; quyền minh chứng bàn giao vẫn chờ RPC.
+- Thử REST với publishable key và không có phiên người dùng: truy cập `profiles`, `transactions`, `material_qr_credentials` đều bị chặn HTTP 401 / SQLSTATE `42501`.
+
+Đây là kiểm tra cấu trúc/quyền trên Cloud, chưa phải nghiệm thu toàn bộ Auth/Profile với email thật hoặc hai phiên người dùng Cloud. Các bước còn lại: đồng bộ password policy Cloud, SMTP, callback Android/web, rồi kiểm thử đăng ký/xác minh/khôi phục, hồ sơ và phân quyền giữa hai tài khoản.
+
+Cấu hình Flutter Cloud ở `src/.dart_tool/supabase.cloud.json`, được Git bỏ qua, với tên biến `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY`. Không dùng prefix `NEXT_PUBLIC_` trong Flutter. Kết quả dry-run, deploy và audit được giữ trong `src/.dart_tool/cloud-step3-*`; không chứa trong commit.
+
+CLI 3.x mặc định nhắm local. Khi kiểm tra Cloud, cần chỉ rõ đích; ví dụ từ `src/`:
+
+```powershell
+$projectRef = '<PROJECT_REF_CUA_BAN>'
+npx.cmd supabase@3.3.0 migration list "--remote=$projectRef"
+npx.cmd supabase@3.3.0 db push "--remote=$projectRef" --dry-run --skip-vault
+```
+
+Hai lệnh trên chỉ kiểm tra lịch sử/xem trước; không áp dụng migration mới. Không dùng `migration repair` để che lỗi lệch lịch sử. Các lựa chọn Auth trong `supabase/config.toml` local chưa được đồng bộ lên Cloud bởi lệnh triển khai database này.
