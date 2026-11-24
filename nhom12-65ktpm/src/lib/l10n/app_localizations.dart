@@ -746,6 +746,36 @@ abstract class AppLocalizations {
   /// **'Đã lưu cài đặt.'**
   String get preferencesSaved;
 
+  /// No description provided for @preferencesSaving.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang lưu…'**
+  String get preferencesSaving;
+
+  /// No description provided for @preferencesAutoSaveHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Áp dụng ngay và tự lưu trên thiết bị này.'**
+  String get preferencesAutoSaveHint;
+
+  /// No description provided for @preferencesSaveRestored.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không lưu được lựa chọn. Đã khôi phục cài đặt đã lưu trước đó.'**
+  String get preferencesSaveRestored;
+
+  /// No description provided for @authJoinPrompt.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có tài khoản?'**
+  String get authJoinPrompt;
+
+  /// No description provided for @authContinueSharing.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếp tục hành trình chia sẻ của bạn.'**
+  String get authContinueSharing;
+
   /// No description provided for @settingsConfirm.
   ///
   /// In vi, this message translates to:

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/preferences/app_preferences.dart';
+import '../core/preferences/preferences_feedback.dart';
 import '../design_system/theme/studyshare_theme.dart';
 import '../design_system/widgets/study_feedback.dart';
 import '../l10n/app_localizations.dart';
@@ -19,7 +20,8 @@ class StudyShareApp extends ConsumerWidget {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'StudyShare',
-      builder: (context, child) => StudyFeedbackHost(child: child!),
+      builder: (context, child) =>
+          StudyFeedbackHost(child: PreferencesFeedback(child: child!)),
       theme: StudyShareTheme.build(
         Brightness.light,
         seed: preferences.palette.seed,

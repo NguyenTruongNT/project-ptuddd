@@ -366,6 +366,23 @@ class AppLocalizationsVi extends AppLocalizations {
   String get preferencesSaved => 'Đã lưu cài đặt.';
 
   @override
+  String get preferencesSaving => 'Đang lưu…';
+
+  @override
+  String get preferencesAutoSaveHint =>
+      'Áp dụng ngay và tự lưu trên thiết bị này.';
+
+  @override
+  String get preferencesSaveRestored =>
+      'Không lưu được lựa chọn. Đã khôi phục cài đặt đã lưu trước đó.';
+
+  @override
+  String get authJoinPrompt => 'Chưa có tài khoản?';
+
+  @override
+  String get authContinueSharing => 'Tiếp tục hành trình chia sẻ của bạn.';
+
+  @override
   String get settingsConfirm => 'Áp dụng cài đặt mới?';
 
   @override

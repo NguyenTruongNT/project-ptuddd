@@ -364,6 +364,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get preferencesSaved => 'Settings saved.';
 
   @override
+  String get preferencesSaving => 'Saving…';
+
+  @override
+  String get preferencesAutoSaveHint =>
+      'Changes apply instantly and save on this device.';
+
+  @override
+  String get preferencesSaveRestored =>
+      'Unable to save your choice. Your last saved settings have been restored.';
+
+  @override
+  String get authJoinPrompt => 'New to StudyShare?';
+
+  @override
+  String get authContinueSharing => 'Continue your sharing journey.';
+
+  @override
   String get settingsConfirm => 'Apply your new settings?';
 
   @override
