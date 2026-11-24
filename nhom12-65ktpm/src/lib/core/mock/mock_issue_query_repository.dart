@@ -1,6 +1,7 @@
 import '../contracts/models/models.dart';
 import '../contracts/repositories/issue_repository.dart';
 import 'mock_fixtures.dart';
+import 'mock_issue_access.dart';
 import 'mock_transaction_store.dart';
 
 // Repository ĐỌC Issue. allowedActions mô phỏng gợi ý của server,
@@ -14,12 +15,9 @@ class MockIssueQueryRepository implements IssueQueryRepository {
   final String demoViewerId;
   final MockTransactionStore store;
 
-  // Chỉ A hoặc B của giao dịch; C không xem Issue chỉ vì là courier.
-  bool _canSee(Issue issue) {
-    final txn = store.transaction(issue.transactionId);
-    return txn != null &&
-        (txn.ownerAtAcceptance == demoViewerId || txn.receiverId == demoViewerId);
-  }
+  // A/B của giao dịch và các bên liên quan trực tiếp (vd. C ở đúng chặng).
+  // Courier không xem Issue chỉ vì là courier: phải là một đầu của chặng đó.
+  bool _canSee(Issue issue) => canReadIssue(store, issue, demoViewerId);
 
   @override
   Future<List<IssueDetails>> getMyIssues() async => List.unmodifiable(
@@ -44,8 +42,12 @@ class MockIssueQueryRepository implements IssueQueryRepository {
 
   IssueDetails _toDetails(Issue issue) {
     final txn = store.transaction(issue.transactionId)!;
-    final counterpartyId =
-        issue.reporterId == txn.ownerAtAcceptance ? txn.receiverId : txn.ownerAtAcceptance;
+    final parties = issueAffectedParties(store, issue);
+    // Bên đối diện người báo: bên đầu tiên khác người báo trong các bên bị ảnh hưởng.
+    final counterpartyId = parties.firstWhere(
+      (id) => id != issue.reporterId,
+      orElse: () => issue.reporterId,
+    );
     final proposal = store.issueProposal(issue.id);
 
     return IssueDetails(
@@ -56,22 +58,23 @@ class MockIssueQueryRepository implements IssueQueryRepository {
       relation: issue.reporterId == demoViewerId
           ? IssueRelation.reporter
           : IssueRelation.counterparty,
-      proposal: proposal == null ? null : _toProposal(txn, proposal),
+      proposal: proposal == null ? null : _toProposal(parties, proposal),
       // Bằng chứng thuộc EvidenceRepository (module Handover); mock chưa có ảnh.
+      canViewTransaction: canViewIssueTransaction(txn, demoViewerId),
       allowedActions: _allowedActions(issue, proposal),
     );
   }
 
-  // Các bên bị ảnh hưởng trực tiếp: A và B của giao dịch (C chưa được tính).
+  // Mỗi bên bị ảnh hưởng trực tiếp một dòng xác nhận (xem mock_issue_access.dart).
   IssueResolutionProposal _toProposal(
-      StudyTransaction txn, MockIssueProposal proposal) {
+      List<String> parties, MockIssueProposal proposal) {
     return IssueResolutionProposal(
       revision: proposal.revision,
       summary: proposal.summary,
       proposedByDisplayName: _name(proposal.proposedBy),
       proposedAt: proposal.proposedAt,
       consents: [
-        for (final userId in [txn.ownerAtAcceptance, txn.receiverId])
+        for (final userId in parties)
           IssueConsent(
             participantDisplayName: _name(userId),
             approvedAt: proposal.approvals[userId],
@@ -81,7 +84,10 @@ class MockIssueQueryRepository implements IssueQueryRepository {
   }
 
   Set<IssueAction> _allowedActions(Issue issue, MockIssueProposal? proposal) {
-    if (!issue.isOpen) return const {};
+    // Chỉ bên bị ảnh hưởng trực tiếp mới được thao tác; bên chỉ đọc thì không.
+    if (!issue.isOpen || !canActOnIssue(store, issue, demoViewerId)) {
+      return const {};
+    }
     return Set.unmodifiable({
       IssueAction.proposeResolution,
       if (proposal != null && !proposal.approvals.containsKey(demoViewerId))
