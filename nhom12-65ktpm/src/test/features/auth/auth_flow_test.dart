@@ -78,88 +78,41 @@ void main() {
     },
   );
 
-  testWidgets('OAuth bỏ qua form email, chặn bấm lặp và đợi session thực', (
-    tester,
-  ) async {
-    final auth = FakeAuthRepository()..socialPending = Completer<void>();
-    addTearDown(auth.close);
-    await start(tester, auth, FakeProfileRepository());
-    final google = find.byKey(const ValueKey('auth-oauth-google'));
-    final github = find.byKey(const ValueKey('auth-oauth-github'));
-    await tester.ensureVisible(google);
-    await tester.pumpAndSettle();
-    await tester.tap(google);
-    await frames(tester);
-    expect(auth.socialCalls, [SocialAuthProvider.google]);
-    expect(auth.loginCalls, 0);
-    expect(find.text('Nhập địa chỉ email hợp lệ.'), findsNothing);
-    expect(tester.widget<OutlinedButton>(github).onPressed, isNull);
-    expect(
-      tester
-          .widget<FilledButton>(find.byKey(const ValueKey('auth-submit')))
-          .onPressed,
-      isNull,
-    );
-    expect(
-      find.descendant(
-        of: google,
-        matching: find.byType(CircularProgressIndicator),
-      ),
-      findsOneWidget,
-    );
-    auth.socialPending!.complete();
-    await frames(tester);
-    expect(auth.snapshot.isAuthenticated, isFalse);
-    expect(find.byKey(const ValueKey('auth-email')), findsOneWidget);
-    expect(tester.widget<OutlinedButton>(github).onPressed, isNotNull);
-    auth.emit(const AuthSnapshot.signedIn(AuthIdentity(id: 'oauth-user')));
-    await frames(tester);
-    expect(find.byKey(const ValueKey('auth-email')), findsNothing);
-  });
-
   testWidgets(
-    'OAuth lỗi không hiện payload thô; nút dùng lại được và toast tự đóng',
+    'OAuth chỉ hiển thị UI, không gọi Auth ở cả đăng nhập và đăng ký',
     (tester) async {
-      final auth = FakeAuthRepository()
-        ..socialError = const AuthException('sensitive_provider_token');
+      final auth = FakeAuthRepository();
       addTearDown(auth.close);
       await start(tester, auth, FakeProfileRepository());
-      final github = find.byKey(const ValueKey('auth-oauth-github'));
-      await tester.ensureVisible(github);
-      await tester.pumpAndSettle();
-      await tester.tap(github);
-      await frames(tester);
-      expect(auth.socialCalls, [SocialAuthProvider.github]);
-      expect(
-        find.text('Không thể hoàn tất thao tác. Vui lòng thử lại.'),
-        findsOneWidget,
-      );
-      expect(find.textContaining('sensitive_provider_token'), findsNothing);
-      expect(tester.widget<OutlinedButton>(github).onPressed, isNotNull);
-      await tester.pump(const Duration(seconds: 4));
-      expect(find.byKey(const ValueKey('study-toast')), findsNothing);
+      for (final signUp in [false, true]) {
+        if (signUp) {
+          await tester.ensureVisible(find.text('Tạo tài khoản'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Tạo tài khoản'));
+          await frames(tester);
+        }
+        for (final name in ['google', 'github']) {
+          final button = find.byKey(ValueKey('auth-oauth-$name'));
+          await tester.ensureVisible(button);
+          await tester.pumpAndSettle();
+          expect(tester.widget<OutlinedButton>(button).onPressed, isNull);
+          await tester.tap(button);
+          await frames(tester);
+        }
+        expect(auth.socialCalls, isEmpty);
+        expect(auth.loginCalls, 0);
+        expect(auth.registerCalls, 0);
+        expect(auth.snapshot.isAuthenticated, isFalse);
+        expect(find.byKey(const ValueKey('study-toast')), findsNothing);
+        expect(
+          tester
+              .widget<FilledButton>(find.byKey(const ValueKey('auth-submit')))
+              .onPressed,
+          isNotNull,
+        );
+      }
     },
   );
-
-  testWidgets('Màn đăng ký cũng dùng OAuth mà không bắt điền email/mật khẩu', (
-    tester,
-  ) async {
-    final auth = FakeAuthRepository();
-    addTearDown(auth.close);
-    await start(tester, auth, FakeProfileRepository());
-    await tester.ensureVisible(find.text('Tạo tài khoản'));
-    await tester.tap(find.text('Tạo tài khoản'));
-    await frames(tester);
-    final google = find.byKey(const ValueKey('auth-oauth-google'));
-    await tester.ensureVisible(google);
-    await tester.pumpAndSettle();
-    await tester.tap(google);
-    await frames(tester);
-    expect(auth.socialCalls, [SocialAuthProvider.google]);
-    expect(auth.registerCalls, 0);
-    expect(find.byKey(const ValueKey('study-confirm')), findsNothing);
-    expect(find.text('Nhập địa chỉ email hợp lệ.'), findsNothing);
-  });
 
   testWidgets('Đăng ký chặn mật khẩu thiếu từng điều kiện trước confirm/API', (
     tester,

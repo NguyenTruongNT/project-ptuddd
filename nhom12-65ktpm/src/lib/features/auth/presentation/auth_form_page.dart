@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_routes.dart';
 import '../../../app/auth_redirect.dart';
 import '../../../core/auth/auth_session_providers.dart';
-import '../../../core/auth/auth_repository.dart';
 import '../../../design_system/widgets/study_confirm.dart';
 import '../../../design_system/widgets/study_feedback.dart';
 import '../../../l10n/app_localizations.dart';
@@ -42,7 +41,6 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
   final _password = TextEditingController();
   final _confirmation = TextEditingController();
   bool _busy = false;
-  SocialAuthProvider? _oauthProvider;
   bool _obscure = true;
   bool _obscureConfirmation = true;
   bool _validationAttempted = false;
@@ -187,32 +185,6 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
       if (mounted) setState(() {});
     });
     setState(() {});
-  }
-
-  Future<void> _continueWith(SocialAuthProvider provider) async {
-    if (_busy) return;
-    final repository = ref.read(authRepositoryProvider);
-    if (repository == null) return;
-    final text = AppLocalizations.of(context)!;
-    final feedback = StudyFeedbackHost.of(context);
-    FocusScope.of(context).unfocus();
-    setState(() {
-      _busy = true;
-      _oauthProvider = provider;
-      _error = null;
-    });
-    try {
-      await repository.signInWithProvider(provider);
-    } catch (error) {
-      if (mounted) feedback?.show(authErrorMessage(error, text), error: true);
-    } finally {
-      if (mounted) {
-        setState(() {
-          _busy = false;
-          _oauthProvider = null;
-        });
-      }
-    }
   }
 
   @override
@@ -422,7 +394,7 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
           onPressed: !_busy && configured && !(_cooldown?.isActive ?? false)
               ? _submit
               : null,
-          child: _busy && _oauthProvider == null
+          child: _busy
               ? SizedBox(
                   width: 22,
                   height: 22,
@@ -459,10 +431,7 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
               ),
             ],
           ),
-          AuthOAuthButtons(
-            onSelected: !_busy && configured ? _continueWith : null,
-            pending: _oauthProvider,
-          ),
+          const AuthOAuthButtons(onSelected: null),
           if (!configured && snapshot?.failed != true)
             TextButton(
               onPressed: () {
@@ -472,10 +441,7 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
               child: Text(text.authDemo),
             ),
         ] else if (signUp)
-          AuthOAuthButtons(
-            onSelected: !_busy && configured ? _continueWith : null,
-            pending: _oauthProvider,
-          )
+          const AuthOAuthButtons(onSelected: null)
         else
           TextButton(
             onPressed: _busy

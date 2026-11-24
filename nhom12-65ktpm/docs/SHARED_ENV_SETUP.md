@@ -211,7 +211,9 @@ Nguồn chính thức: [Redirect URLs](https://supabase.com/docs/guides/auth/red
 
 ## 12. Đăng nhập Google/GitHub — chuẩn bị OAuth
 
-App đã có hai nút OAuth ở cuối form đăng nhập/đăng ký. `AuthSessionService` kiểm tra provider qua endpoint Auth settings bằng publishable key trước khi mở trình duyệt; request kiểm tra có timeout 10 giây. Provider chưa bật hoặc trình duyệt không mở được sẽ trả lỗi thân thiện để UI kết thúc chờ. Chỉ sự kiện session đã xác thực từ Supabase SDK mới cho phép router vào ứng dụng. Metadata tên từ Google/GitHub có thể dùng để khởi tạo tên hồ sơ; metadata không cấp role/quyền và không ghi đè hồ sơ đã có.
+Theo yêu cầu mới của Trường, hai nút Google/GitHub hiện **chỉ hiển thị UI, luôn vô hiệu hóa** trên cả đăng nhập và đăng ký (`onPressed = null`). Giữ logo, nhãn và vị trí đã duyệt; bấm nút không gọi Auth settings, không mở provider, không tạo user/session hoặc hiện toast lỗi. Email/mật khẩu tiếp tục là phương thức đăng nhập hoạt động.
+
+Adapter OAuth và các unit test đã chuẩn bị trước đó được giữ để có thể dùng lại, nhưng form hiện không gọi adapter. Bật provider trong Supabase không tự kích hoạt hai nút; cần yêu cầu triển khai tiếp và nối lại callback UI. Hướng dẫn dưới đây dành cho lần kích hoạt đó, không phải điều kiện để chạy bản UI hiện tại.
 
 Kiểm tra Cloud ngày 25/11/2026 xác nhận **Google và GitHub đều chưa bật**; chủ project cũng xác nhận chưa tạo OAuth credentials. Chưa thay đổi cấu hình provider trên Cloud và chưa nghiệm thu đăng nhập bằng tài khoản Google/GitHub thật. Gmail SMTP đã làm ở mục 10 chỉ phục vụ gửi thư, không thay thế cấu hình OAuth dưới đây.
 
