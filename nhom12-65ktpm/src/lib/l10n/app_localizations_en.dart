@@ -243,4 +243,154 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authLoginNeeded => 'Sign in to view your profile.';
+
+  @override
+  String get brandTagline => 'A community for sharing study materials';
+
+  @override
+  String get brandHeading => 'Share a book.\nStart a new chapter.';
+
+  @override
+  String get brandDescription =>
+      'Connect with students, share your books and keep learning together.';
+
+  @override
+  String get brandBooks => 'Find the materials you need';
+
+  @override
+  String get brandExchange => 'Buy, give and borrow books';
+
+  @override
+  String get brandCommunity => 'Connect with fellow students';
+
+  @override
+  String get authSignInSubtitle => 'Sign in to continue your sharing journey.';
+
+  @override
+  String get authSignUpSubtitle =>
+      'One account. More opportunities to learn together.';
+
+  @override
+  String get authResetSubtitle =>
+      'Enter your account email to receive recovery instructions.';
+
+  @override
+  String get authNewPasswordSubtitle =>
+      'Choose a new password to protect your account.';
+
+  @override
+  String get authCreateConfirm => 'Confirm account creation';
+
+  @override
+  String authCreateConfirmBody(String name, String email) {
+    return 'Create an account as “$name” with email $email?';
+  }
+
+  @override
+  String get authPasswordConfirm => 'Confirm password change';
+
+  @override
+  String get authPasswordConfirmBody =>
+      'You will need to sign in again with your new password after saving.';
+
+  @override
+  String get authCreated => 'Account created successfully.';
+
+  @override
+  String get authSignedIn => 'Signed in successfully.';
+
+  @override
+  String authPasswordHint(int count) {
+    return 'At least $count characters';
+  }
+
+  @override
+  String get commonBack => 'Back';
+
+  @override
+  String get commonConfirm => 'Confirm';
+
+  @override
+  String get commonDiscardTitle => 'Discard unsaved changes?';
+
+  @override
+  String get commonDiscardBody => 'Your changes will not be saved.';
+
+  @override
+  String get commonDiscard => 'Discard changes';
+
+  @override
+  String get profileSubtitle => 'Manage your details and sharing activity.';
+
+  @override
+  String get profileActivity => 'My activity';
+
+  @override
+  String get profileAccount => 'Account';
+
+  @override
+  String get profileEditHint =>
+      'This name is visible to the people you exchange with.';
+
+  @override
+  String get profileEmailHint => 'Sign-in email';
+
+  @override
+  String profileNameConfirm(String name) {
+    return 'Change your display name to “$name”?';
+  }
+
+  @override
+  String get settingsSubtitle => 'Make your study space feel like your own.';
+
+  @override
+  String get settingsAppearance => 'Appearance';
+
+  @override
+  String get settingsAppearanceHint =>
+      'Choose a display mode and your favorite color.';
+
+  @override
+  String get settingsEffects => 'Effects';
+
+  @override
+  String get gridHint => 'Show subtle grid lines on Home.';
+
+  @override
+  String get settingsDraftHint =>
+      'Changes apply only after you choose Save changes.';
+
+  @override
+  String get preferencesSaved => 'Settings saved.';
+
+  @override
+  String get settingsConfirm => 'Apply your new settings?';
+
+  @override
+  String get settingsConfirmBody =>
+      'Save the selected appearance, language and effects on this device.';
+
+  @override
+  String get paletteGreen => 'Green';
+
+  @override
+  String get paletteBlue => 'Blue';
+
+  @override
+  String get palettePurple => 'Purple';
+
+  @override
+  String get paletteOrange => 'Orange';
+
+  @override
+  String get profileMaterialsHint => 'The books and materials you manage';
+
+  @override
+  String get profileTransactionsHint => 'Track purchases, gifts and loans';
+
+  @override
+  String get profileDeliveriesHint => 'Your material deliveries';
+
+  @override
+  String get profileIssuesHint => 'Keep track of reported problems';
 }

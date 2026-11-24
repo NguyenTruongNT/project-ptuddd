@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/preferences/app_preferences.dart';
 import '../design_system/theme/studyshare_theme.dart';
+import '../design_system/widgets/study_feedback.dart';
 import '../l10n/app_localizations.dart';
 import 'app_router.dart';
 import '../core/auth/auth_session_providers.dart';
@@ -18,6 +19,7 @@ class StudyShareApp extends ConsumerWidget {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'StudyShare',
+      builder: (context, child) => StudyFeedbackHost(child: child!),
       theme: StudyShareTheme.build(
         Brightness.light,
         seed: preferences.palette.seed,

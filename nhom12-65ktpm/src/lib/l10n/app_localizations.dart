@@ -535,6 +535,276 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Đăng nhập để xem hồ sơ của bạn.'**
   String get authLoginNeeded;
+
+  /// No description provided for @brandTagline.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cộng đồng chia sẻ tài liệu học tập'**
+  String get brandTagline;
+
+  /// No description provided for @brandHeading.
+  ///
+  /// In vi, this message translates to:
+  /// **'Trao tài liệu.\nNhận tri thức.'**
+  String get brandHeading;
+
+  /// No description provided for @brandDescription.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kết nối với sinh viên, chia sẻ những cuốn sách và tiếp nối hành trình học tập.'**
+  String get brandDescription;
+
+  /// No description provided for @brandBooks.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm tài liệu bạn cần'**
+  String get brandBooks;
+
+  /// No description provided for @brandExchange.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mua, tặng và mượn sách'**
+  String get brandExchange;
+
+  /// No description provided for @brandCommunity.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kết nối cộng đồng sinh viên'**
+  String get brandCommunity;
+
+  /// No description provided for @authSignInSubtitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng nhập để tiếp tục hành trình chia sẻ của bạn.'**
+  String get authSignInSubtitle;
+
+  /// No description provided for @authSignUpSubtitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Một tài khoản, thêm nhiều cơ hội học tập cùng nhau.'**
+  String get authSignUpSubtitle;
+
+  /// No description provided for @authResetSubtitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhập email đăng ký để nhận hướng dẫn khôi phục.'**
+  String get authResetSubtitle;
+
+  /// No description provided for @authNewPasswordSubtitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chọn mật khẩu mới để bảo vệ tài khoản của bạn.'**
+  String get authNewPasswordSubtitle;
+
+  /// No description provided for @authCreateConfirm.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xác nhận tạo tài khoản'**
+  String get authCreateConfirm;
+
+  /// No description provided for @authCreateConfirmBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo tài khoản với tên “{name}” và email {email}?'**
+  String authCreateConfirmBody(String name, String email);
+
+  /// No description provided for @authPasswordConfirm.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xác nhận đổi mật khẩu'**
+  String get authPasswordConfirm;
+
+  /// No description provided for @authPasswordConfirmBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bạn sẽ cần đăng nhập lại bằng mật khẩu mới sau khi lưu.'**
+  String get authPasswordConfirmBody;
+
+  /// No description provided for @authCreated.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã tạo tài khoản thành công.'**
+  String get authCreated;
+
+  /// No description provided for @authSignedIn.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng nhập thành công.'**
+  String get authSignedIn;
+
+  /// No description provided for @authPasswordHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tối thiểu {count} ký tự'**
+  String authPasswordHint(int count);
+
+  /// No description provided for @commonBack.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quay lại'**
+  String get commonBack;
+
+  /// No description provided for @commonConfirm.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xác nhận'**
+  String get commonConfirm;
+
+  /// No description provided for @commonDiscardTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bỏ thay đổi chưa lưu?'**
+  String get commonDiscardTitle;
+
+  /// No description provided for @commonDiscardBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Những thay đổi của bạn sẽ không được lưu.'**
+  String get commonDiscardBody;
+
+  /// No description provided for @commonDiscard.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bỏ thay đổi'**
+  String get commonDiscard;
+
+  /// No description provided for @profileSubtitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quản lý thông tin và hoạt động chia sẻ của bạn.'**
+  String get profileSubtitle;
+
+  /// No description provided for @profileActivity.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hoạt động của tôi'**
+  String get profileActivity;
+
+  /// No description provided for @profileAccount.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài khoản'**
+  String get profileAccount;
+
+  /// No description provided for @profileEditHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tên này hiển thị với những người bạn giao dịch.'**
+  String get profileEditHint;
+
+  /// No description provided for @profileEmailHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Email đăng nhập'**
+  String get profileEmailHint;
+
+  /// No description provided for @profileNameConfirm.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đổi tên hiển thị thành “{name}”?'**
+  String profileNameConfirm(String name);
+
+  /// No description provided for @settingsSubtitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tùy chỉnh không gian học tập theo cách của bạn.'**
+  String get settingsSubtitle;
+
+  /// No description provided for @settingsAppearance.
+  ///
+  /// In vi, this message translates to:
+  /// **'Giao diện'**
+  String get settingsAppearance;
+
+  /// No description provided for @settingsAppearanceHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chọn chế độ hiển thị và màu yêu thích.'**
+  String get settingsAppearanceHint;
+
+  /// No description provided for @settingsEffects.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hiệu ứng'**
+  String get settingsEffects;
+
+  /// No description provided for @gridHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thêm đường kẻ nhẹ ở nền Trang chủ.'**
+  String get gridHint;
+
+  /// No description provided for @settingsDraftHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thay đổi chỉ áp dụng khi bạn chọn Lưu thay đổi.'**
+  String get settingsDraftHint;
+
+  /// No description provided for @preferencesSaved.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã lưu cài đặt.'**
+  String get preferencesSaved;
+
+  /// No description provided for @settingsConfirm.
+  ///
+  /// In vi, this message translates to:
+  /// **'Áp dụng cài đặt mới?'**
+  String get settingsConfirm;
+
+  /// No description provided for @settingsConfirmBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu giao diện, ngôn ngữ và hiệu ứng đã chọn trên thiết bị này.'**
+  String get settingsConfirmBody;
+
+  /// No description provided for @paletteGreen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xanh lá'**
+  String get paletteGreen;
+
+  /// No description provided for @paletteBlue.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xanh dương'**
+  String get paletteBlue;
+
+  /// No description provided for @palettePurple.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tím'**
+  String get palettePurple;
+
+  /// No description provided for @paletteOrange.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cam'**
+  String get paletteOrange;
+
+  /// No description provided for @profileMaterialsHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Sách và tài liệu bạn đang quản lý'**
+  String get profileMaterialsHint;
+
+  /// No description provided for @profileTransactionsHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Theo dõi mua, tặng và mượn'**
+  String get profileTransactionsHint;
+
+  /// No description provided for @profileDeliveriesHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Các lượt giao tài liệu'**
+  String get profileDeliveriesHint;
+
+  /// No description provided for @profileIssuesHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Theo dõi vấn đề cần giải quyết'**
+  String get profileIssuesHint;
 }
 
 class _AppLocalizationsDelegate

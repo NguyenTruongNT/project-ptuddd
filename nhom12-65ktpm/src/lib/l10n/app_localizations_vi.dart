@@ -243,4 +243,156 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get authLoginNeeded => 'Đăng nhập để xem hồ sơ của bạn.';
+
+  @override
+  String get brandTagline => 'Cộng đồng chia sẻ tài liệu học tập';
+
+  @override
+  String get brandHeading => 'Trao tài liệu.\nNhận tri thức.';
+
+  @override
+  String get brandDescription =>
+      'Kết nối với sinh viên, chia sẻ những cuốn sách và tiếp nối hành trình học tập.';
+
+  @override
+  String get brandBooks => 'Tìm tài liệu bạn cần';
+
+  @override
+  String get brandExchange => 'Mua, tặng và mượn sách';
+
+  @override
+  String get brandCommunity => 'Kết nối cộng đồng sinh viên';
+
+  @override
+  String get authSignInSubtitle =>
+      'Đăng nhập để tiếp tục hành trình chia sẻ của bạn.';
+
+  @override
+  String get authSignUpSubtitle =>
+      'Một tài khoản, thêm nhiều cơ hội học tập cùng nhau.';
+
+  @override
+  String get authResetSubtitle =>
+      'Nhập email đăng ký để nhận hướng dẫn khôi phục.';
+
+  @override
+  String get authNewPasswordSubtitle =>
+      'Chọn mật khẩu mới để bảo vệ tài khoản của bạn.';
+
+  @override
+  String get authCreateConfirm => 'Xác nhận tạo tài khoản';
+
+  @override
+  String authCreateConfirmBody(String name, String email) {
+    return 'Tạo tài khoản với tên “$name” và email $email?';
+  }
+
+  @override
+  String get authPasswordConfirm => 'Xác nhận đổi mật khẩu';
+
+  @override
+  String get authPasswordConfirmBody =>
+      'Bạn sẽ cần đăng nhập lại bằng mật khẩu mới sau khi lưu.';
+
+  @override
+  String get authCreated => 'Đã tạo tài khoản thành công.';
+
+  @override
+  String get authSignedIn => 'Đăng nhập thành công.';
+
+  @override
+  String authPasswordHint(int count) {
+    return 'Tối thiểu $count ký tự';
+  }
+
+  @override
+  String get commonBack => 'Quay lại';
+
+  @override
+  String get commonConfirm => 'Xác nhận';
+
+  @override
+  String get commonDiscardTitle => 'Bỏ thay đổi chưa lưu?';
+
+  @override
+  String get commonDiscardBody => 'Những thay đổi của bạn sẽ không được lưu.';
+
+  @override
+  String get commonDiscard => 'Bỏ thay đổi';
+
+  @override
+  String get profileSubtitle =>
+      'Quản lý thông tin và hoạt động chia sẻ của bạn.';
+
+  @override
+  String get profileActivity => 'Hoạt động của tôi';
+
+  @override
+  String get profileAccount => 'Tài khoản';
+
+  @override
+  String get profileEditHint =>
+      'Tên này hiển thị với những người bạn giao dịch.';
+
+  @override
+  String get profileEmailHint => 'Email đăng nhập';
+
+  @override
+  String profileNameConfirm(String name) {
+    return 'Đổi tên hiển thị thành “$name”?';
+  }
+
+  @override
+  String get settingsSubtitle =>
+      'Tùy chỉnh không gian học tập theo cách của bạn.';
+
+  @override
+  String get settingsAppearance => 'Giao diện';
+
+  @override
+  String get settingsAppearanceHint => 'Chọn chế độ hiển thị và màu yêu thích.';
+
+  @override
+  String get settingsEffects => 'Hiệu ứng';
+
+  @override
+  String get gridHint => 'Thêm đường kẻ nhẹ ở nền Trang chủ.';
+
+  @override
+  String get settingsDraftHint =>
+      'Thay đổi chỉ áp dụng khi bạn chọn Lưu thay đổi.';
+
+  @override
+  String get preferencesSaved => 'Đã lưu cài đặt.';
+
+  @override
+  String get settingsConfirm => 'Áp dụng cài đặt mới?';
+
+  @override
+  String get settingsConfirmBody =>
+      'Lưu giao diện, ngôn ngữ và hiệu ứng đã chọn trên thiết bị này.';
+
+  @override
+  String get paletteGreen => 'Xanh lá';
+
+  @override
+  String get paletteBlue => 'Xanh dương';
+
+  @override
+  String get palettePurple => 'Tím';
+
+  @override
+  String get paletteOrange => 'Cam';
+
+  @override
+  String get profileMaterialsHint => 'Sách và tài liệu bạn đang quản lý';
+
+  @override
+  String get profileTransactionsHint => 'Theo dõi mua, tặng và mượn';
+
+  @override
+  String get profileDeliveriesHint => 'Các lượt giao tài liệu';
+
+  @override
+  String get profileIssuesHint => 'Theo dõi vấn đề cần giải quyết';
 }
