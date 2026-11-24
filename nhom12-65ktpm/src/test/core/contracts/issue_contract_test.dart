@@ -54,6 +54,14 @@ void main() {
     expect(details.can(IssueAction.confirmResolution), isFalse);
   });
 
+  test('IssueDetails mặc định cho xem giao dịch và không có action nào', () {
+    final details = _details();
+    expect(details.canViewTransaction, isTrue);
+    expect(details.allowedActions, isEmpty);
+    expect(details.canViewEvidence, isFalse);
+    expect(details.evidenceCount, 0);
+  });
+
   test('IssueResolutionProposal đếm đủ xác nhận khi mọi bên đã đồng ý', () {
     final proposal = IssueResolutionProposal(
       revision: 2,

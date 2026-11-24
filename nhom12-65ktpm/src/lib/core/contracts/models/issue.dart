@@ -117,6 +117,7 @@ class IssueDetails {
     this.proposal,
     this.evidenceCount = 0,
     this.canViewEvidence = false,
+    this.canViewTransaction = true,
     this.allowedActions = const {},
   });
 
@@ -128,6 +129,9 @@ class IssueDetails {
   final IssueResolutionProposal? proposal; // Phương án hiện hành, nếu đã có.
   final int evidenceCount;
   final bool canViewEvidence;
+  // false khi người xem chỉ liên quan tới một chặng (vd. C) và không được xem
+  // toàn bộ giao dịch: UI không hiện lối tắt sang SCR-14.
+  final bool canViewTransaction;
   final Set<IssueAction> allowedActions;
 
   String get id => issue.id;
