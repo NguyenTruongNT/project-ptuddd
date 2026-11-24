@@ -8,7 +8,7 @@
   "welcomeMessage": "Welcome to StudyShare. Business features will be implemented in subsequent pull requests.",
   "placeholderMessage": "Foundation placeholder; no Supabase connection or transaction actions yet.",
   "settingsTitle": "Settings",
-  "themeLabel": "Appearance",
+  "themeLabel": "Display mode",
   "themeSystem": "System",
   "themeLight": "Light",
   "themeDark": "Dark",

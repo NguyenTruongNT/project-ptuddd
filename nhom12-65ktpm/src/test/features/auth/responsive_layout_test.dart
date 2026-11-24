@@ -76,6 +76,33 @@ void main() {
               tester.getSize(find.byKey(const ValueKey('auth-card'))).width,
               lessThanOrEqualTo(460),
             );
+            if (page.flow == AuthFlow.signIn &&
+                scenario.$1 < 900 &&
+                scenario.$5 == 1) {
+              expect(
+                find.byKey(const ValueKey('auth-mobile-headline')),
+                findsOneWidget,
+              );
+              expect(
+                tester
+                    .getBottomRight(find.byKey(const ValueKey('auth-submit')))
+                    .dy,
+                lessThan(scenario.$2),
+                reason: 'CTA available without scrolling on mobile',
+              );
+              tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+              await tester.pumpAndSettle();
+              expect(
+                find.byKey(const ValueKey('auth-mobile-headline')),
+                findsNothing,
+              );
+              await tester.ensureVisible(
+                find.byKey(const ValueKey('auth-submit')),
+              );
+              await tester.pumpAndSettle();
+              expect(tester.takeException(), isNull);
+              tester.view.resetViewInsets();
+            }
           }
           if (page is ProfilePage) {
             await tester.ensureVisible(

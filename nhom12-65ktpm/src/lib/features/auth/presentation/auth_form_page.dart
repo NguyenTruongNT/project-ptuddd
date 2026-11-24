@@ -174,7 +174,7 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
     final reset = widget.flow == AuthFlow.resetPassword;
     final hasPassword = signUp || reset || widget.flow == AuthFlow.signIn;
     final title = switch (widget.flow) {
-      AuthFlow.signIn => text.authWelcome,
+      AuthFlow.signIn => text.authSignIn,
       AuthFlow.signUp => text.authSignUp,
       AuthFlow.forgotPassword => text.authResetTitle,
       AuthFlow.checkEmail => text.authCheckEmail,
@@ -188,9 +188,10 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
       AuthFlow.resetPassword => text.authUpdatePassword,
     };
     return AuthPageLayout(
+      showMobileMessage: widget.flow == AuthFlow.signIn,
       title: title,
       subtitle: switch (widget.flow) {
-        AuthFlow.signIn => text.authSignInSubtitle,
+        AuthFlow.signIn => text.authContinueSharing,
         AuthFlow.signUp => text.authSignUpSubtitle,
         AuthFlow.forgotPassword => text.authResetSubtitle,
         AuthFlow.checkEmail => text.authCheckEmailHint,
@@ -365,16 +366,32 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
                     color: Theme.of(context).colorScheme.onPrimary,
                   ),
                 )
+              : widget.flow == AuthFlow.signIn
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(button),
+                    const SizedBox(width: 10),
+                    const Icon(Icons.arrow_forward_rounded, size: 20),
+                  ],
+                )
               : Text(button),
         ),
         const SizedBox(height: 12),
         if (widget.flow == AuthFlow.signIn) ...[
-          const Divider(height: 28),
-          OutlinedButton(
-            onPressed: _busy
-                ? null
-                : () => context.go(_location(AppRoutes.signUp)),
-            child: Text(text.authSignUp),
+          const SizedBox(height: 8),
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(text.authJoinPrompt),
+              TextButton(
+                onPressed: _busy
+                    ? null
+                    : () => context.go(_location(AppRoutes.signUp)),
+                child: Text(text.authSignUp),
+              ),
+            ],
           ),
           if (!configured && snapshot?.failed != true)
             TextButton(

@@ -37,7 +37,9 @@ Future<void> start(
 
 Future<void> submit(WidgetTester tester) async {
   final button = find.byKey(const ValueKey('auth-submit'));
+  await tester.pump();
   await tester.ensureVisible(button);
+  await tester.pump(const Duration(milliseconds: 300));
   await tester.tap(button);
   await frames(tester);
 }

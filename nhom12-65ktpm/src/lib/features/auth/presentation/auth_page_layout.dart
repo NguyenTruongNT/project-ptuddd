@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../design_system/theme/studyshare_theme.dart';
 import '../../../l10n/app_localizations.dart';
+import 'auth_mobile_body.dart';
 
 class AuthPageLayout extends StatelessWidget {
   const AuthPageLayout({
@@ -11,46 +12,26 @@ class AuthPageLayout extends StatelessWidget {
     required this.formKey,
     required this.children,
     this.onBack,
+    this.showMobileMessage = false,
   });
   final String title;
   final String subtitle;
   final GlobalKey<FormState> formKey;
   final List<Widget> children;
   final VoidCallback? onBack;
-
-  Widget _brand(BuildContext context) => Row(
-    children: [
-      Container(
-        width: 80,
-        height: 64,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        padding: const EdgeInsets.all(4),
-        child: Image.asset(
-          'assets/branding/logo_light_original.png',
-          fit: BoxFit.contain,
-          semanticLabel: 'StudyShare',
-        ),
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Text(
-          AppLocalizations.of(context)!.brandTagline,
-          style: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-        ),
-      ),
-    ],
-  );
+  final bool showMobileMessage;
 
   @override
   Widget build(BuildContext context) {
     final text = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     return Scaffold(
+      backgroundColor: MediaQuery.sizeOf(context).width < 900
+          ? StudyShareTheme.darkGreen
+          : null,
       body: SafeArea(
+        bottom: MediaQuery.sizeOf(context).width >= 900,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final wide = constraints.maxWidth >= 900;
@@ -59,7 +40,6 @@ class AuthPageLayout extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (!wide) ...[_brand(context), const SizedBox(height: 24)],
                   Card(
                     key: const ValueKey('auth-card'),
                     child: Padding(
@@ -89,7 +69,9 @@ class AuthPageLayout extends StatelessWidget {
                               ],
                               Text(
                                 title,
-                                style: theme.textTheme.headlineMedium,
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontSize: wide ? 28 : 24,
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Text(
@@ -110,6 +92,13 @@ class AuthPageLayout extends StatelessWidget {
                 ],
               ),
             );
+            if (!wide) {
+              return AuthMobileBody(
+                form: form,
+                showMessage: showMobileMessage,
+                compact: keyboardOpen || constraints.maxHeight < 580,
+              );
+            }
             return SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: EdgeInsets.symmetric(
