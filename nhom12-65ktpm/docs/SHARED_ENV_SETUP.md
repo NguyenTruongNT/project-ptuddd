@@ -111,7 +111,7 @@ Kiểm tra sau triển khai:
 - Hai bucket `studyshare-material-images` và `studyshare-handover-evidence` đều private, giới hạn mỗi ảnh 5 MB và MIME JPEG/PNG/WEBP. Chỉ có hai policy Storage đọc/upload ảnh tài liệu theo thư mục của chủ tài khoản; quyền minh chứng bàn giao vẫn chờ RPC.
 - Thử REST với publishable key và không có phiên người dùng: truy cập `profiles`, `transactions`, `material_qr_credentials` đều bị chặn HTTP 401 / SQLSTATE `42501`.
 
-Đây là kiểm tra cấu trúc/quyền trên Cloud, chưa phải nghiệm thu toàn bộ Auth/Profile với email thật hoặc hai phiên người dùng Cloud. Các bước còn lại: đồng bộ password policy Cloud, SMTP, callback Android/web, rồi kiểm thử đăng ký/xác minh/khôi phục, hồ sơ và phân quyền giữa hai tài khoản.
+Đây là kiểm tra cấu trúc/quyền trên Cloud, chưa phải nghiệm thu toàn bộ Auth/Profile với email thật hoặc hai phiên người dùng Cloud. Password policy Cloud được đồng bộ ở mục 9. Các bước còn lại: SMTP, callback Android/web, rồi kiểm thử đăng ký/xác minh/khôi phục, hồ sơ và phân quyền giữa hai tài khoản.
 
 Cấu hình Flutter Cloud ở `src/.dart_tool/supabase.cloud.json`, được Git bỏ qua, với tên biến `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY`. Không dùng prefix `NEXT_PUBLIC_` trong Flutter. Kết quả dry-run, deploy và audit được giữ trong `src/.dart_tool/cloud-step3-*`; không chứa trong commit.
 
@@ -124,3 +124,37 @@ npx.cmd supabase@3.3.0 db push "--remote=$projectRef" --dry-run --skip-vault
 ```
 
 Hai lệnh trên chỉ kiểm tra lịch sử/xem trước; không áp dụng migration mới. Không dùng `migration repair` để che lỗi lệch lịch sử. Các lựa chọn Auth trong `supabase/config.toml` local chưa được đồng bộ lên Cloud bởi lệnh triển khai database này.
+
+## 9. Đồng bộ Auth Cloud — 24/11/2026
+
+Đã áp dụng chính sách riêng tại `src/tool/cloud_auth_policy/supabase/config.toml` lên project development. File chỉ khai báo các thuộc tính Auth cần quản lý; không dùng config của stack local để ghi đè cấu hình Cloud.
+
+| Thuộc tính | Kết quả Cloud |
+| --- | --- |
+| Email/password provider | Bật |
+| Cho phép đăng ký | Bật |
+| Xác minh email | Bật (`mailer_autoconfirm = false`) |
+| Độ dài mật khẩu tối thiểu | 8 ký tự, tăng từ 6 |
+| Nhóm ký tự bắt buộc | Chữ hoa A–Z, thường a–z, số 0–9, symbol; `lower_upper_letters_digits_symbols` |
+
+CLI 3.3.0 chỉ push thuộc tính được khai báo tường minh trong file này. Preview trước cập nhật xác nhận đúng hai thay đổi mật khẩu; kiểm tra sau cập nhật không còn chênh lệch thuộc tính được quản lý. Mười thuộc tính ngoài phạm vi được liệt kê trong preview có giá trị remote giữ nguyên; không đồng bộ SMTP, redirect URL, MFA hoặc cấu hình database/Storage bằng bước này.
+
+Thao tác từ `src/`, luôn truyền project ref đúng với môi trường đích:
+
+```powershell
+$projectRef = '<PROJECT_REF_CUA_BAN>'
+npx.cmd supabase@3.3.0 config diff "--remote=$projectRef" --workdir tool/cloud_auth_policy
+```
+
+Chỉ khi diff đúng phạm vi đã được giao mới áp dụng, rồi kiểm tra lại:
+
+```powershell
+npx.cmd supabase@3.3.0 config push "--remote=$projectRef" --workdir tool/cloud_auth_policy
+npx.cmd supabase@3.3.0 config diff "--remote=$projectRef" --workdir tool/cloud_auth_policy
+```
+
+Kiểm thử trực tiếp Cloud bằng publishable key, không qua validator Flutter: năm yêu cầu signup thiếu lần lượt chữ hoa, chữ thường, số, symbol hoặc độ dài đều bị từ chối **HTTP 422 / `weak_password`**. REST probe gửi `X-Supabase-Api-Version: 2024-01-01` như phiên bản API của SDK đang dùng để nhận mã lỗi dạng mới. Địa chỉ QA dùng domain `.invalid`; kiểm tra `auth.users` sau thử nghiệm xác nhận không có tài khoản QA nào được tạo.
+
+Đã kiểm tra lại endpoint Auth settings: email provider, signup và xác minh email vẫn bật. Chưa nghiệm thu đăng ký hợp lệ/gửi email thật hoặc đổi mật khẩu qua recovery trên Cloud; các luồng đó chờ cấu hình SMTP/callback và bước kiểm thử tiếp theo. Kết quả kiểm tra được lưu trong `src/.dart_tool/cloud-step4-*`, bị Git bỏ qua. Không thay UI, không thay config Auth local.
+
+Nguồn chính thức: [Password security](https://supabase.com/docs/guides/auth/password-security), [CLI config push](https://supabase.com/docs/reference/cli/supabase-config-push).

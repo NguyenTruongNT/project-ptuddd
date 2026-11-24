@@ -1,0 +1,14 @@
+# Hosted Auth policy. This is not the local Supabase stack configuration.
+# Supabase CLI 3.3.0 only pushes properties explicitly declared in this file.
+# Preview from src/: config diff --workdir tool/cloud_auth_policy --remote=<ref>
+# Always pass the intended project ref explicitly before applying.
+project_id = "studyshare-nhom12-dev"
+
+[auth]
+enable_signup = true
+minimum_password_length = 8
+password_requirements = "lower_upper_letters_digits_symbols"
+
+[auth.email]
+enabled = true
+enable_confirmations = true
