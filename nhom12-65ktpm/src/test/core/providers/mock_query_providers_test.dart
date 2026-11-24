@@ -10,22 +10,33 @@ void main() {
     final listings = await container.read(publishedListingsProvider.future);
     expect(listings, isNotEmpty);
     // Vẫn hiển thị tin đã đặt nhưng không cho gửi Request.
-    expect(listings.any((item) => item.isReserved && !item.isRequestable), isTrue);
+    expect(
+      listings.any((item) => item.isReserved && !item.isRequestable),
+      isTrue,
+    );
   });
 
   test('Người ngoài không đọc được tài liệu và giao dịch của A', () async {
-    final container = ProviderContainer(overrides: [
-      demoViewerIdProvider.overrideWith((ref) => MockFixtures.outsider),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        demoViewerIdProvider.overrideWith((ref) => MockFixtures.outsider),
+      ],
+    );
     addTearDown(container.dispose);
     final materials = await container.read(myMaterialsPreviewProvider.future);
-    final transactions = await container.read(myTransactionsPreviewProvider.future);
+    final transactions = await container.read(
+      myTransactionsPreviewProvider.future,
+    );
     expect(materials, isEmpty);
     expect(transactions, isEmpty);
   });
 
   test('Tài khoản A đọc được dữ liệu mock của chính mình', () async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [
+        demoViewerIdProvider.overrideWith((ref) => MockFixtures.userA),
+      ],
+    );
     addTearDown(container.dispose);
     final materials = await container.read(myMaterialsPreviewProvider.future);
     expect(materials, isNotEmpty);

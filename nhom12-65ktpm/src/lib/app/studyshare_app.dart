@@ -5,20 +5,27 @@ import '../core/preferences/app_preferences.dart';
 import '../design_system/theme/studyshare_theme.dart';
 import '../l10n/app_localizations.dart';
 import 'app_router.dart';
+import '../core/auth/auth_session_providers.dart';
 
 class StudyShareApp extends ConsumerWidget {
   const StudyShareApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Tạo profile sau khi có session thật; lỗi có retry trong trang Cá nhân.
+    ref.watch(currentProfileProvider);
     final preferences = ref.watch(appPreferencesProvider);
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'StudyShare',
-      theme: StudyShareTheme.build(Brightness.light,
-          seed: preferences.palette.seed),
-      darkTheme: StudyShareTheme.build(Brightness.dark,
-          seed: preferences.palette.seed),
+      theme: StudyShareTheme.build(
+        Brightness.light,
+        seed: preferences.palette.seed,
+      ),
+      darkTheme: StudyShareTheme.build(
+        Brightness.dark,
+        seed: preferences.palette.seed,
+      ),
       themeMode: preferences.themeMode,
       locale: Locale(preferences.localeCode),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
