@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 
 import '../features/home/mock_data_preview_page.dart';
 import '../features/home/tab_content.dart';
+import '../features/issues/presentation/create_issue_page.dart';
+import '../features/issues/presentation/issue_details_page.dart';
+import '../features/issues/presentation/issues_list_page.dart';
 import '../features/profile_settings/settings_page.dart';
 import '../features/transactions/presentation/my_transactions_page.dart';
 import '../features/transactions/presentation/transaction_details_page.dart';
@@ -80,9 +83,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       _placeholder(AppRoutes.prepareHandoverPattern, 'SCR-18', 'Chuẩn bị bàn giao'),
       _placeholder(AppRoutes.scanQrPattern, 'SCR-19', 'Quét QR'),
       _placeholder(AppRoutes.receiverAckPattern, 'SCR-20', 'Xác nhận nhận / từ chối'),
-      _placeholder(AppRoutes.createIssue, 'SCR-22', 'Báo cáo sự cố'),
-      _placeholder(AppRoutes.issues, 'SCR-21', 'Danh sách sự cố'),
-      _placeholder(AppRoutes.issueDetailsPattern, 'SCR-23', 'Chi tiết sự cố'),
+      // SCR-21/22/23 – module Issue (Sơn). Giữ createIssue trước issueDetailsPattern.
+      GoRoute(path: AppRoutes.createIssue,
+          builder: (context, state) => CreateIssuePage(
+              transactionId: state.uri.queryParameters['transactionId'],
+              handoverId: state.uri.queryParameters['handoverId'])),
+      GoRoute(path: AppRoutes.issues,
+          builder: (context, state) => const IssuesListPage()),
+      GoRoute(path: AppRoutes.issueDetailsPattern,
+          builder: (context, state) =>
+              IssueDetailsPage(issueId: state.pathParameters['issueId']!)),
       _placeholder(AppRoutes.notifications, 'SCR-24', 'Thông báo'),
       GoRoute(path: AppRoutes.settings,
           builder: (context, state) => const SettingsPage()),
