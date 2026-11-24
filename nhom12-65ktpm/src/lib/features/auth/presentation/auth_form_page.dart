@@ -7,12 +7,14 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_routes.dart';
 import '../../../app/auth_redirect.dart';
 import '../../../core/auth/auth_session_providers.dart';
+import '../../../core/auth/auth_repository.dart';
 import '../../../design_system/widgets/study_confirm.dart';
 import '../../../design_system/widgets/study_feedback.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/auth_validation.dart';
 import 'auth_error_message.dart';
 import 'auth_page_layout.dart';
+import 'auth_oauth_buttons.dart';
 import 'password_requirements.dart';
 
 enum AuthFlow { signIn, signUp, forgotPassword, checkEmail, resetPassword }
@@ -40,6 +42,7 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
   final _password = TextEditingController();
   final _confirmation = TextEditingController();
   bool _busy = false;
+  SocialAuthProvider? _oauthProvider;
   bool _obscure = true;
   bool _obscureConfirmation = true;
   bool _validationAttempted = false;
@@ -186,6 +189,32 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
     setState(() {});
   }
 
+  Future<void> _continueWith(SocialAuthProvider provider) async {
+    if (_busy) return;
+    final repository = ref.read(authRepositoryProvider);
+    if (repository == null) return;
+    final text = AppLocalizations.of(context)!;
+    final feedback = StudyFeedbackHost.of(context);
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _busy = true;
+      _oauthProvider = provider;
+      _error = null;
+    });
+    try {
+      await repository.signInWithProvider(provider);
+    } catch (error) {
+      if (mounted) feedback?.show(authErrorMessage(error, text), error: true);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _oauthProvider = null;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = AppLocalizations.of(context)!;
@@ -232,6 +261,8 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
         ],
         if (widget.notice == 'password-updated')
           AuthMessage(text.authPasswordUpdated),
+        if (configured && snapshot?.failed == true)
+          AuthMessage(text.authGenericError, error: true),
         if (signUp) ...[
           TextFormField(
             key: const ValueKey('auth-name'),
@@ -391,7 +422,7 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
           onPressed: !_busy && configured && !(_cooldown?.isActive ?? false)
               ? _submit
               : null,
-          child: _busy
+          child: _busy && _oauthProvider == null
               ? SizedBox(
                   width: 22,
                   height: 22,
@@ -404,7 +435,7 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
               ? Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(button),
+                    Flexible(child: Text(button, textAlign: TextAlign.center)),
                     const SizedBox(width: 10),
                     const Icon(Icons.arrow_forward_rounded, size: 20),
                   ],
@@ -415,6 +446,7 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
         if (widget.flow == AuthFlow.signIn) ...[
           const SizedBox(height: 8),
           Wrap(
+            key: const ValueKey('auth-join-prompt'),
             alignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
@@ -427,6 +459,10 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
               ),
             ],
           ),
+          AuthOAuthButtons(
+            onSelected: !_busy && configured ? _continueWith : null,
+            pending: _oauthProvider,
+          ),
           if (!configured && snapshot?.failed != true)
             TextButton(
               onPressed: () {
@@ -435,7 +471,12 @@ class _AuthFormPageState extends ConsumerState<AuthFormPage> {
               },
               child: Text(text.authDemo),
             ),
-        ] else if (!signUp)
+        ] else if (signUp)
+          AuthOAuthButtons(
+            onSelected: !_busy && configured ? _continueWith : null,
+            pending: _oauthProvider,
+          )
+        else
           TextButton(
             onPressed: _busy
                 ? null

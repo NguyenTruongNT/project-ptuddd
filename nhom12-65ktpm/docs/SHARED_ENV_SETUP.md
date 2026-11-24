@@ -208,3 +208,45 @@ Khi thử đăng ký hoặc khôi phục từ app, mở link email bằng cùng 
 Kiểm tra code: **123 test đạt, 2 integration test local được bỏ qua theo cờ opt-in**, `flutter analyze` không báo vấn đề và build web với cấu hình Cloud thành công. Ba test callback mới kiểm tra deep link Android, hai host phát triển và HTTPS; các ca web xác nhận query/fragment chứa code/token không bị đưa vào redirect mới. Kết quả SMTP/email thật và mở callback web đã ghi tại mục 10. Chưa nghiệm thu Flutter PKCE trên Cloud, khôi phục mật khẩu, phân quyền giữa hai tài khoản hoặc thao tác mở link trực tiếp trên Android. Chẩn đoán CLI/build/test ở `src/.dart_tool/cloud-step6-*`, bị Git bỏ qua.
 
 Nguồn chính thức: [Redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls), [Mobile deep linking](https://supabase.com/docs/guides/auth/native-mobile-deep-linking), [Flutter password recovery](https://supabase.com/docs/reference/dart/auth-resetpasswordforemail).
+
+## 12. Đăng nhập Google/GitHub — chuẩn bị OAuth
+
+App đã có hai nút OAuth ở cuối form đăng nhập/đăng ký. `AuthSessionService` kiểm tra provider qua endpoint Auth settings bằng publishable key trước khi mở trình duyệt; request kiểm tra có timeout 10 giây. Provider chưa bật hoặc trình duyệt không mở được sẽ trả lỗi thân thiện để UI kết thúc chờ. Chỉ sự kiện session đã xác thực từ Supabase SDK mới cho phép router vào ứng dụng. Metadata tên từ Google/GitHub có thể dùng để khởi tạo tên hồ sơ; metadata không cấp role/quyền và không ghi đè hồ sơ đã có.
+
+Kiểm tra Cloud ngày 25/11/2026 xác nhận **Google và GitHub đều chưa bật**; chủ project cũng xác nhận chưa tạo OAuth credentials. Chưa thay đổi cấu hình provider trên Cloud và chưa nghiệm thu đăng nhập bằng tài khoản Google/GitHub thật. Gmail SMTP đã làm ở mục 10 chỉ phục vụ gửi thư, không thay thế cấu hình OAuth dưới đây.
+
+### 12.1. Cấu hình Google trước
+
+Luồng hiện tại sử dụng đăng nhập qua trình duyệt và callback về app. Chuẩn bị tại [Google Cloud Console](https://console.cloud.google.com/):
+
+1. Tạo hoặc chọn Google Cloud project riêng cho StudyShare.
+2. Mở **Google Auth Platform**. Khởi tạo phần **Branding** với tên ứng dụng `StudyShare`, email hỗ trợ và email liên hệ của chủ project.
+3. Ở **Audience**, chọn **External** nếu cần dùng Gmail cá nhân ngoài tổ chức. Khi ứng dụng còn ở chế độ **Testing**, thêm các Gmail được dùng kiểm thử vào danh sách **Test users**.
+4. Chỉ sử dụng thông tin nhận diện cần cho đăng nhập: OpenID, email và hồ sơ cơ bản.
+5. Vào **Clients → Create client**, chọn loại **Web application**, đặt tên `StudyShare Supabase`.
+6. Trong **Authorized redirect URIs**, thêm **callback của Supabase** lấy tại Dashboard → Authentication → Sign In / Providers → Google. Với project development hiện tại, callback là `https://dacrjfgleursgtnzeoix.supabase.co/auth/v1/callback`. Không điền URL Flutter cổng `5180` vào ô callback nhà cung cấp này.
+7. Nếu khai báo **Authorized JavaScript origins** cho web development, dùng `http://localhost:5180` và origin web chính thức khi triển khai.
+8. Tạo client, giữ Client ID và Client Secret. Nhập trực tiếp hai giá trị vào **Supabase → Authentication → Sign In / Providers → Google**, bật provider và lưu. Không đưa Client Secret vào Flutter, chat, ảnh chụp hoặc Git.
+9. Trong app, chọn **Tiếp tục với Google**, dùng Gmail đã thêm ở Test users, cấp quyền và kiểm tra quay về app. Giữ URL chuyển hướng của app theo mục 11.
+
+Hướng dẫn chính thức: [Supabase Google](https://supabase.com/docs/guides/auth/social-sign-in/auth-google).
+
+### 12.2. Cấu hình GitHub
+
+1. Mở [Register a new OAuth application](https://github.com/settings/applications/new).
+2. **Application name:** `StudyShare Development`.
+3. **Homepage URL:** `http://127.0.0.1:5180/` cho môi trường phát triển hiện tại.
+4. **Authorization callback URL:** callback Supabase lấy tại Dashboard → Authentication → Sign In / Providers → GitHub; project hiện tại dùng `https://dacrjfgleursgtnzeoix.supabase.co/auth/v1/callback`.
+5. Giữ **Enable Device Flow** không được chọn, rồi đăng ký ứng dụng.
+6. Sao chép Client ID, tạo Client Secret và nhập trực tiếp vào provider GitHub trong Supabase. Bật provider rồi lưu; không gửi secret vào chat hoặc đưa vào mã nguồn.
+7. Trong app, chọn **Tiếp tục với GitHub**, cấp quyền và kiểm tra callback về web/Android.
+
+Hướng dẫn chính thức: [Supabase GitHub](https://supabase.com/docs/guides/auth/social-sign-in/auth-github).
+
+### 12.3. Nghiệm thu sau khi bật provider
+
+- Đăng nhập lần đầu tạo đúng hồ sơ của `auth.uid()`; đăng nhập lại dùng cùng user và giữ tên hồ sơ đã chỉnh.
+- Thử tài khoản email đã được xác nhận cùng địa chỉ với provider; đối chiếu user/identities trên Supabase để xác nhận liên kết đúng, không tạo hồ sơ trùng. Không tự gộp user bằng email trong Flutter. Xem [Identity linking](https://supabase.com/docs/guides/auth/auth-identity-linking).
+- Hủy cấp quyền hoặc lỗi callback không cấp phiên giả; người dùng vẫn thao tác lại được trên màn đăng nhập.
+- Kiểm thử cả Chrome và Android, đăng xuất/đăng nhập lại và phân quyền giữa hai user như Auth email/password. Không mở rộng RLS/Storage grants để làm OAuth chạy.
+- Bật provider không cần thêm Client Secret vào `.dart_tool/supabase.cloud.json`. Flutter tiếp tục dùng Project URL và publishable key hiện có.

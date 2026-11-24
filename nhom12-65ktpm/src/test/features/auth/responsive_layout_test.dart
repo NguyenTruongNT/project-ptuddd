@@ -14,6 +14,7 @@ import '../../support/fake_auth_repository.dart';
 
 void main() {
   for (final scenario in [
+    (320.0, 568.0, 'vi', Brightness.light, 2.0),
     (360.0, 800.0, 'vi', Brightness.light, 1.0),
     (440.0, 956.0, 'vi', Brightness.light, 1.0),
     (360.0, 800.0, 'en', Brightness.dark, 2.0),
@@ -102,6 +103,18 @@ void main() {
               await tester.pumpAndSettle();
               expect(tester.takeException(), isNull);
               tester.view.resetViewInsets();
+            }
+            for (final provider in ['google', 'github']) {
+              final button = find.byKey(ValueKey('auth-oauth-$provider'));
+              if (page.flow == AuthFlow.signIn ||
+                  page.flow == AuthFlow.signUp) {
+                await tester.ensureVisible(button);
+                await tester.pumpAndSettle();
+                expect(tester.takeException(), isNull);
+                expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
+              } else {
+                expect(button, findsNothing);
+              }
             }
           }
           if (page is ProfilePage) {
