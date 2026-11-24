@@ -136,6 +136,7 @@ OPEN         (người gửi tạo nhiệm vụ, các C ứng tuyển)
 - Khiếu nại **sau** ACK mở Issue mà **không rollback** holder, owner, payment, due_date hoặc Transaction.COMPLETED.
 - Khiếu nại về tình trạng khi B nhận: mở trong **7 ngày lịch Việt Nam** từ B ACK; sự cố mới của BORROW khi còn active có thể báo trong giao dịch; vấn đề chặng trả sau BORROW hoàn tất mở trong 7 ngày từ A ACK.
 - Các bên trực tiếp bị ảnh hưởng đồng thuận với **cùng phiên bản phương án giải quyết** rồi server mới RESOLVED. Moderator không được tự đóng Issue hoặc áp đặt giao nhận/thanh toán.
+- Bên bị ảnh hưởng suy ra theo từng Issue: Issue gắn một chặng thì là hai đầu của chặng (kể cả C), Issue cấp giao dịch thì là A và B; luôn gồm người báo. Đề xuất mới tăng `revision` và làm mất hiệu lực xác nhận cũ; người đề xuất cũng phải xác nhận riêng. Chi tiết: `CONTRACTS.md` §5.1.
 - `NEEDS_RESOLUTION` là **nhãn UI dẫn xuất** nếu tồn tại Issue OPEN; không tạo Transaction.status này.
 - Các action xung đột với Issue OPEN phải chặn, nhưng cho phép hành động khắc phục/hoàn trả theo phương án đồng thuận; tránh khóa toàn bộ tiến trình một cách mù quáng.
 
