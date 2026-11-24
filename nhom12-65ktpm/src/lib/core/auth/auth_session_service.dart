@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_repository.dart';
@@ -10,6 +11,11 @@ class AuthSessionService implements AuthRepository {
   final SupabaseClient _client;
   bool _recovering = false;
   static const callbackUrl = 'studyshare://auth/callback';
+
+  /// Web quay về origin hiện tại; Android dùng deep link đã đăng ký.
+  /// Không đưa query hoặc fragment chứa thông tin phiên vào redirect mới.
+  static String callbackUrlForPlatform({bool isWeb = kIsWeb, Uri? baseUri}) =>
+      isWeb ? (baseUri ?? Uri.base).resolve('/').toString() : callbackUrl;
 
   User? get currentUser => _client.auth.currentUser;
 
@@ -25,7 +31,11 @@ class AuthSessionService implements AuthRepository {
     required String email,
     required String password,
   }) {
-    return _client.auth.signUp(email: email.trim(), password: password);
+    return _client.auth.signUp(
+      email: email.trim(),
+      password: password,
+      emailRedirectTo: callbackUrlForPlatform(),
+    );
   }
 
   @override
@@ -75,7 +85,7 @@ class AuthSessionService implements AuthRepository {
     final result = await _client.auth.signUp(
       email: email.trim(),
       password: password,
-      emailRedirectTo: callbackUrl,
+      emailRedirectTo: callbackUrlForPlatform(),
       data: {'display_name': displayName.trim()},
     );
     return RegistrationOutcome(needsEmailConfirmation: result.session == null);
@@ -83,14 +93,17 @@ class AuthSessionService implements AuthRepository {
 
   @override
   Future<void> requestPasswordReset(String email) =>
-      _client.auth.resetPasswordForEmail(email.trim(), redirectTo: callbackUrl);
+      _client.auth.resetPasswordForEmail(
+        email.trim(),
+        redirectTo: callbackUrlForPlatform(),
+      );
 
   @override
   Future<void> resendConfirmation(String email) async {
     await _client.auth.resend(
       type: OtpType.signup,
       email: email.trim(),
-      emailRedirectTo: callbackUrl,
+      emailRedirectTo: callbackUrlForPlatform(),
     );
   }
 

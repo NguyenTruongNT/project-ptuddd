@@ -158,3 +158,53 @@ Kiểm thử trực tiếp Cloud bằng publishable key, không qua validator Fl
 Đã kiểm tra lại endpoint Auth settings: email provider, signup và xác minh email vẫn bật. Chưa nghiệm thu đăng ký hợp lệ/gửi email thật hoặc đổi mật khẩu qua recovery trên Cloud; các luồng đó chờ cấu hình SMTP/callback và bước kiểm thử tiếp theo. Kết quả kiểm tra được lưu trong `src/.dart_tool/cloud-step4-*`, bị Git bỏ qua. Không thay UI, không thay config Auth local.
 
 Nguồn chính thức: [Password security](https://supabase.com/docs/guides/auth/password-security), [CLI config push](https://supabase.com/docs/reference/cli/supabase-config-push).
+
+## 10. Gmail SMTP trên Cloud — 25/11/2026
+
+Chủ project đã cấu hình Gmail trong **Authentication → Emails → SMTP Settings** bằng mật khẩu ứng dụng Google. Kiểm tra read-only từ CLI xác nhận:
+
+- Custom SMTP đã bật; host `smtp.gmail.com`, port `465`.
+- Sender email và SMTP username có giá trị, trùng nhau.
+- Mật khẩu SMTP được nhập trực tiếp trên Dashboard; không đọc hoặc đưa vào Flutter/Git.
+
+Để thiết lập lại, bật xác minh 2 bước Google, tạo mật khẩu ứng dụng tên `StudyShare Supabase`, rồi nhập vào SMTP Settings cùng Gmail gửi thư và sender name `StudyShare`. Không dùng mật khẩu đăng nhập Google thông thường. Xem [hướng dẫn mật khẩu ứng dụng Google](https://support.google.com/accounts/answer/185833?hl=vi), [host/port SMTP Google](https://developers.google.com/workspace/gmail/imap/imap-smtp) và [SMTP Supabase](https://supabase.com/docs/guides/auth/auth-smtp).
+
+Sau khi chủ project cung cấp email và đồng ý nhận thư thử, kiểm tra `auth.users` xác nhận email đó chưa tồn tại. Một yêu cầu đăng ký hợp lệ tới Cloud trả **HTTP 200**, tạo đúng một tài khoản chưa xác nhận và không trả phiên đăng nhập. Mật khẩu thử sinh ngẫu nhiên chỉ giữ trong file local bị Git bỏ qua. Chủ tài khoản có thể xác nhận email, sau đó dùng luồng **Quên mật khẩu** để đặt mật khẩu riêng.
+
+Đây là phép thử gửi thư qua REST, không phải kiểm thử Flutter PKCE. Sau phản hồi HTTP 200, chủ project xác nhận **đã nhận thư và bấm link mở được app** tại origin phát triển. Kiểm tra read-only tiếp theo xác nhận đúng một tài khoản khớp email và `email_confirmed_at` đã có giá trị. Vì vậy đã có bằng chứng thư đến hộp nhận, xác nhận email trên server và mở callback web; chưa nghiệm thu đổi mật khẩu hoặc đăng nhập lại bằng mật khẩu do người dùng chọn. Dữ liệu chẩn đoán nằm trong `src/.dart_tool/cloud-step5-*`; không commit địa chỉ nhận, mật khẩu thử hoặc payload Auth.
+
+## 11. Callback Android/web trên Cloud development — 25/11/2026
+
+Trước cập nhật, Cloud còn Site URL `http://localhost:3000`, chưa có Redirect URLs; code đăng ký/khôi phục/gửi lại thư đều dùng deep link Android khi chạy web. Đã sửa `AuthSessionService` để web quay về origin đang chạy, giữ đúng host/cổng và bỏ path/query/fragment; Android tiếp tục dùng deep link đã đăng ký trong manifest. Áp dụng cho đăng ký, gửi lại xác nhận và khôi phục mật khẩu. SDK Supabase xử lý phiên từ callback; router không tự cấp quyền recovery từ URL.
+
+Cấu hình Cloud riêng nằm tại `src/tool/cloud_auth_redirects/supabase/config.toml`:
+
+| Thuộc tính | Giá trị development |
+| --- | --- |
+| Site URL | `http://127.0.0.1:5180/` |
+| Redirect URL web | `http://127.0.0.1:5180/` |
+| Redirect URL web localhost | `http://localhost:5180/` |
+| Redirect URL Android | `studyshare://auth/callback` |
+
+File này chỉ quản lý hai thuộc tính `auth.site_url` và `auth.additional_redirect_urls`, không chứa SMTP credentials hoặc khóa dự án. Preview trước cập nhật xác nhận đúng hai thuộc tính này. Sau áp dụng, diff không còn chênh lệch thuộc tính được khai báo; **18 thuộc tính remote ngoài phạm vi giữ nguyên**, bao gồm cấu hình SMTP và chính sách mật khẩu đã đặt.
+
+Thao tác từ `src/`, kiểm tra đích và preview trước khi áp dụng:
+
+```powershell
+$projectRef = '<PROJECT_REF_CUA_BAN>'
+npx.cmd supabase@3.3.0 config diff "--remote=$projectRef" --workdir tool/cloud_auth_redirects
+npx.cmd supabase@3.3.0 config push "--remote=$projectRef" --workdir tool/cloud_auth_redirects
+npx.cmd supabase@3.3.0 config diff "--remote=$projectRef" --workdir tool/cloud_auth_redirects
+```
+
+Chạy web ở đúng origin trong allow-list, dừng preview cũ nếu nó đang giữ cổng `5180`:
+
+```powershell
+flutter run -d chrome --web-hostname=127.0.0.1 --web-port=5180 --dart-define-from-file=.dart_tool/supabase.cloud.json
+```
+
+Khi thử đăng ký hoặc khôi phục từ app, mở link email bằng cùng trình duyệt và cùng origin đã khởi tạo yêu cầu để SDK đọc được PKCE verifier. Không gửi link xác nhận/khôi phục vào chat hoặc lưu vào log. Khi triển khai web công khai, thay Site URL và allow-list bằng origin HTTPS của môi trường đó.
+
+Kiểm tra code: **123 test đạt, 2 integration test local được bỏ qua theo cờ opt-in**, `flutter analyze` không báo vấn đề và build web với cấu hình Cloud thành công. Ba test callback mới kiểm tra deep link Android, hai host phát triển và HTTPS; các ca web xác nhận query/fragment chứa code/token không bị đưa vào redirect mới. Kết quả SMTP/email thật và mở callback web đã ghi tại mục 10. Chưa nghiệm thu Flutter PKCE trên Cloud, khôi phục mật khẩu, phân quyền giữa hai tài khoản hoặc thao tác mở link trực tiếp trên Android. Chẩn đoán CLI/build/test ở `src/.dart_tool/cloud-step6-*`, bị Git bỏ qua.
+
+Nguồn chính thức: [Redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls), [Mobile deep linking](https://supabase.com/docs/guides/auth/native-mobile-deep-linking), [Flutter password recovery](https://supabase.com/docs/reference/dart/auth-resetpasswordforemail).
