@@ -124,6 +124,7 @@ void main() {
     addTearDown(auth.close);
     await start(tester, auth, FakeProfileRepository());
     await tester.ensureVisible(find.text('Tạo tài khoản'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Tạo tài khoản'));
     await frames(tester);
     await tester.enterText(find.byKey(const ValueKey('auth-name')), 'Trường');
@@ -174,6 +175,7 @@ void main() {
       addTearDown(auth.close);
       await start(tester, auth, FakeProfileRepository());
       await tester.ensureVisible(find.text('Tạo tài khoản'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Tạo tài khoản'));
       await frames(tester);
       final requirements = find.byKey(
@@ -253,6 +255,7 @@ void main() {
     addTearDown(auth.close);
     await start(tester, auth, FakeProfileRepository());
     await tester.ensureVisible(find.text('Tạo tài khoản'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Tạo tài khoản'));
     await frames(tester);
     await tester.enterText(find.byKey(const ValueKey('auth-name')), 'Trường');
@@ -454,6 +457,7 @@ void main() {
     addTearDown(auth.close);
     await start(tester, auth, FakeProfileRepository());
     await tester.ensureVisible(find.text('Tạo tài khoản'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Tạo tài khoản'));
     await frames(tester);
     await tester.enterText(find.byKey(const ValueKey('auth-name')), ' Trường ');

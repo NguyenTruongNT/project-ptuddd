@@ -6,6 +6,7 @@ import 'package:studyshare/core/auth/auth_session_providers.dart';
 import 'package:studyshare/design_system/theme/studyshare_theme.dart';
 import 'package:studyshare/design_system/widgets/study_feedback.dart';
 import 'package:studyshare/features/auth/presentation/auth_form_page.dart';
+import 'package:studyshare/features/auth/presentation/auth_mobile_body.dart';
 import 'package:studyshare/features/profile_settings/profile_page.dart';
 import 'package:studyshare/features/profile_settings/settings_page.dart';
 import 'package:studyshare/l10n/app_localizations.dart';
@@ -74,6 +75,19 @@ void main() {
             reason: page.runtimeType.toString(),
           );
           if (page is AuthFormPage) {
+            final mobileLogo = find.image(
+              const AssetImage('assets/branding/logo_dark_original.png'),
+            );
+            final mobileHeader = find
+                .ancestor(of: mobileLogo, matching: find.byType(Stack))
+                .first;
+            var headerHeight = 0.0;
+            if (scenario.$1 < 900) {
+              expect(find.byType(AuthMobileBody), findsOneWidget);
+              expect(mobileLogo, findsOneWidget);
+              expect(tester.widget<Image>(mobileLogo).fit, BoxFit.contain);
+              headerHeight = tester.getSize(mobileHeader).height;
+            }
             expect(
               tester.getSize(find.byKey(const ValueKey('auth-card'))).width,
               lessThanOrEqualTo(460),
@@ -81,10 +95,6 @@ void main() {
             if (page.flow == AuthFlow.signIn &&
                 scenario.$1 < 900 &&
                 scenario.$5 == 1) {
-              expect(
-                find.byKey(const ValueKey('auth-mobile-headline')),
-                findsOneWidget,
-              );
               expect(
                 tester
                     .getBottomRight(find.byKey(const ValueKey('auth-submit')))
@@ -98,9 +108,13 @@ void main() {
                 scenario.$1 < 900) {
               tester.view.viewInsets = const FakeViewPadding(bottom: 280);
               await tester.pumpAndSettle();
+              expect(mobileLogo, findsOneWidget);
               expect(
-                find.byKey(const ValueKey('auth-mobile-headline')),
-                findsNothing,
+                tester.getSize(mobileHeader).height,
+                scenario.$2 >= 700 && scenario.$5 == 1
+                    ? lessThan(headerHeight)
+                    : lessThanOrEqualTo(headerHeight),
+                reason: 'Logo header compacts when the keyboard opens',
               );
               await tester.ensureVisible(
                 find.byKey(const ValueKey('auth-submit'), skipOffstage: false),
