@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_routes.dart';
 import '../../../core/auth/auth_session_providers.dart';
+import '../../../design_system/widgets/study_confirm.dart';
+import '../../../design_system/widgets/study_feedback.dart';
 import '../../../l10n/app_localizations.dart';
 import 'auth_error_message.dart';
 
@@ -22,22 +24,12 @@ class _LogoutButtonState extends ConsumerState<LogoutButton> {
     try {
       final demo = ref.read(demoModeProvider);
       if (!demo) {
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) => AlertDialog(
-            title: Text(text.profileLogout),
-            content: Text(text.profileLogoutConfirm),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
-                child: Text(text.commonCancel),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(dialogContext, true),
-                child: Text(text.profileLogout),
-              ),
-            ],
-          ),
+        final confirmed = await showStudyConfirm(
+          context,
+          title: text.profileLogout,
+          message: text.profileLogoutConfirm,
+          confirmLabel: text.profileLogout,
+          icon: Icons.logout,
         );
         if (confirmed != true || !mounted) return;
         await ref.read(authRepositoryProvider)?.signOut();
@@ -48,9 +40,8 @@ class _LogoutButtonState extends ConsumerState<LogoutButton> {
       context.go(AppRoutes.signIn);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(authErrorMessage(error, text))));
+        StudyFeedbackHost.of(context)
+            ?.show(authErrorMessage(error, text), error: true);
       }
     } finally {
       if (mounted) setState(() => _busy = false);

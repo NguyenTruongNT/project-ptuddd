@@ -224,11 +224,17 @@ void main() {
     await start(tester, auth, profiles);
     await tester.tap(find.text('Cá nhân').first);
     await frames(tester);
+    await tester.tap(find.byKey(const ValueKey('profile-edit')));
+    await frames(tester);
     await tester.enterText(
       find.byKey(const ValueKey('profile-name')),
       'Tên mới',
     );
+    await frames(tester);
     await tester.tap(find.text('Lưu thay đổi'));
+    await frames(tester);
+    expect(profiles.updateCalls, 0);
+    await tester.tap(find.byKey(const ValueKey('confirm-action')));
     await frames(tester);
     expect(profiles.names['user-a'], 'Tên mới');
     await tester.pump(const Duration(seconds: 4));

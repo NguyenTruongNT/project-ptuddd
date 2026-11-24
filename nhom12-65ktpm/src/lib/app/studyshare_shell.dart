@@ -15,7 +15,9 @@ class StudyShareShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('StudyShare')),
+      appBar: navigationShell.currentIndex == 4
+          ? null
+          : AppBar(title: const Text('StudyShare')),
       body: Column(
         children: [
           if (ref.watch(demoModeProvider))
