@@ -71,6 +71,12 @@ void main() {
             isNull,
             reason: page.runtimeType.toString(),
           );
+          if (page is AuthFormPage) {
+            expect(
+              tester.getSize(find.byKey(const ValueKey('auth-card'))).width,
+              lessThanOrEqualTo(460),
+            );
+          }
           if (page is ProfilePage) {
             await tester.ensureVisible(
               find.byKey(const ValueKey('profile-edit')),

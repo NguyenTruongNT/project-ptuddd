@@ -11,6 +11,38 @@ import 'auth_flow_test.dart' show frames;
 
 void main() {
   testWidgets(
+    'Đổi ngôn ngữ chỉ áp dụng sau confirm và dịch cả nhãn màu, toast',
+    (tester) async {
+      await tester.pumpWidget(const ProviderScope(child: StudyShareApp()));
+      await frames(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(StudyShareApp)),
+      );
+      container.read(demoModeProvider.notifier).enable();
+      await frames(tester);
+      container.read(appRouterProvider).push('/settings');
+      await frames(tester);
+      final dropdown = find.byType(DropdownButtonFormField<String>);
+      await tester.ensureVisible(dropdown);
+      await tester.tap(dropdown);
+      await frames(tester);
+      await tester.tap(find.text('English').last);
+      await frames(tester);
+      expect(container.read(appPreferencesProvider).localeCode, 'vi');
+      final save = find.byKey(const ValueKey('settings-save'));
+      await tester.ensureVisible(save);
+      await tester.tap(save);
+      await frames(tester);
+      await tester.tap(find.byKey(const ValueKey('confirm-action')));
+      await frames(tester);
+      expect(container.read(appPreferencesProvider).localeCode, 'en');
+      expect(find.text('Settings saved.'), findsOneWidget);
+      expect(find.text('Green'), findsOneWidget);
+      expect(find.text('Xanh lá'), findsNothing);
+      await tester.pump(const Duration(seconds: 4));
+    },
+  );
+  testWidgets(
     'Cài đặt là nháp, Hủy confirm không ghi, Lưu confirm mới ghi toàn bộ',
     (tester) async {
       SharedPreferences.setMockInitialValues({});

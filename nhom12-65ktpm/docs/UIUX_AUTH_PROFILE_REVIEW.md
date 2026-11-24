@@ -48,4 +48,20 @@ Thông báo hoàn thành xuất hiện góc trên phải trong 3,5 giây; mobile
 - Flutter accessibility: https://docs.flutter.dev/ui/accessibility
 - Flutter AlertDialog, nội dung dài và xác nhận: https://api.flutter.dev/flutter/material/AlertDialog-class.html
 - Mẫu mã nguồn mở chính thức Material 3: https://github.com/flutter/samples/tree/main/material_3_demo (tham khảo cấu trúc/theme, không chép asset hoặc thêm dependency).
+- Bootstrap web chuẩn Flutter: https://docs.flutter.dev/platform-integration/web/initialization (bổ sung entry HTML để build và duyệt trên Chrome).
 - SS-UIUX của nhóm: `StudyShare_UIUX_MVP_va_HuongDan_TrienKhai.md`, mục 2, SCR-25/26, design tokens. Quy tắc bản nháp Cài đặt và toast góc trên phải trong tài liệu này là điều chỉnh theo yêu cầu mới của Trường, chờ duyệt trước tích hợp.
+
+## 7. Kết quả kiểm tra bản cục bộ (24/11/2026)
+
+| Kiểm tra | Kết quả |
+| --- | --- |
+| `flutter analyze --no-pub` | Không có lỗi/cảnh báo |
+| `flutter test --no-pub` | 114 đạt; 1 test Auth local được bỏ qua mặc định (opt-in), không tính là đã chạy trong lượt này |
+| `flutter build web --release --no-wasm-dry-run` | Thành công với URL/khóa công khai Supabase local |
+| `flutter build apk --debug` | Thành công với URL Android Emulator/Supabase local |
+| Widget responsive | 360x800, 440x956, 1440x1000; chữ 200%; vi/en; Light/Dark; dialog Hồ sơ với keyboard inset |
+| Trình duyệt thật | Đăng ký + confirm, sửa tên + confirm + toast, cài đặt + confirm, khôi phục lựa chọn sau reload, đăng xuất + confirm; xem Light/Dark và bố cục web rộng |
+| Dữ liệu thử | Chỉ Supabase local; tài khoản thử riêng đã đăng xuất và xóa; không sửa tài khoản sẵn có của người dùng |
+| Git | Chỉ thư mục nhóm; commit local đúng mẫu, không push hoặc cập nhật PR |
+
+Ảnh chụp và log kiểm tra lưu trong `src/.dart_tool/` (bị Git bỏ qua), không dùng làm asset sản phẩm. Bản Android mới đã build; kiểm tra tương tác trực tiếp của phiên bản giao diện này thực hiện trên Chrome, không thay cho nghiệm thu thao tác Android/email deep link trên thiết bị. Cần Trường duyệt giao diện trước bước push/review tích hợp.

@@ -61,6 +61,7 @@ class AuthPageLayout extends StatelessWidget {
                 children: [
                   if (!wide) ...[_brand(context), const SizedBox(height: 24)],
                   Card(
+                    key: const ValueKey('auth-card'),
                     child: Padding(
                       padding: EdgeInsets.all(wide ? 32 : 24),
                       child: AutofillGroup(
@@ -203,7 +204,12 @@ class AuthPageLayout extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            Expanded(child: form),
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.topRight,
+                                child: form,
+                              ),
+                            ),
                           ],
                         )
                       : form,
