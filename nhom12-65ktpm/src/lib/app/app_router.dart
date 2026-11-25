@@ -2,6 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/deliveries/presentation/create_delivery_page.dart';
+import '../features/deliveries/presentation/delivery_details_page.dart';
+import '../features/deliveries/presentation/delivery_list_page.dart';
+import '../features/handovers/presentation/prepare_handover_page.dart';
+import '../features/handovers/presentation/qr_scanner_page.dart';
+import '../features/handovers/presentation/receiver_ack_page.dart';
 import '../features/home/mock_data_preview_page.dart';
 import '../features/home/tab_content.dart';
 import '../features/issues/presentation/create_issue_page.dart';
@@ -167,23 +173,40 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           transactionId: state.pathParameters['transactionId']!,
         ),
       ),
-      _placeholder(AppRoutes.deliveries, 'SCR-15', 'Danh sách giao hộ'),
-      _placeholder(AppRoutes.createDelivery, 'SCR-16', 'Tạo nhiệm vụ giao hộ'),
-      _placeholder(
-        AppRoutes.deliveryDetailsPattern,
-        'SCR-17',
-        'Chi tiết giao hộ',
+      // SCR-15/16/17/18/19/20 – module Giao hộ & Bàn giao (Vũ Hải Đăng).
+      GoRoute(
+        path: AppRoutes.deliveries,
+        builder: (context, state) => const DeliveryListPage(),
       ),
-      _placeholder(
-        AppRoutes.prepareHandoverPattern,
-        'SCR-18',
-        'Chuẩn bị bàn giao',
+      GoRoute(
+        path: AppRoutes.createDelivery,
+        builder: (context, state) => CreateDeliveryPage(
+          transactionId: state.uri.queryParameters['transactionId'] ?? 'txn-delivery-01',
+        ),
       ),
-      _placeholder(AppRoutes.scanQrPattern, 'SCR-19', 'Quét QR'),
-      _placeholder(
-        AppRoutes.receiverAckPattern,
-        'SCR-20',
-        'Xác nhận nhận / từ chối',
+      GoRoute(
+        path: AppRoutes.deliveryDetailsPattern,
+        builder: (context, state) => DeliveryDetailsPage(
+          taskId: state.pathParameters['taskId']!,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.prepareHandoverPattern,
+        builder: (context, state) => PrepareHandoverPage(
+          handoverId: state.pathParameters['handoverId']!,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.scanQrPattern,
+        builder: (context, state) => QrScannerPage(
+          handoverId: state.pathParameters['handoverId']!,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.receiverAckPattern,
+        builder: (context, state) => ReceiverAckPage(
+          handoverId: state.pathParameters['handoverId']!,
+        ),
       ),
       // SCR-21/22/23 – module Issue (Sơn). Giữ createIssue trước issueDetailsPattern.
       GoRoute(
