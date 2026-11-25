@@ -5,6 +5,12 @@
 # working directory name when running `supabase init`.
 project_id = "src"
 
+# Function tự xác thực JWT qua Auth; không tin payload actor từ client.
+[functions.verify-material-image]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/verify-material-image/index.ts"
+
 [api]
 enabled = true
 # Port to use for the API URL.

@@ -8,6 +8,9 @@ class Material {
     required this.subject,
     required this.condition,
     this.isbn,
+    this.description,
+    this.revision = 1,
+    this.updatedAt,
   });
 
   final String id;
@@ -17,6 +20,9 @@ class Material {
   final String subject;
   final String condition;
   final String? isbn;
+  final String? description;
+  final int revision;
+  final DateTime? updatedAt;
 
   // Không cung cấp setOwner/setHolder: chỉ server được thay khi ACK hợp lệ.
 }
@@ -30,6 +36,10 @@ class MaterialSummary {
     required this.ownerId,
     required this.holderId,
     this.coverUrl,
+    this.canEdit = false,
+    this.canPublish = false,
+    this.listingStatus,
+    this.hasActiveTransaction = false,
   });
 
   final String id;
@@ -38,4 +48,8 @@ class MaterialSummary {
   final String ownerId;
   final String holderId;
   final String? coverUrl;
+  final bool canEdit;
+  final bool canPublish;
+  final String? listingStatus;
+  final bool hasActiveTransaction;
 }

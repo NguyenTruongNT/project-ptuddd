@@ -38,10 +38,12 @@ String safeAuthDestination(String? raw) {
   );
   final handover = RegExp(r'^/handovers/[a-zA-Z0-9_-]+/(prepare|scan|ack)$');
   final request = RegExp(r'^/requests/new/[a-zA-Z0-9_-]+$');
+  final materialEdit = RegExp(r'^/materials/[a-zA-Z0-9_-]+/edit$');
   return roots.contains(path) ||
           details.hasMatch(path) ||
           handover.hasMatch(path) ||
-          request.hasMatch(path)
+          request.hasMatch(path) ||
+          materialEdit.hasMatch(path)
       ? path
       : AppRoutes.home;
 }

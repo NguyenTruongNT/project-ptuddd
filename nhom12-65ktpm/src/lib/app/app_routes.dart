@@ -19,6 +19,7 @@ class AppRoutes {
   static const myMaterials = '/materials';
   static const materialForm = '/materials/new';
   static const materialDetailsPattern = '/materials/:materialId';
+  static const materialEditPattern = '/materials/:materialId/edit';
   static const listingForm = '/listings/new';
   static const createRequestPattern = '/requests/new/:listingId';
   static const requestCenter = '/requests';
@@ -45,6 +46,8 @@ class AppRoutes {
       '/listings/${Uri.encodeComponent(id)}';
   static String materialDetails(String id) =>
       '/materials/${Uri.encodeComponent(id)}';
+  static String materialEdit(String id) =>
+      '/materials/${Uri.encodeComponent(id)}/edit';
   static String transactionDetails(String id) =>
       '/transactions/${Uri.encodeComponent(id)}';
   static String deliveryDetails(String id) =>

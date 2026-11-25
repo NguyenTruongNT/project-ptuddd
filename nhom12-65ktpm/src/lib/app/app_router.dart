@@ -19,6 +19,9 @@ import '../features/auth/presentation/auth_form_page.dart';
 import '../features/auth/presentation/splash_page.dart';
 import '../features/profile_settings/profile_page.dart';
 import 'auth_redirect.dart';
+import '../features/materials/presentation/my_materials_page.dart';
+import '../features/materials/presentation/material_form_page.dart';
+import '../features/materials/presentation/material_details_page.dart';
 
 class _AuthRouterRefresh extends ChangeNotifier {
   void refresh() => notifyListeners();
@@ -82,6 +85,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: AppRoutes.publishTab,
                 builder: (context, state) =>
                     const TabContent(section: TabSection.publish),
+              ),
+              GoRoute(
+                path: AppRoutes.myMaterials,
+                builder: (_, _) => const MyMaterialsPage(),
               ),
             ],
           ),
@@ -151,12 +158,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         'SCR-06',
         'Chi tiết tin đăng',
       ),
-      _placeholder(AppRoutes.myMaterials, 'SCR-07', 'Tài liệu của tôi'),
-      _placeholder(AppRoutes.materialForm, 'SCR-08', 'Tạo/sửa tài liệu'),
-      _placeholder(
-        AppRoutes.materialDetailsPattern,
-        'SCR-09',
-        'Chi tiết tài liệu/QR',
+      GoRoute(
+        path: AppRoutes.materialForm,
+        builder: (_, _) => const MaterialFormPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.materialEditPattern,
+        builder: (_, state) =>
+            MaterialFormPage(materialId: state.pathParameters['materialId']!),
+      ),
+      GoRoute(
+        path: AppRoutes.materialDetailsPattern,
+        builder: (_, state) => MaterialDetailsPage(
+          materialId: state.pathParameters['materialId']!,
+        ),
       ),
       _placeholder(AppRoutes.createRequestPattern, 'SCR-11', 'Gửi yêu cầu'),
       _placeholder(AppRoutes.requestCenter, 'SCR-12', 'Trung tâm yêu cầu'),
