@@ -11,9 +11,13 @@ import '../mock/mock_listing_query_repository.dart';
 import '../mock/mock_material_query_repository.dart';
 import '../mock/mock_transaction_query_repository.dart';
 import '../mock/mock_transaction_store.dart';
+import '../auth/auth_session_providers.dart';
 
 // ID này chỉ dành cho trang preview. Không dùng làm actor cho Supabase RPC.
-final demoViewerIdProvider = Provider<String>((ref) => MockFixtures.userA);
+final demoViewerIdProvider = Provider<String>((ref) {
+  final boundary = ref.watch(sessionBoundaryProvider);
+  return boundary == 'demo' ? MockFixtures.userA : boundary;
+});
 
 // Các màn hình module sẽ đọc INTERFACE thay vì phụ thuộc class mock trực tiếp.
 // Khi có backend thật, override các provider repository phù hợp.
@@ -27,9 +31,10 @@ final materialQueryRepositoryProvider = Provider<MaterialQueryRepository>(
 );
 // Một store mô phỏng dùng chung cho đọc + lệnh mock; không phụ thuộc viewer
 // để đổi tài khoản demo A/B vẫn thấy cùng trạng thái.
-final mockTransactionStoreProvider = Provider<MockTransactionStore>(
-  (ref) => MockTransactionStore.fromFixtures(),
-);
+final mockTransactionStoreProvider = Provider<MockTransactionStore>((ref) {
+  ref.watch(sessionBoundaryProvider);
+  return MockTransactionStore.fromFixtures();
+});
 final transactionQueryRepositoryProvider = Provider<TransactionQueryRepository>(
   (ref) => MockTransactionQueryRepository(
     demoViewerId: ref.watch(demoViewerIdProvider),

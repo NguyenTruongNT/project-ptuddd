@@ -1,0 +1,12 @@
+# Development callbacks only; keep SMTP credentials in the hosted dashboard.
+# CLI 3.3.0 pushes explicitly declared properties and preserves other settings.
+# Preview from src/: config diff --workdir tool/cloud_auth_redirects --remote=<ref>
+project_id = "studyshare-nhom12-dev"
+
+[auth]
+site_url = "http://127.0.0.1:5180/"
+additional_redirect_urls = [
+  "http://127.0.0.1:5180/",
+  "http://localhost:5180/",
+  "studyshare://auth/callback",
+]

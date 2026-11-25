@@ -6,9 +6,15 @@ class AppRoutes {
   static const splash = '/splash';
   static const signIn = '/login';
   static const signUp = '/register';
+  // Màn phụ Auth, không tăng số SCR chính.
+  static const forgotPassword = '/auth/forgot-password';
+  static const checkEmail = '/auth/check-email';
+  static const resetPassword = '/auth/reset-password';
+  static const authCallback = '/auth/callback';
   static const home = '/home';
   static const explore = '/explore';
-  static const publishTab = '/publish'; // Tab Đăng tin, chưa phải form đăng tin.
+  static const publishTab =
+      '/publish'; // Tab Đăng tin, chưa phải form đăng tin.
   static const listingDetailsPattern = '/listings/:listingId';
   static const myMaterials = '/materials';
   static const materialForm = '/materials/new';
@@ -43,8 +49,7 @@ class AppRoutes {
       '/transactions/${Uri.encodeComponent(id)}';
   static String deliveryDetails(String id) =>
       '/deliveries/${Uri.encodeComponent(id)}';
-  static String issueDetails(String id) =>
-      '/issues/${Uri.encodeComponent(id)}';
+  static String issueDetails(String id) => '/issues/${Uri.encodeComponent(id)}';
   static String createRequest(String listingId) =>
       '/requests/new/${Uri.encodeComponent(listingId)}';
   static String prepareHandover(String id) =>
@@ -61,21 +66,45 @@ class AppRoutes {
     const AppScreenInfo('SCR-03', 'Đăng ký', signUp),
     const AppScreenInfo('SCR-04', 'Trang chủ', home),
     const AppScreenInfo('SCR-05', 'Khám phá', explore),
-    AppScreenInfo('SCR-06', 'Chi tiết tin đăng', listingDetails('demo-listing')),
+    AppScreenInfo(
+      'SCR-06',
+      'Chi tiết tin đăng',
+      listingDetails('demo-listing'),
+    ),
     const AppScreenInfo('SCR-07', 'Tài liệu của tôi', myMaterials),
     const AppScreenInfo('SCR-08', 'Tạo/sửa tài liệu', materialForm),
-    AppScreenInfo('SCR-09', 'Chi tiết tài liệu và QR', materialDetails('demo-material')),
+    AppScreenInfo(
+      'SCR-09',
+      'Chi tiết tài liệu và QR',
+      materialDetails('demo-material'),
+    ),
     const AppScreenInfo('SCR-10', 'Tạo/sửa tin đăng', listingForm),
-    AppScreenInfo('SCR-11', 'Gửi yêu cầu trao đổi', createRequest('demo-listing')),
+    AppScreenInfo(
+      'SCR-11',
+      'Gửi yêu cầu trao đổi',
+      createRequest('demo-listing'),
+    ),
     const AppScreenInfo('SCR-12', 'Trung tâm yêu cầu', requestCenter),
     const AppScreenInfo('SCR-13', 'Giao dịch của tôi', transactions),
-    AppScreenInfo('SCR-14', 'Chi tiết giao dịch', transactionDetails('demo-transaction')),
+    AppScreenInfo(
+      'SCR-14',
+      'Chi tiết giao dịch',
+      transactionDetails('demo-transaction'),
+    ),
     const AppScreenInfo('SCR-15', 'Danh sách giao hộ', deliveries),
     const AppScreenInfo('SCR-16', 'Tạo nhiệm vụ giao hộ', createDelivery),
     AppScreenInfo('SCR-17', 'Chi tiết giao hộ', deliveryDetails('demo-task')),
-    AppScreenInfo('SCR-18', 'Chuẩn bị bàn giao', prepareHandover('demo-handover')),
+    AppScreenInfo(
+      'SCR-18',
+      'Chuẩn bị bàn giao',
+      prepareHandover('demo-handover'),
+    ),
     AppScreenInfo('SCR-19', 'Quét QR', scanQr('demo-handover')),
-    AppScreenInfo('SCR-20', 'Xác nhận nhận / từ chối', receiverAck('demo-handover')),
+    AppScreenInfo(
+      'SCR-20',
+      'Xác nhận nhận / từ chối',
+      receiverAck('demo-handover'),
+    ),
     const AppScreenInfo('SCR-21', 'Danh sách sự cố', issues),
     const AppScreenInfo('SCR-22', 'Báo cáo sự cố', createIssue),
     AppScreenInfo('SCR-23', 'Chi tiết sự cố', issueDetails('demo-issue')),
