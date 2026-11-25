@@ -14,6 +14,9 @@ import '../mock/mock_material_query_repository.dart';
 import '../mock/mock_transaction_query_repository.dart';
 import '../mock/mock_transaction_store.dart';
 import '../auth/auth_session_providers.dart';
+import '../backend/workflow_rpc.dart';
+import '../../features/transactions/data/supabase_transaction_repository.dart';
+import '../../features/issues/data/supabase_issue_repository.dart';
 
 // ID này chỉ dành cho trang preview. Không dùng làm actor cho Supabase RPC.
 final demoViewerIdProvider = Provider<String>((ref) {
@@ -38,18 +41,24 @@ final mockTransactionStoreProvider = Provider<MockTransactionStore>((ref) {
   return MockTransactionStore.fromFixtures();
 });
 final transactionQueryRepositoryProvider = Provider<TransactionQueryRepository>(
-  (ref) => MockTransactionQueryRepository(
-    demoViewerId: ref.watch(demoViewerIdProvider),
-    store: ref.watch(mockTransactionStoreProvider),
-  ),
+  (ref) {
+    final rpc = ref.watch(workflowRpcProvider);
+    if (rpc != null) return SupabaseTransactionQueryRepository(rpc);
+    return MockTransactionQueryRepository(
+      demoViewerId: ref.watch(demoViewerIdProvider),
+      store: ref.watch(mockTransactionStoreProvider),
+    );
+  },
 );
 // Issue dùng chung store với Transaction để nhãn "có sự cố" luôn khớp.
-final issueQueryRepositoryProvider = Provider<IssueQueryRepository>(
-  (ref) => MockIssueQueryRepository(
+final issueQueryRepositoryProvider = Provider<IssueQueryRepository>((ref) {
+  final rpc = ref.watch(workflowRpcProvider);
+  if (rpc != null) return SupabaseIssueQueryRepository(rpc);
+  return MockIssueQueryRepository(
     demoViewerId: ref.watch(demoViewerIdProvider),
     store: ref.watch(mockTransactionStoreProvider),
-  ),
-);
+  );
+});
 
 // FutureProvider chuyển Future thành AsyncValue: loading/data/error cho UI.
 final publishedListingsProvider = FutureProvider<List<ListingCardModel>>(

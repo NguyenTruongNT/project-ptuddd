@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:studyshare/core/backend/workflow_rpc.dart';
 import 'package:studyshare/core/mock/mock_fixtures.dart';
 import 'package:studyshare/core/providers/mock_query_providers.dart';
 import 'package:studyshare/features/transactions/presentation/my_transactions_page.dart';
@@ -28,6 +29,7 @@ Widget _app({required String viewer, required String initial, DateTime? nowUtc})
   );
   return ProviderScope(
     overrides: [
+      workflowRpcProvider.overrideWithValue(null),
       demoViewerIdProvider.overrideWith((ref) => viewer),
       nowUtcProvider.overrideWith(
         (ref) => () => nowUtc ?? DateTime.utc(2026, 11, 23, 3),

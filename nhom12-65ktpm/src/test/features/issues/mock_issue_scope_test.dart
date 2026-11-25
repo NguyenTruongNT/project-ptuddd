@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:studyshare/core/backend/workflow_rpc.dart';
 import 'package:studyshare/core/contracts/command_inputs.dart';
 import 'package:studyshare/core/contracts/command_result.dart';
 import 'package:studyshare/core/contracts/domain_enums.dart';
@@ -322,6 +323,7 @@ void main() {
       await world.report(_b, handoverId: _hDirect, key: 'k2');
 
       final container = ProviderContainer(overrides: [
+        workflowRpcProvider.overrideWithValue(null),
         demoViewerIdProvider.overrideWith((ref) => _c),
         mockTransactionStoreProvider.overrideWith((ref) => world.store),
       ]);
