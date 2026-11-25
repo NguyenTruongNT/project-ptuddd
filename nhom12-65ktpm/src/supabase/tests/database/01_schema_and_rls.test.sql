@@ -31,8 +31,10 @@ select extensions.ok(
       ) and c.relrowsecurity),
   'RLS bat cho 19 bang');
 
-select extensions.ok(not has_table_privilege('authenticated', 'public.materials', 'SELECT'),
-  'client khong duoc SELECT materials toan bo');
+select extensions.ok(has_table_privilege('authenticated', 'public.materials', 'SELECT')
+  and exists(select 1 from pg_policies where schemaname='public'
+    and tablename='materials' and policyname='materials_read_owner'),
+  'client doc materials qua owner RLS; test A/B o 04');
 select extensions.ok(not has_table_privilege('authenticated', 'public.material_qr_credentials', 'SELECT'),
   'QR credential khong the doc tu client');
 select extensions.ok(not has_table_privilege('authenticated', 'public.transactions', 'UPDATE'),
@@ -53,8 +55,8 @@ select extensions.ok(
 select extensions.ok(
   exists (select 1 from pg_policies
           where schemaname = 'storage' and tablename = 'objects'
-            and policyname = 'material_images_upload_own_folder'),
-  'anh tai lieu chi upload duoc vao thu muc ca nhan');
+            and policyname = 'material_images_upload_registered'),
+  'anh tai lieu chi upload vao path dang ky cho actor');
 select extensions.ok(
   (select public is false from storage.buckets where id = 'studyshare-material-images'),
   'material images bucket PRIVATE');

@@ -290,6 +290,8 @@ Các contracts Auth/Profile bổ sung ở mục 13; không thay đổi enum ho�
 
 ## 13. Auth/Profile — contracts triển khai ngày 1
 
+> Material ngày 2 được mô tả ở mục 14 bên dưới; không thay contract workflow của Khanh/Đăng/Sơn.
+
 - `AuthRepository` cung cấp `watchSession`, `signIn`, `register`, `requestPasswordReset`, `resendConfirmation`, `completePasswordRecovery`, `signOut`; adapter Supabase là `AuthSessionService`.
 - `AuthSnapshot` phân biệt chưa cấu hình, signed out, signed in, recovery và lỗi phiên. `AuthIdentity` chỉ gồm ID, email và tên hiển thị của chính người dùng; không chứa token. Actor thực tế ở server vẫn là `auth.uid()`.
 - `register` nhận tên/email/password, trả `RegistrationOutcome.needsEmailConfirmation`. Session null không được coi là đăng ký đã xác thực. Password không được lưu vào preferences hoặc chuyển qua URL.
@@ -302,3 +304,33 @@ Các contracts Auth/Profile bổ sung ở mục 13; không thay đổi enum ho�
 - Preferences chỉ lưu theme, palette, locale, grid/leaves trên thiết bị; Supabase SDK quản lý session. Các lựa chọn giao diện được ghi tuần tự để không mất thay đổi đồng thời.
 - Kiểm thử: unit/widget Auth + guard + cache + preferences; pgTAP `03_profile_access.test.sql`; test local opt-in `test/integration/auth_local_test.dart` dùng Auth thật, RLS và trao đổi PKCE. Test local chỉ xóa UUID tài khoản giả do chính nó tạo, không dùng URL cloud hoặc service key.
 - Kiểm thử policy riêng: `tool/test_password_policy_local.ps1` chạy `test/integration/password_policy_local_test.dart`, gọi trực tiếp SDK để kiểm tra server từ chối từng điều kiện còn thiếu ở signup/update, mật khẩu cũ vẫn dùng được sau yêu cầu đổi bị từ chối, mật khẩu mới hợp lệ mới thay thế mật khẩu cũ.
+
+## 14. Material/ảnh — ngày 2, Trường duyệt 25/11/2026
+
+- Giữ interface đọc cũ/constructor Material, fixture ID và workflow đồng đội. Thêm tùy chọn description/revision/updatedAt và summary fields. MaterialWorkspaceRepository mở rộng query/command: searchMaterials(query/filter/offset/limit), getDetails, uploadImage, createMaterial, updateMaterial(expectedRevision), discardUpload.
+- MaterialDetails gồm Material, gallery theo thứ tự, tên owner/holder an toàn, listingStatus, hasActiveTransaction, editBlockedReason, isCached. Không QR/token/ngân hàng. CommandOk.receipt dùng commandId + serverRevision; serverEventId nullable vì Material chưa có Transaction. Constructor event cũ tiếp tục dùng cho Transaction/Issue.
+- CreateMaterialInput thêm description/imageIds theo thứ tự, không actor/owner/holder/status/path. Material chưa đăng có 0–5 ảnh; bìa đầu tiên; publish Listing cần ít nhất một ảnh đã ghi nhận. Tên 1–200, môn/loại và tình trạng 1–100; mô tả tùy chọn 2.000; trim và chặn control; ISBN-10/13 có checksum, không unique.
+- Chỉ owner sửa khi owner=holder, không Transaction active, Listing PUBLISHED hoặc Request PENDING. Server kiểm tra lại dưới row lock. Không ghi owner/holder qua lệnh lưu.
+
+| RPC | Input / output |
+|---|---|
+| get_my_material | p_material_id → chi tiết của owner hoặc null |
+| search_my_materials | p_query, p_filter (all/ready/active), p_offset, p_limit ≤1.000 → items, has_more |
+| prepare_material_image | p_mime_type, p_byte_size, p_material_id? → upload ID/path, hạn 24 giờ |
+| get_my_material_upload | p_image_id → đăng ký còn hợp lệ của chính actor |
+| verify_material_image_upload | p_image_id, p_actor_id; chỉ service_role sau Edge kiểm tra file |
+| save_material | p_payload, p_idempotency_key, p_material_id?, p_expected_revision? → Material + command_id + server_revision |
+| get_material_command_result | p_command, p_key → receipt của actor còn sở hữu |
+| discard_material_upload | Claim bỏ upload chưa gắn; không xóa ảnh ATTACHED/lịch sử |
+| claim_expired_material_uploads / finish_material_upload_cleanup | Claim upload tạm hết hạn của actor / xác nhận path đã được xóa qua Storage API |
+
+- Luồng: prepare → uploadBinary không upsert → Edge verify-material-image → save_material. JPEG/PNG/WebP tối đa 5 MiB; Edge xác thực JWT qua Auth, đọc file bằng quyền user và kiểm tra signature, cấu trúc/kích thước tối đa 40 triệu pixel. App cũng decode ảnh trước upload.
+- Edge tắt gateway verify_jwt vì tự xác thực JWT với Auth trước mọi thao tác; không tin actor từ mobile. Service key chỉ nằm trong môi trường Edge/tiến trình test.
+- Một DB transaction ghi metadata, gallery, revision và receipt. Storage upload ở bước riêng; không hứa rollback file cùng DB. Retry cùng actor/command/key/payload trả ACK cũ, khác payload/revision cũ trả CONFLICT. Client timeout giữ key/payload và kiểm tra lại.
+- RLS SELECT theo owner; ghi qua RPC. Bucket private đọc ảnh theo owner hiện tại, thay policy folder cũ; không policy UPDATE object. service_role có grants tường minh cho bảng Material, ảnh, upload, receipt và Listing; không thêm quyền ghi anon/authenticated.
+- Gỡ gallery giữ file private để bảo vệ snapshot lịch sử. Upload chưa gắn được claim DISCARDED, xóa bằng Storage API rồi dọn registry. Cleanup upload hết hạn được retry khi upload lần sau; chưa có tác vụ nền định kỳ.
+- URL ký 5 phút, không lưu URL signed vào nháp/cache. Cache metadata theo user tối đa 15 phút chỉ đọc. SQLite Android giữ nội dung/byte ảnh nháp, key/upload ID theo user + Material; web preview dùng preferences và báo lỗi quota.
+- Migration: 20261125000100_material_workspace, 20261125000200_material_backend_role, 20261125000300_material_text_normalization, 20261125130000_material_isbn_prefix. Không sửa migration đã triển khai.
+- ISBN-13 kiểm tra prefix 978/979 và checksum; không nhận EAN khác chỉ vì đủ 13 số/checksum đúng. [Nguồn International ISBN Agency](https://www.isbn-international.org/index.php/node/10).
+- Cloud có migration riêng 20261125120000_transactions_payment_issues_rpc của Sơn chưa trong nhánh này. Đối chiếu lịch sử qua snapshot bị Git bỏ qua, không copy module Sơn vào đóng góp Material, không repair lịch sử.
+- Listing publish/QR và quản lý tham chiếu snapshot nối tiếp ngày 3/4. Không tạo Listing/QR/Transaction giả để đáp ứng ACK Material.
