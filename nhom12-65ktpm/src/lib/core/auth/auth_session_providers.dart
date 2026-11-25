@@ -8,6 +8,11 @@ import 'profile_repository.dart';
 
 final authInitializationFailedProvider = Provider<bool>((ref) => false);
 
+// main truyền cấu hình đã nạp từ asset hoặc --dart-define cho toàn bộ Auth.
+final supabaseSettingsProvider = Provider<SupabaseSettings>(
+  (ref) => SupabaseSettings.fromEnvironment,
+);
+
 final authRepositoryProvider = Provider<AuthRepository?>(
   (ref) => ref.watch(authSessionServiceProvider),
 );
@@ -65,17 +70,22 @@ final currentProfileProvider = FutureProvider<UserProfile?>((ref) async {
   return repository?.getOrCreateMyProfile(identity);
 });
 
-/// Khi chưa truyền cấu hình, app vẫn xem được các màn hình mock.
+/// Khi tắt Supabase bằng cấu hình demo, app vẫn xem được các màn hình mock.
 /// Không tạo SupabaseClient giả và không tự coi như đã đăng nhập.
 final supabaseClientProvider = Provider<SupabaseClient?>((ref) {
-  if (!SupabaseSettings.fromEnvironment.isConfigured) return null;
+  if (!ref.watch(supabaseSettingsProvider).isConfigured) return null;
   if (ref.watch(authInitializationFailedProvider)) return null;
   return Supabase.instance.client;
 });
 
 final authSessionServiceProvider = Provider<AuthSessionService?>((ref) {
   final client = ref.watch(supabaseClientProvider);
-  return client == null ? null : AuthSessionService(client);
+  return client == null
+      ? null
+      : AuthSessionService(
+          client,
+          settings: ref.watch(supabaseSettingsProvider),
+        );
 });
 
 /// Dòng sự kiện cho router và màn hình đăng nhập dùng về sau.

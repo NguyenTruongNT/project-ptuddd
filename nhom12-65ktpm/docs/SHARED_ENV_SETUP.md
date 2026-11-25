@@ -10,7 +10,7 @@
 3. Kiểm tra: `flutter doctor`, `flutter devices`.
 4. Ở thư mục gốc repo, chuyển về nhánh làm việc hoặc nhánh integration đã được đồng bộ.
 
-## 2. Chạy giao diện và mock, không cần backend
+## 2. Chạy ứng dụng sau khi pull code
 
 ```powershell
 cd nhom12-65ktpm\src
@@ -22,6 +22,17 @@ flutter run -d emulator-5554
 ```
 
 - Nếu mã thiết bị thay đổi, dùng đúng ID trong `flutter devices`.
+- Mặc định ứng dụng kết nối Supabase Cloud development bằng `src/assets/config/supabase.public.json` đã có trong Git. Không cần tạo file JSON cá nhân; cần Internet và tài khoản thử nghiệm riêng của từng thành viên.
+- Auth/Profile dùng Supabase thật. Các module nghiệp vụ chưa nối backend vẫn dùng dữ liệu mock.
+- File cấu hình công khai nằm ngoài `.dart_tool/`, nên được giữ lại sau `flutter clean`.
+
+Để phát triển giao diện với dữ liệu mock mà không kết nối Supabase:
+
+```powershell
+flutter run -d emulator-5554 --dart-define=SUPABASE_ENABLED=false
+```
+
+- Chọn **Xem bản demo** trên màn đăng nhập. Lỗi đọc cấu hình hoặc khởi tạo Supabase sẽ hiện trạng thái lỗi Auth, không tự chuyển sang demo.
 - Có thể mở tab **Cá nhân** → danh mục 26 màn hình và trang dữ liệu mock.
 - Các màn hình nghiệp vụ chưa làm sẽ hiện **placeholder**.
 - Không nhập tài khoản, số tài khoản hoặc chứng cứ giao nhận thật vào dữ liệu mock.
@@ -55,10 +66,13 @@ Khi dùng điện thoại Android thật, địa chỉ `10.0.2.2` không áp d�
 ## 4. Supabase Cloud
 
 - Một thành viên chịu trách nhiệm tạo/quản lý project development và cấp quyền phù hợp.
-- Chỉ cung cấp **Project URL** và **publishable key** cho Flutter qua `--dart-define`; bí mật quản trị chỉ dùng ở môi trường tin cậy, không đưa lên repo công khai.
+- Flutter mặc định đọc **Project URL** và **publishable key** từ `src/assets/config/supabase.public.json`. Đây là cấu hình development công khai được nhóm trưởng cho phép đưa lên Git; file chỉ được chứa hai trường `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY`.
+- Nếu dùng project khác hoặc Supabase local, truyền đủ cặp URL/key qua `--dart-define` hoặc `--dart-define-from-file`. Hai trường ghi đè được dùng cùng nhau; thiếu một trường hoặc URL không hợp lệ sẽ báo lỗi, không ghép với cấu hình development.
+- File ghi đè cá nhân có thể đặt ở `src/.env.supabase.json` (đã bị Git bỏ qua), rồi chạy `flutter run -d emulator-5554 --dart-define-from-file=.env.supabase.json`. Flutter không tự đọc file này khi thiếu tham số.
+- Publishable key được thiết kế để dùng trong ứng dụng phía người dùng; quyền dữ liệu vẫn phải được bảo vệ bằng Auth/RLS. Bí mật quản trị chỉ dùng ở môi trường tin cậy, không đưa vào ứng dụng hoặc repo công khai. Nguồn: [Supabase API keys](https://supabase.com/docs/guides/getting-started/api-keys).
 - Migration chỉ được áp dụng lên cloud **sau review và kiểm thử local**; sao lưu trước thay đổi phá hủy.
 - RLS/Storage đã có nền tảng, nhưng **không đồng nghĩa** các RPC giao dịch đã sẵn sàng; không mở quyền ghi trực tiếp chỉ để demo.
-- Không lưu key thật vào `README.md`, file `.dart`, Issue, PR hoặc ảnh chụp màn hình.
+- Chỉ lưu khóa publishable development đã được duyệt trong file JSON công khai nói trên; không chép giá trị khóa vào `README.md`, file `.dart`, Issue, PR hoặc ảnh chụp màn hình. Không đưa secret key, `service_role`, mật khẩu database, SMTP hoặc OAuth Client Secret vào JSON.
 
 ## 5. Kiểm tra trước mỗi PR
 
@@ -87,6 +101,7 @@ Script không tự reset database, không deploy cloud, không push Git và khô
 - `No supported devices`: mở Android Emulator → `flutter devices` → dùng ID hiện tại.
 - `assembleDebug` chạy lâu: để Gradle biên dịch; chỉ ghi là đạt khi app thực sự mở được.
 - Lỗi incremental Kotlin cache: dừng Gradle, `flutter clean`, `flutter pub get`, chạy lại; bản nhóm đã có fix trên `android/gradle.properties`. Không chỉnh cấu hình Gradle thêm tùy tiện.
+- Lỗi thiếu `.dart_tool/supabase.cloud.json`: bỏ tham số `--dart-define-from-file=.dart_tool/supabase.cloud.json` để dùng cấu hình development đi kèm ứng dụng. Nếu cần project riêng, tạo `src/.env.supabase.json` và truyền đường dẫn đó; không giữ cấu hình cá nhân trong thư mục sẽ bị `flutter clean` xóa.
 - Cảnh báo nâng cấp package không đồng nghĩa test thất bại; không nâng cấp đồng loạt trong PR tài liệu.
 
 ## 7. Nguyên tắc khi bàn giao
@@ -113,7 +128,7 @@ Kiểm tra sau triển khai:
 
 Đây là kiểm tra cấu trúc/quyền trên Cloud, chưa phải nghiệm thu toàn bộ Auth/Profile với email thật hoặc hai phiên người dùng Cloud. Password policy Cloud được đồng bộ ở mục 9. Các bước còn lại: SMTP, callback Android/web, rồi kiểm thử đăng ký/xác minh/khôi phục, hồ sơ và phân quyền giữa hai tài khoản.
 
-Cấu hình Flutter Cloud ở `src/.dart_tool/supabase.cloud.json`, được Git bỏ qua, với tên biến `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY`. Không dùng prefix `NEXT_PUBLIC_` trong Flutter. Kết quả dry-run, deploy và audit được giữ trong `src/.dart_tool/cloud-step3-*`; không chứa trong commit.
+Cấu hình Flutter Cloud hiện ở `src/assets/config/supabase.public.json`, được Git quản lý và đóng gói cùng ứng dụng, với đúng hai trường `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY`. File `.dart_tool/supabase.cloud.json` dùng ở các lượt kiểm tra trước không còn bắt buộc. Không dùng prefix `NEXT_PUBLIC_` trong Flutter. Kết quả dry-run, deploy và audit được giữ trong `src/.dart_tool/cloud-step3-*`; không chứa trong commit.
 
 CLI 3.x mặc định nhắm local. Khi kiểm tra Cloud, cần chỉ rõ đích; ví dụ từ `src/`:
 
@@ -200,7 +215,7 @@ npx.cmd supabase@3.3.0 config diff "--remote=$projectRef" --workdir tool/cloud_a
 Chạy web ở đúng origin trong allow-list, dừng preview cũ nếu nó đang giữ cổng `5180`:
 
 ```powershell
-flutter run -d chrome --web-hostname=127.0.0.1 --web-port=5180 --dart-define-from-file=.dart_tool/supabase.cloud.json
+flutter run -d chrome --web-hostname=127.0.0.1 --web-port=5180
 ```
 
 Khi thử đăng ký hoặc khôi phục từ app, mở link email bằng cùng trình duyệt và cùng origin đã khởi tạo yêu cầu để SDK đọc được PKCE verifier. Không gửi link xác nhận/khôi phục vào chat hoặc lưu vào log. Khi triển khai web công khai, thay Site URL và allow-list bằng origin HTTPS của môi trường đó.
@@ -251,4 +266,4 @@ Hướng dẫn chính thức: [Supabase GitHub](https://supabase.com/docs/guides
 - Thử tài khoản email đã được xác nhận cùng địa chỉ với provider; đối chiếu user/identities trên Supabase để xác nhận liên kết đúng, không tạo hồ sơ trùng. Không tự gộp user bằng email trong Flutter. Xem [Identity linking](https://supabase.com/docs/guides/auth/auth-identity-linking).
 - Hủy cấp quyền hoặc lỗi callback không cấp phiên giả; người dùng vẫn thao tác lại được trên màn đăng nhập.
 - Kiểm thử cả Chrome và Android, đăng xuất/đăng nhập lại và phân quyền giữa hai user như Auth email/password. Không mở rộng RLS/Storage grants để làm OAuth chạy.
-- Bật provider không cần thêm Client Secret vào `.dart_tool/supabase.cloud.json`. Flutter tiếp tục dùng Project URL và publishable key hiện có.
+- Bật provider không cần thêm Client Secret vào `assets/config/supabase.public.json`. Flutter tiếp tục dùng Project URL và publishable key hiện có.
