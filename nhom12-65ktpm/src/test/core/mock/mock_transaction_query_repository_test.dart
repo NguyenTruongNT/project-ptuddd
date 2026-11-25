@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:studyshare/core/contracts/domain_enums.dart';
+import 'package:studyshare/core/contracts/models/issue.dart';
 import 'package:studyshare/core/contracts/models/transaction.dart';
 import 'package:studyshare/core/mock/mock_repositories.dart';
 
@@ -77,6 +78,91 @@ void main() {
       expect(b.can(TransactionAction.requestReturn), isTrue);
       expect(a.can(TransactionAction.requestReturn), isFalse);
       expect(a.can(TransactionAction.reportIssue), isTrue);
+    });
+  });
+
+  group('Báo sự cố sau COMPLETED (BR-34, hạn 7 ngày lịch VN)', () {
+    // Hoàn tất lúc 03:00 UTC ngày 22/11 = 10:00 ngày 22/11 giờ VN; hạn hết ngày 29/11.
+    MockTransactionQueryRepository repoAt(DateTime now, String viewer,
+        {TransactionStatus status = TransactionStatus.completed}) {
+      var clock = DateTime.utc(2026, 11, 22, 3);
+      final store = MockTransactionStore.fromFixtures(clock: () => clock);
+      store.appendEvent(
+          transactionId: 'txn-borrow-01',
+          eventType: 'TRANSACTION_COMPLETED',
+          safeDescription: 'Hoàn tất.');
+      store.setStatus('txn-borrow-01', status);
+      clock = now;
+      return MockTransactionQueryRepository(demoViewerId: viewer, store: store);
+    }
+
+    test('Trong hạn: A và B được gợi ý báo sự cố, không có thao tác nào khác',
+        () async {
+      for (final viewer in [MockFixtures.userA, MockFixtures.userB]) {
+        // 23:59 ngày 29/11 giờ VN vẫn còn hạn.
+        final d = (await repoAt(DateTime.utc(2026, 11, 29, 16, 59), viewer)
+            .getTransactionDetails('txn-borrow-01'))!;
+        expect(d.allowedActions, {TransactionAction.reportIssue});
+      }
+    });
+
+    test('Quá hạn (00:00 ngày 30/11 giờ VN): không còn gợi ý', () async {
+      final d = (await repoAt(DateTime.utc(2026, 11, 29, 17), MockFixtures.userB)
+          .getTransactionDetails('txn-borrow-01'))!;
+      expect(d.allowedActions, isEmpty);
+    });
+
+    test('Giao dịch đã hủy: không gợi ý báo sự cố', () async {
+      final d = (await repoAt(DateTime.utc(2026, 11, 23), MockFixtures.userB,
+              status: TransactionStatus.cancelled)
+          .getTransactionDetails('txn-borrow-01'))!;
+      expect(d.allowedActions, isEmpty);
+    });
+  });
+
+  group('Timeline cùng thời điểm giữ thứ tự sự kiện thực tế', () {
+    test('Sự kiện giao dịch 10, 11, 12 không nhảy lên trước 2–9', () async {
+      final at = DateTime.utc(2026, 11, 22, 3);
+      final store = MockTransactionStore.fromFixtures(clock: () => at);
+      final ids = [
+        for (var i = 0; i < 12; i++)
+          store.appendEvent(
+              transactionId: 'txn-borrow-01',
+              eventType: 'NOTE',
+              safeDescription: 'Sự kiện ${i + 1}'),
+      ];
+      final repo = MockTransactionQueryRepository(
+          demoViewerId: MockFixtures.userA, store: store);
+      final timeline = (await repo.getTimeline('txn-borrow-01'))
+          .where((e) => e.eventType == 'NOTE')
+          .map((e) => e.id)
+          .toList();
+      expect(timeline, ids); // evt-mock-1 … evt-mock-12 đúng thứ tự ghi.
+    });
+
+    test('Sự kiện Issue cùng thời điểm cũng giữ thứ tự ghi', () async {
+      final at = DateTime.utc(2026, 11, 22, 3);
+      final store = MockTransactionStore.fromFixtures(
+          clock: () => at,
+          seedIssues: [
+            Issue(
+              id: 'issue-t',
+              transactionId: 'txn-borrow-01',
+              reporterId: MockFixtures.userB,
+              type: IssueType.wrongCondition,
+              reason: 'x',
+              status: IssueStatus.open,
+              openedAt: at,
+            ),
+          ]);
+      final ids = [
+        for (var i = 0; i < 12; i++)
+          store.appendIssueEvent(
+              issueId: 'issue-t', eventType: 'NOTE', safeDescription: '$i'),
+      ];
+      final repo = MockIssueQueryRepository(
+          demoViewerId: MockFixtures.userA, store: store);
+      expect((await repo.getTimeline('issue-t')).map((e) => e.id).toList(), ids);
     });
   });
 

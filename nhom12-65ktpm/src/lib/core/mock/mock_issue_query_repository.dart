@@ -1,5 +1,6 @@
 import '../contracts/models/models.dart';
 import '../contracts/repositories/issue_repository.dart';
+import 'mock_event_order.dart';
 import 'mock_fixtures.dart';
 import 'mock_issue_access.dart';
 import 'mock_transaction_store.dart';
@@ -33,11 +34,10 @@ class MockIssueQueryRepository implements IssueQueryRepository {
   @override
   Future<List<IssueEventItem>> getTimeline(String issueId) async {
     if (await getIssueDetails(issueId) == null) return const [];
-    final events = [...store.issueEvents(issueId)]..sort((a, b) {
-        final byTime = a.serverAt.compareTo(b.serverAt);
-        return byTime != 0 ? byTime : a.id.compareTo(b.id);
-      });
-    return List.unmodifiable(events);
+    return List.unmodifiable(sortedByServerOrder<IssueEventItem>(
+      store.issueEvents(issueId),
+      (event) => event.serverAt,
+    ));
   }
 
   IssueDetails _toDetails(Issue issue) {
