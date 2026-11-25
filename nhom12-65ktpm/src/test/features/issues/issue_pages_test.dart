@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:studyshare/core/backend/workflow_rpc.dart';
 import 'package:studyshare/core/contracts/command_inputs.dart';
 import 'package:studyshare/core/contracts/command_result.dart';
 import 'package:studyshare/core/contracts/domain_enums.dart';
@@ -79,6 +80,7 @@ Widget _app({
   return ProviderScope(
     key: UniqueKey(),
     overrides: [
+      workflowRpcProvider.overrideWithValue(null),
       demoViewerIdProvider.overrideWith((ref) => viewer),
       mockTransactionStoreProvider.overrideWith((ref) => store),
       ...overrides,

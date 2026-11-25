@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:studyshare/core/backend/workflow_rpc.dart';
 import 'package:studyshare/core/contracts/command_inputs.dart';
 import 'package:studyshare/core/contracts/domain_enums.dart';
 import 'package:studyshare/core/mock/mock_fixtures.dart';
@@ -23,6 +24,7 @@ void main() {
   test('Người ngoài không đọc được tài liệu và giao dịch của A', () async {
     final container = ProviderContainer(
       overrides: [
+        workflowRpcProvider.overrideWithValue(null),
         demoViewerIdProvider.overrideWith((ref) => MockFixtures.outsider),
       ],
     );
@@ -38,6 +40,7 @@ void main() {
   test('Tài khoản A đọc được dữ liệu mock của chính mình', () async {
     final container = ProviderContainer(
       overrides: [
+        workflowRpcProvider.overrideWithValue(null),
         demoViewerIdProvider.overrideWith((ref) => MockFixtures.userA),
       ],
     );
@@ -49,6 +52,7 @@ void main() {
   test('Issue mới tạo dùng chung store nên giao dịch hiện sự cố đang mở', () async {
     final container = ProviderContainer(
       overrides: [
+        workflowRpcProvider.overrideWithValue(null),
         demoViewerIdProvider.overrideWith((ref) => MockFixtures.userA),
       ],
     );
