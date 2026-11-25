@@ -15,7 +15,7 @@ flutter run -d emulator-5554
 
 Nếu mã thiết bị khác `emulator-5554`, lấy mã chính xác bằng `flutter devices` rồi thay thế. Ứng dụng mặc định đọc `assets/config/supabase.public.json` đã có trong Git để kết nối project development của nhóm. Máy mới không cần tạo `.dart_tool/supabase.cloud.json`; `flutter clean` không xóa file cấu hình công khai này. Cần có Internet và mỗi thành viên dùng tài khoản thử nghiệm riêng.
 
-Auth/Profile dùng Supabase thật; dữ liệu nghiệp vụ Material/Listing, giao dịch và các module chưa nối backend vẫn là mock.
+Auth/Profile và Material/ảnh tại SCR-07/08/09 dùng Supabase thật. Listing, QR Material và các module chưa nối backend theo tiến độ riêng; không coi màn preview mock là dữ liệu Cloud.
 
 ## Chạy demo không kết nối Supabase
 

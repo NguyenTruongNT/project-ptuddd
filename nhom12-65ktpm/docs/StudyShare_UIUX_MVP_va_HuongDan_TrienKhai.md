@@ -115,6 +115,7 @@ Các hình mockup minh họa trong DOCX và gói assets **không phải thiết 
 - **Cấu trúc/fields:** Tìm kiếm; filter; card; thêm tài liệu; trạng thái.
 - **CTA & điều hướng:** Thêm → SCR-08; chạm card → SCR-09.
 - **Điều kiện/chặn quan trọng:** Owner khác holder; sách đã bán/tặng không còn trong sở hữu A.
+- **Triển khai ngày 2 đã duyệt:** Tìm tên/ISBN, phân trang và bộ lọc chạy qua repository; card có bìa, môn/loại, nhãn Listing và người đang giữ riêng biệt. Giữ Shell 5 tab; form/chi tiết mở ngoài Shell. Hero có một tiêu đề, không lặp AppBar bên trong Shell.
 - **Trạng thái UI:** loading skeleton/indicator, empty state có hướng dẫn, lỗi có retry, offline có nhãn rõ; không đánh dấu thành công trước server ACK. Button disabled khi chưa đủ điều kiện hoặc request pending.
 
 #### SCR-08 – Thêm / sửa Material
@@ -122,6 +123,7 @@ Các hình mockup minh họa trong DOCX và gói assets **không phải thiết 
 - **Cấu trúc/fields:** Tên; môn/loại; tình trạng; mô tả; ảnh; lưu nháp.
 - **CTA & điều hướng:** Lưu ACK → SCR-09; hủy giữ xác nhận nếu đã sửa.
 - **Điều kiện/chặn quan trọng:** Offline chỉ lưu nháp; không tạo QR/Material giả; không sửa lịch sử.
+- **Triển khai ngày 2 đã duyệt:** Gallery 0–5 ảnh, đặt bìa và gỡ có confirm; tên 1–200, môn/loại và tình trạng 1–100, mô tả tùy chọn tối đa 2.000, ISBN tùy chọn có checksum. Confirm tóm tắt trước tạo/sửa; rời form có giữ nháp/bỏ thay đổi/tiếp tục. Nháp Android nằm trong SQLite riêng theo tài khoản. Tạo/sửa thành công chỉ sau ACK; timeout giữ cùng key và payload để kiểm tra lại.
 - **Trạng thái UI:** loading skeleton/indicator, empty state có hướng dẫn, lỗi có retry, offline có nhãn rõ; không đánh dấu thành công trước server ACK. Button disabled khi chưa đủ điều kiện hoặc request pending.
 
 #### SCR-09 – Chi tiết Material / QR
@@ -306,7 +308,7 @@ flowchart TD
 | Tab Trang chủ | /home | SCR-04 | Tab 1 |
 | Tab Khám phá | /explore | SCR-05 | Tab 2 |
 | Bài đăng | /listings/:id | SCR-06 | Details |
-| Tài liệu | /my-materials | SCR-07 | Danh sách |
+| Tài liệu | /materials | SCR-07 | Danh sách |
 | Tài liệu | /materials/new; /materials/:id/edit | SCR-08 | Form |
 | Tài liệu | /materials/:id | SCR-09 | Detail |
 | Tab Đăng tin | /listings/new?material=:id | SCR-10 | Tab 3 mở flow chọn Material |

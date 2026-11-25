@@ -448,4 +448,281 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get profileIssuesHint => 'Theo dõi vấn đề cần giải quyết';
+
+  @override
+  String get matTitle => 'Tài liệu của tôi';
+
+  @override
+  String get matSubtitle => 'Mỗi cuốn sách, một hành trình tri thức.';
+
+  @override
+  String get matAdd => 'Thêm tài liệu';
+
+  @override
+  String get matEdit => 'Chỉnh sửa';
+
+  @override
+  String get matDetails => 'Chi tiết tài liệu';
+
+  @override
+  String get matSearch => 'Tìm tên tài liệu hoặc ISBN';
+
+  @override
+  String get matAll => 'Tất cả';
+
+  @override
+  String get matReady => 'Có thể đăng';
+
+  @override
+  String get matActive => 'Đang giao dịch';
+
+  @override
+  String get matEmpty => 'Bắt đầu từ một cuốn sách';
+
+  @override
+  String get matEmptyBody =>
+      'Thêm tài liệu bạn sở hữu để lưu giữ và sẵn sàng chia sẻ.';
+
+  @override
+  String get matNoResults => 'Chưa tìm thấy tài liệu phù hợp.';
+
+  @override
+  String get matTryAgain => 'Thử lại';
+
+  @override
+  String get matLoadMore => 'Xem thêm';
+
+  @override
+  String get matNotFound =>
+      'Tài liệu không còn tồn tại hoặc bạn không có quyền xem.';
+
+  @override
+  String get matNoImage => 'Chưa có ảnh';
+
+  @override
+  String get matNoImageHint => 'Thêm ít nhất một ảnh để có thể đăng tin.';
+
+  @override
+  String get matHeldByYou => 'Bạn đang giữ';
+
+  @override
+  String get matHeldOther => 'Người khác đang giữ';
+
+  @override
+  String get matReserved => 'Đã được đặt';
+
+  @override
+  String get matUnlisted => 'Chưa đăng tin';
+
+  @override
+  String get matPublished => 'Đang công khai';
+
+  @override
+  String get matDraftListing => 'Tin nháp';
+
+  @override
+  String get matHiddenListing => 'Đã ẩn tin';
+
+  @override
+  String get matReadyLabel => 'Sẵn sàng chia sẻ';
+
+  @override
+  String get matLockedTransaction =>
+      'Tài liệu đang có giao dịch. Bạn có thể xem, nhưng chưa thể sửa thông tin và ảnh.';
+
+  @override
+  String get matLockedListing =>
+      'Hãy ẩn tin đăng trước khi chỉnh sửa tài liệu.';
+
+  @override
+  String get matLockedRequest =>
+      'Cần xử lý các yêu cầu đang chờ trước khi chỉnh sửa.';
+
+  @override
+  String get matLockedHolder =>
+      'Chỉ chỉnh sửa khi tài liệu đã được ghi nhận về người sở hữu.';
+
+  @override
+  String get matSave => 'Lưu tài liệu';
+
+  @override
+  String get matSaveChanges => 'Lưu thay đổi';
+
+  @override
+  String get matSaved => 'Đã lưu tài liệu.';
+
+  @override
+  String get matConfirmCreate => 'Xác nhận thêm tài liệu';
+
+  @override
+  String get matConfirmEdit => 'Xác nhận thay đổi';
+
+  @override
+  String get matConfirmBody => 'Thông tin và thứ tự ảnh dưới đây sẽ được lưu:';
+
+  @override
+  String get matName => 'Tên tài liệu';
+
+  @override
+  String get matSubject => 'Môn học / loại';
+
+  @override
+  String get matCondition => 'Tình trạng';
+
+  @override
+  String get matDescription => 'Mô tả';
+
+  @override
+  String get matIsbn => 'ISBN (không bắt buộc)';
+
+  @override
+  String get matRequired200 => 'Nhập từ 1 đến 200 ký tự hợp lệ.';
+
+  @override
+  String get matRequired100 => 'Nhập từ 1 đến 100 ký tự hợp lệ.';
+
+  @override
+  String get matDescriptionLimit => 'Mô tả tối đa 2.000 ký tự hợp lệ.';
+
+  @override
+  String get matInvalidIsbn => 'ISBN phải là mã ISBN-10 hoặc ISBN-13 hợp lệ.';
+
+  @override
+  String get matImages => 'Ảnh tài liệu';
+
+  @override
+  String get matImagesHint => 'Tối đa 5 ảnh • JPEG, PNG, WebP • 5 MiB/ảnh';
+
+  @override
+  String get matAddImage => 'Thêm ảnh';
+
+  @override
+  String get matCamera => 'Chụp ảnh';
+
+  @override
+  String get matGallery => 'Chọn từ thư viện';
+
+  @override
+  String get matCover => 'Ảnh bìa';
+
+  @override
+  String get matMakeCover => 'Đặt làm ảnh bìa';
+
+  @override
+  String get matRemoveImage => 'Bỏ ảnh';
+
+  @override
+  String get matRemoveImageBody =>
+      'Ảnh sẽ được gỡ khỏi tài liệu khi bạn lưu thay đổi.';
+
+  @override
+  String get matImageInvalid =>
+      'Ảnh không hợp lệ. Chọn JPEG, PNG hoặc WebP không quá 5 MiB.';
+
+  @override
+  String get matImageFailed =>
+      'Không thể tải ảnh. Nội dung đã được giữ lại; hãy thử lại.';
+
+  @override
+  String get matUploadProgress => 'Đang tải ảnh';
+
+  @override
+  String get matSaveProgress => 'Đang lưu tài liệu…';
+
+  @override
+  String get matConflict =>
+      'Dữ liệu đã thay đổi. Tải lại bản mới trước khi lưu; nội dung bạn nhập vẫn được giữ.';
+
+  @override
+  String get matForbidden => 'Bạn không có quyền thực hiện thao tác này.';
+
+  @override
+  String get matNetwork =>
+      'Chưa kết nối được. Hãy kiểm tra mạng hoặc lưu bản nháp.';
+
+  @override
+  String get matUnknown =>
+      'Chưa xác định kết quả lưu. Thử lại để kiểm tra cùng thao tác, không tạo tài liệu trùng.';
+
+  @override
+  String get matRefresh => 'Tải lại dữ liệu';
+
+  @override
+  String get matLeaveTitle => 'Bạn có thay đổi chưa lưu';
+
+  @override
+  String get matLeaveBody =>
+      'Bạn có thể giữ bản nháp trên thiết bị để tiếp tục sau.';
+
+  @override
+  String get matKeepEditing => 'Tiếp tục sửa';
+
+  @override
+  String get matSaveDraft => 'Lưu nháp trên máy';
+
+  @override
+  String get matDiscard => 'Bỏ thay đổi';
+
+  @override
+  String get matDraftSaved => 'Đã lưu nháp trên thiết bị.';
+
+  @override
+  String get matDraftFound => 'Có bản nháp chưa hoàn tất';
+
+  @override
+  String get matResumeDraft => 'Tiếp tục bản nháp';
+
+  @override
+  String get matNewInstead => 'Bắt đầu lại';
+
+  @override
+  String get matDraftError =>
+      'Không lưu được bản nháp. Hãy giữ màn hình này và thử lại.';
+
+  @override
+  String get matCopyId => 'Sao chép mã tài liệu';
+
+  @override
+  String get matIdCopied => 'Đã sao chép mã tài liệu.';
+
+  @override
+  String get matOwner => 'Chủ sở hữu';
+
+  @override
+  String get matHolder => 'Người đang giữ';
+
+  @override
+  String get matYou => 'Bạn';
+
+  @override
+  String get matDemo => 'Dữ liệu mô phỏng • không lưu lên Supabase';
+
+  @override
+  String get matDetailsHint => 'Một bản sách riêng, được lưu cùng bạn.';
+
+  @override
+  String get matReloadUrls => 'Tải lại ảnh';
+
+  @override
+  String get matTip =>
+      'Chụp rõ bìa và những trang có ghi chú để người nhận hiểu đúng tình trạng sách.';
+
+  @override
+  String get matNewTitle => 'Thêm một cuốn sách,\nmở thêm cơ hội sẻ chia.';
+
+  @override
+  String get matFormHint =>
+      'Lưu thông tin bản sách bạn sở hữu. Bạn có thể đăng tin sau.';
+
+  @override
+  String get matPhotoPermission =>
+      'Không mở được camera hoặc thư viện. Kiểm tra quyền truy cập và thử lại.';
+
+  @override
+  String get matSnapshotChanged =>
+      'Nội dung mới nhất đã được tải. Bạn có thể tiếp tục chỉnh sửa từ bản này.';
+
+  @override
+  String get matCached =>
+      'Đang xem dữ liệu lưu trên thiết bị. Kết nối mạng để tải dữ liệu mới và chỉnh sửa.';
 }

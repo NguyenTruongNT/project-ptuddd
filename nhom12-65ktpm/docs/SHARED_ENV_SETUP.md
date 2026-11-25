@@ -23,7 +23,7 @@ flutter run -d emulator-5554
 
 - Nếu mã thiết bị thay đổi, dùng đúng ID trong `flutter devices`.
 - Mặc định ứng dụng kết nối Supabase Cloud development bằng `src/assets/config/supabase.public.json` đã có trong Git. Không cần tạo file JSON cá nhân; cần Internet và tài khoản thử nghiệm riêng của từng thành viên.
-- Auth/Profile dùng Supabase thật. Các module nghiệp vụ chưa nối backend vẫn dùng dữ liệu mock.
+- Auth/Profile và Material/ảnh SCR-07/08/09 dùng Supabase thật. Các module chưa nối backend trên nhánh hiện tại vẫn dùng dữ liệu mock.
 - File cấu hình công khai nằm ngoài `.dart_tool/`, nên được giữ lại sau `flutter clean`.
 
 Để phát triển giao diện với dữ liệu mock mà không kết nối Supabase:
@@ -267,3 +267,20 @@ Hướng dẫn chính thức: [Supabase GitHub](https://supabase.com/docs/guides
 - Hủy cấp quyền hoặc lỗi callback không cấp phiên giả; người dùng vẫn thao tác lại được trên màn đăng nhập.
 - Kiểm thử cả Chrome và Android, đăng xuất/đăng nhập lại và phân quyền giữa hai user như Auth email/password. Không mở rộng RLS/Storage grants để làm OAuth chạy.
 - Bật provider không cần thêm Client Secret vào `assets/config/supabase.public.json`. Flutter tiếp tục dùng Project URL và publishable key hiện có.
+
+## 13. Material/ảnh ngày 2 — 25/11/2026
+
+Material SCR-07/08/09 dùng Cloud development mặc định. Từ Cá nhân → Tài liệu của tôi → Thêm tài liệu. Demo tường minh dùng store mock riêng, không fallback khi Supabase lỗi.
+
+Bốn migration Material ngày 25/11 và Edge verify-material-image đã triển khai đúng project development. Không đưa key backend vào asset hoặc Dart define.
+
+- Local: mở stack, chạy riêng npx supabase@3.3.0 functions serve verify-material-image --no-verify-jwt, rồi ./tool/test_material_local.ps1.
+- Cloud development: ./tool/test_material_cloud.ps1. CLI cần quyền project; script giữ key trong tiến trình, khôi phục biến môi trường, không ghi key ra log.
+- Cả hai chạy test/integration/material_supabase_test.dart: Auth A/B, JPEG/PNG/WebP, giả MIME, create/update, trùng ISBN khác ID, retry/conflict, bìa, revision race, session mới, RLS và chuyển chủ.
+- Database: npx supabase@3.3.0 test db và db lint. Flutter: flutter analyze, flutter test, flutter build apk --debug.
+- Test integration mặc định skip khi không có RUN_MATERIAL_SUPABASE. Lỗi cleanup giữ UUID test trong .dart_tool để dọn chính xác; không reset DB hoặc xóa dữ liệu người khác.
+- Ảnh chụp/log/dữ liệu QA ở .dart_tool, không commit. QR và publish Listing thuộc ngày 4/3.
+- Kết quả 25/11: analyze sạch; 224 test Flutter đạt (3 integration opt-in mặc định skip), 13 test Material mock/UI, 74 kiểm tra pgTAP đạt và db lint sạch. Integration opt-in đã chạy riêng trên local/Cloud, có cache offline và tách A/B.
+- Android đã thử thư viện ảnh thật, nháp SQLite qua force-stop, tạo/sửa có confirm, mở lại tải đúng Cloud; đã sửa SafeArea và nút lưu trên bàn phím. Giữ một account/bản sách QA để người dùng nghiệm thu; tài khoản của test tự động được dọn riêng.
+
+Khi Cloud có migration đồng đội chưa trong checkout: đọc lịch sử, đối chiếu nguồn và dry-run từ snapshot riêng đủ lịch sử. Không migration repair để bỏ qua phiên bản lạ, không tự merge/commit code đồng đội.
