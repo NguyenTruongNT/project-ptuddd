@@ -1,33 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../core/auth/auth_session_providers.dart';
 
 import '../l10n/app_localizations.dart';
 
-class StudyShareShell extends StatelessWidget {
+class StudyShareShell extends ConsumerWidget {
   const StudyShareShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('StudyShare')),
-      body: navigationShell,
+      appBar: navigationShell.currentIndex == 4
+          ? null
+          : AppBar(title: const Text('StudyShare')),
+      body: Column(
+        children: [
+          if (ref.watch(demoModeProvider))
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: Theme.of(context).colorScheme.secondaryContainer,
+              child: Text(l10n.authDemoNotice),
+            ),
+          Expanded(child: navigationShell),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) => navigationShell.goBranch(index),
         destinations: [
-          NavigationDestination(icon: const Icon(Icons.home_outlined),
-              label: l10n.navHome),
-          NavigationDestination(icon: const Icon(Icons.search),
-              label: l10n.navExplore),
-          NavigationDestination(icon: const Icon(Icons.add_box_outlined),
-              label: l10n.navPublish),
-          NavigationDestination(icon: const Icon(Icons.swap_horiz),
-              label: l10n.navTransactions),
-          NavigationDestination(icon: const Icon(Icons.person_outline),
-              label: l10n.navProfile),
+          NavigationDestination(
+            icon: const Icon(Icons.home_outlined),
+            label: l10n.navHome,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.search),
+            label: l10n.navExplore,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.add_box_outlined),
+            label: l10n.navPublish,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.swap_horiz),
+            label: l10n.navTransactions,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.person_outline),
+            label: l10n.navProfile,
+          ),
         ],
       ),
     );

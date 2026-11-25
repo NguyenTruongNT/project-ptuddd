@@ -277,6 +277,8 @@ Các interface khác: `MaterialRepository`, `ListingRepository`, `ListingQueryRe
 
 ## 12. Gate trước khi triển khai migration/code
 
+Các contracts Auth/Profile bổ sung ở mục 13; không thay đổi enum hoặc quyền của các module giao dịch.
+
 - [x] Nhóm trưởng đã duyệt định hướng `CONTRACTS.md` và `STATE_MACHINES.md` trên cơ sở SS-BR v2.0; bản v0.2 điều chỉnh vị trí mã nguồn theo README.
 - [ ] Khóa exact SQL schema/migration và RPC input/output types.
 - [ ] Khóa query public read vs private row access; không làm lộ QR secret.
@@ -285,3 +287,18 @@ Các interface khác: `MaterialRepository`, `ListingRepository`, `ListingQueryRe
 - [ ] Mock repository chạy cùng interface và contract tests trước khi các thành viên triển khai UI chuyên biệt.
 
 > **Tình trạng:** Bản kỹ thuật đã được nhóm trưởng duyệt định hướng, chưa khóa chữ ký SQL/RPC cụ thể. **Chưa có migration, RLS, RPC hoặc UI được chạy từ file này.**
+
+## 13. Auth/Profile — contracts triển khai ngày 1
+
+- `AuthRepository` cung cấp `watchSession`, `signIn`, `register`, `requestPasswordReset`, `resendConfirmation`, `completePasswordRecovery`, `signOut`; adapter Supabase là `AuthSessionService`.
+- `AuthSnapshot` phân biệt chưa cấu hình, signed out, signed in, recovery và lỗi phiên. `AuthIdentity` chỉ gồm ID, email và tên hiển thị của chính người dùng; không chứa token. Actor thực tế ở server vẫn là `auth.uid()`.
+- `register` nhận tên/email/password, trả `RegistrationOutcome.needsEmailConfirmation`. Session null không được coi là đăng ký đã xác thực. Password không được lưu vào preferences hoặc chuyển qua URL.
+- Đăng ký/đặt mật khẩu mới: tối thiểu 8 ký tự, có A–Z, a–z, 0–9 và ít nhất một ký tự thuộc tập symbol của Supabase `lower_upper_letters_digits_symbols`. Form báo rõ điều kiện còn thiếu, xác nhận mật khẩu phải khớp, không mở confirm/gọi API khi sai. Supabase Auth local cưỡng chế cùng policy tại signup/updateUser; Cloud cần cấu hình riêng trước triển khai. Đăng nhập không áp policy tạo mới lên mật khẩu cũ; server xác thực thông tin đăng nhập. Email đúng định dạng ở client không thay thế bước xác minh email do server yêu cầu.
+- Chỉ sự kiện `AuthChangeEvent.passwordRecovery` sau khi SDK xác minh liên kết mới bật form đổi mật khẩu. URL/query recovery do người dùng tự gửi không đủ cấp quyền. Đổi mật khẩu xong đăng xuất các phiên bằng server và yêu cầu đăng nhập lại.
+- Callback Android: `studyshare://auth/callback`, được allowlist trong Auth. SDK sở hữu nhận và trao đổi PKCE; Flutter router không đọc/log code hoặc token. Các route phụ `/auth/forgot-password`, `/auth/check-email`, `/auth/reset-password` không tăng 26 SCR chính.
+- Auth guard chỉ lưu đường dẫn nội bộ đã biết, loại query/fragment, từ chối external redirect. Khi đổi identity/logout, profile và cache mock riêng tư phải được tái tạo. Chế độ demo chỉ bật tường minh khi backend chưa cấu hình và phải có nhãn mô phỏng.
+- `ProfileRepository.getOrCreateMyProfile` chỉ đọc/tạo hồ sơ của session hiện tại; `updateMyDisplayName` chỉ sửa tên 1–100 ký tự. Dùng SELECT/INSERT và column-grant UPDATE(display_name) đã có, với RLS self-only. Không cấp UPDATE(user_id), role hay trạng thái nghiệp vụ.
+- Tên trong `user_metadata` chỉ là giá trị khởi tạo hiển thị, không dùng làm căn cứ phân quyền. Dữ liệu profile không được coi là đã lưu trước ACK server. Lỗi không trả message thô có thể chứa PII.
+- Preferences chỉ lưu theme, palette, locale, grid/leaves trên thiết bị; Supabase SDK quản lý session. Các lựa chọn giao diện được ghi tuần tự để không mất thay đổi đồng thời.
+- Kiểm thử: unit/widget Auth + guard + cache + preferences; pgTAP `03_profile_access.test.sql`; test local opt-in `test/integration/auth_local_test.dart` dùng Auth thật, RLS và trao đổi PKCE. Test local chỉ xóa UUID tài khoản giả do chính nó tạo, không dùng URL cloud hoặc service key.
+- Kiểm thử policy riêng: `tool/test_password_policy_local.ps1` chạy `test/integration/password_policy_local_test.dart`, gọi trực tiếp SDK để kiểm tra server từ chối từng điều kiện còn thiếu ở signup/update, mật khẩu cũ vẫn dùng được sau yêu cầu đổi bị từ chối, mật khẩu mới hợp lệ mới thay thế mật khẩu cũ.
