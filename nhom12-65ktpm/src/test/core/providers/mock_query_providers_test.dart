@@ -47,7 +47,11 @@ void main() {
   });
 
   test('Issue mới tạo dùng chung store nên giao dịch hiện sự cố đang mở', () async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [
+        demoViewerIdProvider.overrideWith((ref) => MockFixtures.userA),
+      ],
+    );
     addTearDown(container.dispose);
     expect(await container.read(issueQueryRepositoryProvider).getMyIssues(), isEmpty);
 

@@ -292,6 +292,38 @@ void main() {
       expect(find.text(IssueDetailsPage.noAccessMessage), findsOneWidget);
     });
 
+    testWidgets('Dialog đề xuất không tràn trên 360×640 khi bàn phím mở',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final store = _store(seeded: true);
+      await tester.pumpWidget(_app(
+          viewer: MockFixtures.userA,
+          initial: '/issues/issue-seed-1',
+          store: store));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Đề xuất phương án'));
+      await tester.tap(find.text('Đề xuất phương án'));
+      await tester.pumpAndSettle();
+
+      // Bàn phím cao (kèm thanh gợi ý) chiếm hơn nửa màn hình 640px.
+      tester.view.viewInsets = const FakeViewPadding(bottom: 380);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull); // Không có RenderFlex overflow.
+
+      // Nút gửi vẫn bấm được nhờ nội dung dialog cuộn được.
+      await tester.enterText(
+          find.byKey(const Key('resolution-summary')), 'Đổi bản khác.');
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.text('Gửi đề xuất'));
+      await tester.pumpAndSettle();
+      expect(store.issueProposal('issue-seed-1')?.summary, 'Đổi bản khác.');
+    });
+
     testWidgets('A đề xuất, B xác nhận, A xác nhận: chỉ khi đủ hai bên mới đóng',
         (tester) async {
       _tallView(tester);
