@@ -16,10 +16,7 @@ class MockIssueRepository implements IssueRepository {
 
   final MockIssueCommandRunner _runner;
 
-  // Hạn khởi tạo khiếu nại sau khi giao dịch COMPLETED: 7 ngày lịch Việt Nam.
-  static const reportWindowDays = 7;
   static const _maxTextLength = 1000;
-  static const _vnOffset = Duration(hours: 7);
 
   static const _resolved = MockIssueFail(
     DomainErrorCode.invalidTransactionTransition,
@@ -194,29 +191,14 @@ class MockIssueRepository implements IssueRepository {
 
   // Giao dịch đã hủy không còn đối tượng để khiếu nại; sau COMPLETED chỉ được
   // khởi tạo trong hạn 7 ngày lịch Việt Nam (hết ngày thứ 7).
+  // Điều kiện dùng chung với allowedActions: isIssueReportWindowOpen.
   MockIssueFail? _reportBlocker(StudyTransaction txn) {
-    final store = _runner.store;
+    if (isIssueReportWindowOpen(_runner.store, txn)) return null;
     if (txn.status == TransactionStatus.cancelled) {
       return const MockIssueFail(DomainErrorCode.invalidTransactionTransition,
           'Giao dịch đã hủy, không thể mở sự cố.');
     }
-    if (txn.status == TransactionStatus.completed) {
-      final completedAt = store.lastEventAt(txn.id);
-      if (completedAt != null) {
-        final deadline = _vnDay(completedAt).add(const Duration(days: reportWindowDays));
-        if (_vnDay(store.clock()).isAfter(deadline)) {
-          return const MockIssueFail(
-              DomainErrorCode.invalidTransactionTransition,
-              'Đã quá hạn 7 ngày để mở sự cố cho giao dịch này.');
-        }
-      }
-    }
-    return null;
-  }
-
-  // Ngày lịch Asia/Ho_Chi_Minh (UTC+7) của một thời điểm, về 00:00.
-  static DateTime _vnDay(DateTime instant) {
-    final vn = instant.toUtc().add(_vnOffset);
-    return DateTime.utc(vn.year, vn.month, vn.day);
+    return const MockIssueFail(DomainErrorCode.invalidTransactionTransition,
+        'Đã quá hạn 7 ngày để mở sự cố cho giao dịch này.');
   }
 }

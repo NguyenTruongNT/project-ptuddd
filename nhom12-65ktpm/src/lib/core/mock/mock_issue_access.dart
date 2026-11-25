@@ -1,3 +1,4 @@
+import '../contracts/domain_enums.dart';
 import '../contracts/models/models.dart';
 import 'mock_transaction_store.dart';
 
@@ -55,6 +56,39 @@ bool canReadIssue(MockTransactionStore store, Issue issue, String userId) {
 /// Quyền đề xuất/xác nhận phương án: chỉ bên bị ảnh hưởng trực tiếp.
 bool canActOnIssue(MockTransactionStore store, Issue issue, String userId) =>
     issueAffectedParties(store, issue).contains(userId);
+
+/// Hạn khởi tạo khiếu nại sau khi giao dịch COMPLETED: 7 ngày lịch Việt Nam.
+const issueReportWindowDays = 7;
+
+// Việt Nam dùng UTC+7 cố định, không có giờ mùa hè.
+const _vnOffset = Duration(hours: 7);
+
+// Ngày lịch Asia/Ho_Chi_Minh (UTC+7) của một thời điểm, về 00:00.
+DateTime _vnDay(DateTime instant) {
+  final vn = instant.toUtc().add(_vnOffset);
+  return DateTime.utc(vn.year, vn.month, vn.day);
+}
+
+/// Giao dịch còn nhận Issue mới theo trạng thái/thời hạn hay không (BR-34).
+/// - CANCELLED: không còn đối tượng để khiếu nại.
+/// - COMPLETED: chỉ trong hạn 7 ngày lịch Việt Nam (hết ngày thứ 7).
+/// - Các trạng thái còn lại: luôn mở.
+/// Dùng chung cho gợi ý UI (allowedActions) và lệnh reportIssue để hai nơi
+/// không lệch nhau.
+bool isIssueReportWindowOpen(MockTransactionStore store, StudyTransaction txn) {
+  switch (txn.status) {
+    case TransactionStatus.cancelled:
+      return false;
+    case TransactionStatus.completed:
+      final completedAt = store.lastEventAt(txn.id);
+      if (completedAt == null) return true;
+      final deadline =
+          _vnDay(completedAt).add(const Duration(days: issueReportWindowDays));
+      return !_vnDay(store.clock()).isAfter(deadline);
+    default:
+      return true;
+  }
+}
 
 /// Quyền MỞ Issue mới: A/B của giao dịch, hoặc một đầu của chặng được gắn vào.
 bool canReportIssue(
