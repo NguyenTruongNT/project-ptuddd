@@ -66,6 +66,7 @@ flutter:
   uses-material-design: true
   generate: true
   assets:
+    - assets/config/supabase.public.json
     - assets/branding/logo_dark_original.png
     - assets/branding/logo_light_original.png
     - assets/branding/google_g.png

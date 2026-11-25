@@ -2,7 +2,7 @@
 
 Ứng dụng StudyShare của nhóm 12, lớp 65KTPM. Mã nguồn Flutter nằm trong `nhom12-65ktpm/src/` theo README giảng viên.
 
-## Chạy nhanh (giao diện + dữ liệu mock)
+## Chạy nhanh (Supabase Cloud development của nhóm)
 
 ```powershell
 cd nhom12-65ktpm\src
@@ -13,11 +13,23 @@ flutter devices
 flutter run -d emulator-5554
 ```
 
-Nếu mã thiết bị khác `emulator-5554`, lấy mã chính xác bằng `flutter devices` rồi thay thế. Khi chưa có cấu hình Supabase, màn đăng nhập có nút **Xem bản demo**. Chế độ này có nhãn dữ liệu mô phỏng và không tạo phiên Supabase giả.
+Nếu mã thiết bị khác `emulator-5554`, lấy mã chính xác bằng `flutter devices` rồi thay thế. Ứng dụng mặc định đọc `assets/config/supabase.public.json` đã có trong Git để kết nối project development của nhóm. Máy mới không cần tạo `.dart_tool/supabase.cloud.json`; `flutter clean` không xóa file cấu hình công khai này. Cần có Internet và mỗi thành viên dùng tài khoản thử nghiệm riêng.
 
-## Chạy với Supabase
+Auth/Profile dùng Supabase thật; dữ liệu nghiệp vụ Material/Listing, giao dịch và các module chưa nối backend vẫn là mock.
 
-Đọc **`../docs/SHARED_ENV_SETUP.md`** trước khi cấu hình. Ứng dụng đọc `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY` từ `--dart-define`. Chỉ dùng khóa công khai của client, không đưa `service_role`, secret key, mật khẩu hay `.env` vào Git.
+## Chạy demo không kết nối Supabase
+
+```powershell
+flutter run -d emulator-5554 --dart-define=SUPABASE_ENABLED=false
+```
+
+Màn đăng nhập có nút **Xem bản demo**. Chế độ này có nhãn dữ liệu mô phỏng và không tạo phiên Supabase giả. Lỗi đọc cấu hình hoặc khởi tạo Supabase được hiển thị như lỗi Auth, không tự chuyển sang demo.
+
+## Ghi đè cấu hình Supabase
+
+Đọc **`../docs/SHARED_ENV_SETUP.md`** trước khi cấu hình. Để dùng Supabase local hoặc project khác, truyền đầy đủ `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY` bằng `--dart-define` hoặc `--dart-define-from-file`. Cặp ghi đè được ưu tiên toàn bộ, không lấy trường còn thiếu từ cấu hình development. Nếu chỉ truyền một trường hoặc URL không hợp lệ, ứng dụng báo lỗi cấu hình.
+
+File `assets/config/supabase.public.json` chỉ chứa URL development và khóa `sb_publishable_` dành cho ứng dụng. Không đưa `service_role`, secret key, mật khẩu hay `.env` vào Git. Khóa publishable không thay thế đăng nhập, RLS hoặc kiểm tra quyền tại server.
 
 ## Kiểm tra một lần
 
