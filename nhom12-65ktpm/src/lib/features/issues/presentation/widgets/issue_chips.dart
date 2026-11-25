@@ -69,12 +69,16 @@ class _IssueChip extends StatelessWidget {
             Icon(icon, size: 14, color: foreground),
             const SizedBox(width: 4),
           ],
-          Text(
-            label,
-            style: Theme.of(context)
-                .textTheme
-                .labelMedium
-                ?.copyWith(color: foreground),
+          // Flexible: nhãn dài co lại thay vì tràn ngang trên màn 360px.
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context)
+                  .textTheme
+                  .labelMedium
+                  ?.copyWith(color: foreground),
+            ),
           ),
         ],
       ),

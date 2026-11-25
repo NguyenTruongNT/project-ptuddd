@@ -81,6 +81,7 @@ class _IssueActionsCardState extends ConsumerState<IssueActionsCard> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true, // Phương án có thể dài; tránh tràn trên màn nhỏ.
         title: const Text('Xác nhận phương án?'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -203,7 +204,10 @@ class _ProposalDialogState extends State<_ProposalDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // scrollable: nội dung cuộn được và co theo bàn phím (viewInsets) để không
+    // tràn trên màn nhỏ như 360×640 khi bàn phím mở.
     return AlertDialog(
+      scrollable: true,
       title: const Text('Đề xuất phương án giải quyết'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
