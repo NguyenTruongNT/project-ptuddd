@@ -7,12 +7,16 @@ import '../../../core/providers/mock_query_providers.dart';
 import '../../transactions/providers/transaction_providers.dart';
 import '../data/mock_issue_command_runner.dart';
 import '../data/mock_issue_repository.dart';
+import '../data/supabase_issue_repositories.dart';
 
 // ---------- Repository (interface) ----------
-// Trang chỉ phụ thuộc interface. Bản Supabase override các provider này.
-final issueReadRepositoryProvider = Provider<IssueQueryRepository>(
-  (ref) => ref.watch(issueQueryRepositoryProvider),
-);
+// Trang chỉ phụ thuộc interface. Có SupabaseClient thì dùng RPC thật;
+// không cấu hình Supabase (demo/test) thì dùng mock in-memory.
+final issueReadRepositoryProvider = Provider<IssueQueryRepository>((ref) {
+  final rpc = ref.watch(studyRpcGatewayProvider);
+  if (rpc != null) return SupabaseIssueQueryRepository(rpc);
+  return ref.watch(issueQueryRepositoryProvider);
+});
 
 final _mockIssueRunnerProvider = Provider<MockIssueCommandRunner>(
   (ref) => MockIssueCommandRunner(
@@ -21,9 +25,11 @@ final _mockIssueRunnerProvider = Provider<MockIssueCommandRunner>(
   ),
 );
 
-final issueRepositoryProvider = Provider<IssueRepository>(
-  (ref) => MockIssueRepository(ref.watch(_mockIssueRunnerProvider)),
-);
+final issueRepositoryProvider = Provider<IssueRepository>((ref) {
+  final rpc = ref.watch(studyRpcGatewayProvider);
+  if (rpc != null) return SupabaseIssueRepository(rpc);
+  return MockIssueRepository(ref.watch(_mockIssueRunnerProvider));
+});
 
 // ---------- Dữ liệu đọc ----------
 final myIssuesProvider = FutureProvider<List<IssueDetails>>((ref) async {
@@ -41,16 +47,17 @@ final issueDetailsProvider = FutureProvider.family<IssueDetails?, String>(
 
 final issueTimelineProvider =
     FutureProvider.family<List<IssueEventItem>, String>(
-  (ref, issueId) => ref.watch(issueReadRepositoryProvider).getTimeline(issueId),
-);
+      (ref, issueId) =>
+          ref.watch(issueReadRepositoryProvider).getTimeline(issueId),
+    );
 
 // Giao dịch mà SCR-22 gắn Issue vào; null khi không tồn tại hoặc không có quyền.
 final issueTransactionContextProvider =
     FutureProvider.family<TransactionDetails?, String>(
-  (ref, transactionId) => ref
-      .watch(transactionQueryRepositoryProvider)
-      .getTransactionDetails(transactionId),
-);
+      (ref, transactionId) => ref
+          .watch(transactionReadRepositoryProvider)
+          .getTransactionDetails(transactionId),
+    );
 
 /// Sau mỗi lệnh (thành công hay lỗi) tải lại snapshot server, không tự sửa UI.
 /// Issue đổi nhãn "Có sự cố" của giao dịch nên cũng phải tải lại giao dịch.
