@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/app_routes.dart';
 import '../../../core/contracts/command_inputs.dart';
 import '../../../core/contracts/command_result.dart';
 import '../../../core/mock/mock_fixtures.dart';
@@ -27,6 +28,7 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
   final _dropoffController = TextEditingController();
   final _noteController = TextEditingController();
 
+  bool _isDirectHandover = false; // false = Giao hộ, true = Giao trực tiếp
   bool _attachGps = false;
   String? _gpsCoords;
   bool _isSubmitting = false;
@@ -132,6 +134,70 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
               ),
               const SizedBox(height: 16),
 
+              // Lựa chọn phương thức bàn giao (UI-10: Giao trực tiếp hoặc Giao hộ)
+              Text(
+                'Hình thức giao nhận tài liệu',
+                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment<bool>(
+                    value: false,
+                    label: Text('Giao hộ (Courier)'),
+                    icon: Icon(Icons.delivery_dining),
+                  ),
+                  ButtonSegment<bool>(
+                    value: true,
+                    label: Text('Giao trực tiếp'),
+                    icon: Icon(Icons.people_outline),
+                  ),
+                ],
+                selected: {_isDirectHandover},
+                onSelectionChanged: (newSelection) {
+                  setState(() => _isDirectHandover = newSelection.first);
+                },
+              ),
+              const SizedBox(height: 16),
+
+              if (_isDirectHandover) ...[
+                Card(
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.handshake_outlined, color: Colors.green),
+                            SizedBox(width: 8),
+                            Text('Quy trình giao nhận trực tiếp', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Hai bạn sẽ hẹn gặp mặt trực tiếp để bàn giao tài liệu. Người giao sẽ chụp ít nhất 1 ảnh minh chứng và đối chiếu QR.',
+                          style: TextStyle(fontSize: 13, color: Colors.black87),
+                        ),
+                        const SizedBox(height: 16),
+                        FilledButton.icon(
+                          onPressed: () {
+                            context.push(AppRoutes.prepareHandover('handover-borrow-01'));
+                          },
+                          icon: const Icon(Icons.camera_alt),
+                          label: const Text('Bắt đầu chuẩn bị bàn giao trực tiếp'),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48),
+                            backgroundColor: const Color(0xFF16A34A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ] else ...[
               if (_errorMessage != null) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -228,6 +294,7 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
+              ],
             ],
           ),
         ),
