@@ -87,3 +87,18 @@ enum IssueStatus {
   static IssueStatus fromWire(String raw) =>
       _fromWire(values, raw, (value) => value.wire);
 }
+
+// Loại sự cố để phân loại và hiển thị; KHÔNG quyết định trạng thái hay chủ sở hữu.
+// SS-BR v2.0 chưa khóa danh sách; đây là bộ tối thiểu cho MVP, chờ nhóm trưởng duyệt.
+enum IssueType {
+  wrongMaterial('WRONG_MATERIAL'),
+  wrongCondition('WRONG_CONDITION'),
+  notReceived('NOT_RECEIVED'),
+  deliveryFailed('DELIVERY_FAILED'),
+  uncooperative('UNCOOPERATIVE'),
+  other('OTHER');
+  const IssueType(this.wire);
+  final String wire;
+  static IssueType fromWire(String raw) =>
+      _fromWire(values, raw, (value) => value.wire);
+}

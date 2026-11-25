@@ -7,8 +7,19 @@ import 'mock_fixtures.dart';
 // - Chỉ các mock command repository (giả lập RPC server) được gọi hàm ghi.
 // - Mất khi khởi động lại app; không phải nguồn sự thật.
 class MockTransactionStore {
-  MockTransactionStore.fromFixtures({DateTime Function()? clock})
-      : clock = clock ?? (() => DateTime.now().toUtc()),
+  MockTransactionStore.fromFixtures({
+    DateTime Function()? clock,
+    List<Issue>? seedIssues,
+    List<Handover>? seedHandovers,
+  })  : clock = clock ?? (() => DateTime.now().toUtc()),
+        _issues = {
+          for (final issue in seedIssues ?? MockFixtures.issues)
+            issue.id: issue,
+        },
+        _handovers = {
+          for (final handover in seedHandovers ?? MockFixtures.handovers)
+            handover.id: handover,
+        },
         _transactions = {
           for (final txn in MockFixtures.transactions) txn.id: txn,
         },
@@ -26,7 +37,15 @@ class MockTransactionStore {
   final List<TransactionEventItem> _events;
   final Map<String, CancellationProposal> _cancellations = {};
   final Map<String, MockCommandReceipt> _receipts = {};
+  // Issue nằm cùng store với Transaction vì openIssueCount phải phản ánh Issue mới tạo.
+  final Map<String, Issue> _issues;
+  // Chặng bàn giao để xác định C có trực tiếp liên quan tới một Issue hay không.
+  final Map<String, Handover> _handovers;
+  final Map<String, MockIssueProposal> _issueProposals = {};
+  final List<IssueEventItem> _issueEvents = [];
   int _eventCounter = 0;
+  int _issueCounter = 0;
+  int _issueEventCounter = 0;
 
   // ---------- Đọc ----------
   List<StudyTransaction> get transactions =>
@@ -51,14 +70,41 @@ class MockTransactionStore {
     return null;
   }
 
-  int openIssueCount(String transactionId) => MockFixtures.issues
+  int openIssueCount(String transactionId) => _issues.values
       .where((issue) =>
           issue.transactionId == transactionId &&
           issue.status == IssueStatus.open)
       .length;
 
+  List<Issue> get issues => List.unmodifiable(_issues.values);
+
+  Issue? issue(String id) => _issues[id];
+
+  // Phương án giải quyết hiện hành của Issue; null khi chưa ai đề xuất.
+  MockIssueProposal? issueProposal(String issueId) => _issueProposals[issueId];
+
+  List<IssueEventItem> issueEvents(String issueId) => List.unmodifiable(
+        _issueEvents.where((event) => event.issueId == issueId),
+      );
+
+  // Mốc sự kiện mới nhất của giao dịch; mock dùng làm mốc hoàn tất để tính hạn
+  // khiếu nại 7 ngày (server thật dùng thời điểm ACK cuối cùng). Bỏ qua sự kiện
+  // ISSUE_*: mở Issue không được tự kéo dài hạn khiếu nại.
+  DateTime? lastEventAt(String transactionId) {
+    DateTime? latest;
+    for (final event in events(transactionId)) {
+      if (event.eventType.startsWith('ISSUE_')) continue;
+      if (latest == null || event.serverAt.isAfter(latest)) {
+        latest = event.serverAt;
+      }
+    }
+    return latest;
+  }
+
   // Handover chưa kết thúc nghĩa là sách có thể đang trên đường.
-  bool hasActiveHandover(String transactionId) => MockFixtures.handovers.any(
+  Handover? handover(String id) => _handovers[id];
+
+  bool hasActiveHandover(String transactionId) => _handovers.values.any(
         (handover) =>
             handover.transactionId == transactionId &&
             (handover.status == HandoverStatus.pending ||
@@ -96,6 +142,39 @@ class MockTransactionStore {
 
   void putPayment(PaymentConfirmation payment) =>
       _payments[payment.transactionId] = payment;
+
+  // Bỏ qua ID đã có (vd. Issue seed) để Issue mới không bao giờ ghi đè Issue cũ.
+  String nextIssueId() {
+    String id;
+    do {
+      id = 'issue-mock-${++_issueCounter}';
+    } while (_issues.containsKey(id));
+    return id;
+  }
+
+  void putIssue(Issue issue) => _issues[issue.id] = issue;
+
+  void putIssueProposal(String issueId, MockIssueProposal proposal) =>
+      _issueProposals[issueId] = proposal;
+
+  /// Ghi một sự kiện append-only của Issue, trả về event ID.
+  String appendIssueEvent({
+    required String issueId,
+    required String eventType,
+    required String safeDescription,
+    String? actorDisplay,
+  }) {
+    final id = 'iev-mock-${++_issueEventCounter}';
+    _issueEvents.add(IssueEventItem(
+      id: id,
+      issueId: issueId,
+      eventType: eventType,
+      serverAt: clock(),
+      safeDescription: safeDescription,
+      actorDisplay: actorDisplay,
+    ));
+    return id;
+  }
 
   void putCancellation(String transactionId, CancellationProposal? proposal) {
     if (proposal == null) {
@@ -136,7 +215,41 @@ class MockTransactionStore {
 
 // Tương ứng bảng command_receipts: retry cùng key + payload trả lại kết quả cũ.
 class MockCommandReceipt {
-  const MockCommandReceipt({required this.payloadHash, required this.eventId});
+  const MockCommandReceipt({
+    required this.payloadHash,
+    required this.eventId,
+    this.entityId,
+  });
   final String payloadHash;
   final String eventId;
+  // Đối tượng do lệnh tạo ra (vd. Issue mới) để retry trả lại đúng bản ghi cũ.
+  final String? entityId;
+}
+
+// Phương án giải quyết Issue theo revision và các xác nhận đi kèm.
+// Đề xuất mới thay thế bản cũ với revision tăng dần, xác nhận cũ mất hiệu lực.
+class MockIssueProposal {
+  const MockIssueProposal({
+    required this.revision,
+    required this.summary,
+    required this.proposedBy,
+    required this.proposedAt,
+    this.approvals = const {},
+  });
+
+  final int revision;
+  final String summary;
+  final String proposedBy;
+  final DateTime proposedAt;
+  // userId -> thời điểm xác nhận của revision hiện hành.
+  final Map<String, DateTime> approvals;
+
+  MockIssueProposal withApproval(String userId, DateTime at) =>
+      MockIssueProposal(
+        revision: revision,
+        summary: summary,
+        proposedBy: proposedBy,
+        proposedAt: proposedAt,
+        approvals: Map.unmodifiable({...approvals, userId: at}),
+      );
 }

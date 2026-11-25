@@ -1,7 +1,9 @@
 import '../contracts/domain_enums.dart';
 import '../contracts/models/models.dart';
 import '../contracts/repositories/transaction_repository.dart';
+import 'mock_event_order.dart';
 import 'mock_fixtures.dart';
+import 'mock_issue_access.dart';
 import 'mock_transaction_store.dart';
 
 // Repository ĐỌC. allowedActions ở đây mô phỏng gợi ý của server,
@@ -34,12 +36,10 @@ class MockTransactionQueryRepository implements TransactionQueryRepository {
   Future<List<TransactionEventItem>> getTimeline(String transactionId) async {
     final details = await getTransactionDetails(transactionId);
     if (details == null) return const []; // Không có quyền -> không trả gì.
-    final events = [...store.events(transactionId)]
-      ..sort((a, b) {
-        final byTime = a.serverAt.compareTo(b.serverAt);
-        return byTime != 0 ? byTime : a.id.compareTo(b.id);
-      });
-    return List.unmodifiable(events);
+    return List.unmodifiable(sortedByServerOrder<TransactionEventItem>(
+      store.events(transactionId),
+      (event) => event.serverAt,
+    ));
   }
 
   TransactionDetails _toDetails(StudyTransaction txn) {
@@ -80,7 +80,14 @@ class MockTransactionQueryRepository implements TransactionQueryRepository {
     PaymentConfirmation? payment,
     CancellationProposal? proposal,
   ) {
-    if (txn.status.isTerminal) return const {};
+    if (txn.status.isTerminal) {
+      // BR-34: sau COMPLETED vẫn được báo sự cố trong hạn 7 ngày lịch VN.
+      // Cùng điều kiện với lệnh reportIssue; mọi thao tác khác đã kết thúc.
+      return txn.status == TransactionStatus.completed &&
+              isIssueReportWindowOpen(store, txn)
+          ? const {TransactionAction.reportIssue}
+          : const {};
+    }
     final isOwner = role == TransactionViewerRole.owner;
     final actions = <TransactionAction>{TransactionAction.reportIssue};
 

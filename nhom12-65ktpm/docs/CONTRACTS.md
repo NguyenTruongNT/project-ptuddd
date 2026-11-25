@@ -32,8 +32,9 @@
 | `delivery_applications` | `id`, `task_id`, `applicant_id`, `status`, `created_at` | UNIQUE(task_id, applicant_id), tối đa một ACCEPTED/task |
 | `handovers` | `id`, `transaction_id`, `delivery_task_id?`, `from_user_id`, `to_user_id`, `status`, `verification_method?`, `fallback_reason?`, server timestamps | Mỗi chặng có ID; không tạo hai chặng hoạt động trùng mục đích |
 | `handover_evidence` | `id`, `handover_id`, `uploaded_by`, `private_path`, `uploaded_at`, `sensitivity` | ≥1 ảnh từ đúng `from_user_id` khi chuyển sang awaiting receiver |
-| `issues` | `id`, `transaction_id`, `handover_id?`, `reporter_id`, `type`, `reason`, `status`, `opened_at`, `resolved_at?` | `OPEN/RESOLVED`; không rollback lịch sử vật lý |
-| `issue_consents` | `issue_id`, `participant_id`, `resolution_revision`, `approved_at` | Đồng thuận đúng phương án/các bên trực tiếp bị ảnh hưởng |
+| `issues` | `id`, `transaction_id`, `handover_id?`, `reporter_id`, `type`, `reason`, `status`, `opened_at`, `resolved_at?` | `OPEN/RESOLVED`; không rollback lịch sử vật lý; `handover_id` phải thuộc `transaction_id` |
+| `issue_resolution_proposals` | `issue_id`, `revision`, `summary`, `proposed_by`, `proposed_at` | Bản phương án hiện hành; mỗi lần đề xuất tăng `revision` (xem §5.1) |
+| `issue_consents` | `issue_id`, `participant_id`, `resolution_revision`, `approved_at` | Mỗi bên bị ảnh hưởng trực tiếp một dòng cho đúng revision; UNIQUE(issue_id, participant_id, resolution_revision) |
 | `transaction_events` | `id`, `transaction_id`, `actor_id?`, `event_type`, `payload_safe`, `server_at`, `source_action_id` | Append-only; actor snapshot; phục vụ timeline/notifications |
 | `notifications` | `id`, `recipient_id`, `type`, `entity_type`, `entity_id`, `created_at`, `read_at?`, `preview_safe` | Read per recipient; deep link kiểm tra lại quyền |
 | `courier_ratings` | `task_id`, `rater_id`, `stars`, `created_at` | 1–5; UNIQUE(task_id,rater_id); A/B độc lập, tùy chọn |
@@ -67,7 +68,8 @@ DTO là dữ liệu bất biến phục vụ màn hình; **không** đưa row da
 | `TransactionEventItem` | eventId, eventType, serverAt, actorDisplay, safeDescription | SCR-14/23 |
 | `DeliveryTaskDetails` | id, status, sender/final receiver, pickup/dropoff **scoped**, applicants allowed, current leg | SCR-15/17 |
 | `HandoverDetails` | id, leg, from/to display, status, verificationResult, evidence access info, allowedActions | SCR-18/20 |
-| `IssueDetails` | id, status, relation, safe description, evidence permission flags, resolution proposals | SCR-21/23 |
+| `IssueDetails` | `issue` (id, transactionId, handoverId?, reporterId, type, reason, status, openedAt, resolvedAt?), `materialTitle`, tên người báo/đối diện, `relation` (REPORTER/COUNTERPARTY), `proposal?` (revision, summary, người đề xuất, danh sách consent theo từng bên), `evidenceCount`, `canViewEvidence`, `canViewTransaction`, `allowedActions` (`CAN_PROPOSE_ISSUE_RESOLUTION`, `CAN_CONFIRM_ISSUE_RESOLUTION`) | SCR-21/23 |
+| `IssueEventItem` | id, issueId, eventType, serverAt, actorDisplay?, safeDescription | SCR-23 |
 | `NotificationItem` | id, safePreview, createdAt, readAt?, resourceRef | SCR-24 |
 
 **Allowed actions:** Server có thể trả danh sách action cho actor (`CAN_APPROVE_REQUEST`, `CAN_CONFIRM_HANDOVER`, …) để hỗ trợ UI, nhưng RPC **vẫn phải kiểm tra lại** quyền và trạng thái khi thực thi. `can*` của client không phải quyết định cuối.
@@ -108,7 +110,25 @@ class CommandError<T> extends CommandResult<T> {
 }
 ```
 
-Các interface khác: `MaterialRepository`, `ListingRepository`, `ListingQueryRepository`, `BorrowRepository`, `TransactionRepository`, `DeliveryRepository`, `EvidenceRepository`, `IssueRepository`, `NotificationRepository`.
+```dart
+// Issue (đã cài trong src/lib/core/contracts/repositories/issue_repository.dart).
+abstract interface class IssueQueryRepository {
+  Future<List<IssueDetails>> getMyIssues();                    // Chỉ Issue actor được ĐỌC.
+  Future<IssueDetails?> getIssueDetails(String issueId);       // null: không tồn tại HOẶC không có quyền.
+  Future<List<IssueEventItem>> getTimeline(String issueId);    // Tăng dần theo serverAt; [] khi không có quyền.
+}
+
+abstract interface class IssueRepository {
+  Future<CommandResult<IssueDetails>> reportIssue(
+    CreateIssueInput input, {required String idempotencyKey}); // input: transactionId, type, reason, handoverId?
+  Future<CommandResult<IssueDetails>> proposeResolution(
+    String issueId, String summary, {required String idempotencyKey});
+  Future<CommandResult<IssueDetails>> confirmResolution(
+    String issueId, int resolutionRevision, {required String idempotencyKey});
+}
+```
+
+Các interface khác: `MaterialRepository`, `ListingRepository`, `ListingQueryRepository`, `BorrowRepository`, `TransactionRepository`, `DeliveryRepository`, `EvidenceRepository`, `NotificationRepository`.
 
 ## 5. Command contract và điểm chuyển trách nhiệm
 
@@ -126,7 +146,7 @@ Các interface khác: `MaterialRepository`, `ListingRepository`, `ListingQueryRe
 | `submitHandoverEvidence` | Giver đúng actor; private storage ACK; ≥1 ảnh + QR/fallback hợp lệ → awaiting | Đăng |
 | `confirmHandover` | Receiver đúng actor; Handover awaiting; đổi holder + event + Transaction/Task transition | Đăng + Sơn |
 | `refuseHandover` / `reportIssue` | Ghi Issue, Handover DISPUTED nếu chưa nhận; không đổi holder | Sơn + Đăng |
-| `proposeIssueResolution` / `confirmIssueResolution` | Snapshot proposal/revision; xác nhận các bên ảnh hưởng; không ép giải quyết | Sơn |
+| `proposeIssueResolution` / `confirmIssueResolution` | Snapshot proposal/revision; xác nhận các bên ảnh hưởng (xem §5.1); không ép giải quyết | Sơn |
 | `proposeTransactionCancellation` / `acceptTransactionCancellation` | Hai bên đồng thuận; kiểm tra nghĩa vụ sách/tiền/Issue; archive Listing an toàn | Sơn |
 | `getTransactionTimeline` | Chỉ actor thuộc transaction; event details đã loại PII | Sơn |
 
@@ -135,6 +155,35 @@ Các interface khác: `MaterialRepository`, `ListingRepository`, `ListingQueryRe
 `approve_exchange_request`, `confirm_seller_payment`, `select_courier`, `create_handover`, `verify_material_code`, `submit_handover_evidence`, `confirm_handover`, `refuse_handover`, `request_borrow_return`, `confirm_issue_resolution`, `accept_transaction_cancellation`. **Không buộc mỗi use case là một RPC riêng**, nhưng mọi mutation xuyên bảng phải là server-side atomic command.
 
 **Thiết kế nhận input:** client gửi ID, payload nghiệp vụ, `idempotency_key`, phiên Supabase Auth; **không** gửi actor/owner/holder/status mới. Server lấy actor từ `auth.uid()` và tự đọc bản ghi mới nhất dưới lock phù hợp.
+
+### 5.1 Issue: người liên quan, revision và consent (đề xuất, chữ ký chưa khóa)
+
+**Người liên quan được suy ra theo từng Issue**, không mặc định luôn là A và B, và không dựa vào `globalRole`:
+
+| Khái niệm | Quy tắc |
+|---|---|
+| Bên bị ảnh hưởng trực tiếp | Issue gắn `handover_id`: hai đầu của chặng đó (`from_user_id`, `to_user_id`). Issue cấp giao dịch: A và B. Luôn gồm cả người báo. |
+| ĐỌC (`getMyIssues`/`getIssueDetails`/`getTimeline`) | A/B của giao dịch **và** các bên bị ảnh hưởng trực tiếp. C chỉ đọc khi là một đầu của đúng chặng; C ở chặng/task khác và người ngoài nhận `null`/`[]`, không phân biệt "không tồn tại" với "không có quyền". |
+| MỞ Issue (`reportIssue`) | A/B của giao dịch, hoặc một đầu của `handover_id` được gắn vào (vd. C từ chối nhận ở chặng A→C). Không có `handover_id` thì C không mở được. |
+| ĐỀ XUẤT / XÁC NHẬN | Chỉ bên bị ảnh hưởng trực tiếp. Bên chỉ đọc (vd. A khi Issue thuộc chặng C→B mà A không báo) không có action. |
+| `canViewTransaction` | `false` với người không phải A/B (C): UI không hiện lối tắt sang SCR-14. |
+
+**Revision và consent:**
+
+1. `proposeResolution` tạo bản phương án mới với `revision = revision cũ + 1`; mọi consent của revision cũ mất hiệu lực. Đề xuất **không** tự là consent của người đề xuất: mỗi bên (kể cả người đề xuất) xác nhận riêng.
+2. `confirmResolution(issueId, revision)` chỉ hợp lệ khi `revision` bằng revision hiện hành; sai revision trả `CONFLICT`. Chưa có phương án, đã xác nhận rồi, hoặc Issue đã `RESOLVED` trả `INVALID_TRANSACTION_TRANSITION`.
+3. Server chỉ chuyển `OPEN → RESOLVED` khi **mọi** bên bị ảnh hưởng trực tiếp đã xác nhận đúng revision hiện hành; moderator/admin không đóng thay.
+4. `reportIssue`: `reason` không rỗng (≤ 1000 ký tự); giao dịch `CANCELLED` không nhận Issue; sau `COMPLETED` chỉ khởi tạo trong **7 ngày lịch Việt Nam** (hết ngày thứ 7). Lệnh không đổi owner/holder/`due_date`/payment/`Transaction.status` (INV-10), chỉ ghi Issue + Event.
+5. Sau mỗi lệnh server trả `IssueDetails` mới nhất; client tải lại, không tự sửa state.
+
+**`IssueType` (ĐỀ XUẤT của module Sơn, CHƯA được nhóm trưởng duyệt, SS-BR v2.0 chưa khóa danh sách):** `WRONG_MATERIAL`, `WRONG_CONDITION`, `NOT_RECEIVED`, `DELIVERY_FAILED`, `UNCOOPERATIVE`, `OTHER`. Loại chỉ để phân loại/hiển thị, không quyết định trạng thái hay chủ sở hữu. Nếu nhóm trưởng đổi danh sách, cập nhật `IssueType` trong `domain_enums.dart` và CHECK constraint tương ứng.
+
+**Giới hạn của bản mock (không phải backend thật):**
+- Mốc "hoàn tất" để tính hạn 7 ngày lấy từ sự kiện mới nhất (bỏ qua `ISSUE_*`) của giao dịch; server thật phải dùng thời điểm ACK cuối cùng.
+- Mock chưa có ảnh bằng chứng (`evidenceCount = 0`, `canViewEvidence = false`); phần này thuộc `EvidenceRepository`/module Handover.
+- Chặng bàn giao do `MockTransactionStore.seedHandovers`/`MockFixtures.handovers` cung cấp; module Handover thật sẽ ghi các chặng này.
+- SCR-22 hiện lấy tên tài liệu từ giao dịch nên C (không đọc được giao dịch) chưa mở được Issue bằng form; lệnh `reportIssue` đã hỗ trợ C theo chặng. Cần phối hợp với Đăng khi làm luồng từ chối nhận (SCR-20).
+- Supabase phải thực thi lại toàn bộ quy tắc ở RLS/RPC; mock chỉ để UI và test dùng chung.
 
 ## 6. Error contract
 
@@ -182,7 +231,7 @@ Các interface khác: `MaterialRepository`, `ListingRepository`, `ListingQueryRe
 | DeliveryTask OPEN | Xem tóm tắt phục vụ ứng tuyển khi đăng nhập | Người tạo xem chi tiết | Người đã được chọn xem điểm hẹn phù hợp | Không GPS/địa chỉ chi tiết trước khi chọn |
 | Handover | Không | Xem theo chặng/quan hệ | Chỉ chặng giao C | Giver/receiver mới được mutate đúng bước |
 | Evidence Handover | Không | Chỉ ảnh cho phép theo vai trò | Chỉ ảnh liên quan chặng C | Private bucket + signed URL ngắn hạn |
-| Issue/Evidence | Không | Các bên ảnh hưởng theo phạm vi | Khi C trực tiếp liên quan | Cấp cao cần cấp quyền riêng |
+| Issue/Evidence | Không | A/B của giao dịch đọc; chỉ bên bị ảnh hưởng trực tiếp mới đề xuất/xác nhận (§5.1) | Chỉ Issue gắn đúng chặng C tham gia; không đọc giao dịch | Cấp cao cần cấp quyền riêng |
 | Notification | Không | Chỉ `recipient_id = auth.uid()` | Chỉ của chính C | Không để private payload trong preview |
 | Payment | Không | A/B thuộc SELL hợp lệ | Không | Ngân hàng ngoài app, không OTP |
 

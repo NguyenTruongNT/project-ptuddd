@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../contracts/models/listing.dart';
 import '../contracts/models/material.dart';
 import '../contracts/models/transaction.dart';
+import '../contracts/repositories/issue_repository.dart';
 import '../contracts/repositories/listing_repository.dart';
 import '../contracts/repositories/material_repository.dart';
 import '../contracts/repositories/transaction_repository.dart';
 import '../mock/mock_fixtures.dart';
+import '../mock/mock_issue_query_repository.dart';
 import '../mock/mock_listing_query_repository.dart';
 import '../mock/mock_material_query_repository.dart';
 import '../mock/mock_transaction_query_repository.dart';
@@ -37,6 +39,13 @@ final mockTransactionStoreProvider = Provider<MockTransactionStore>((ref) {
 });
 final transactionQueryRepositoryProvider = Provider<TransactionQueryRepository>(
   (ref) => MockTransactionQueryRepository(
+    demoViewerId: ref.watch(demoViewerIdProvider),
+    store: ref.watch(mockTransactionStoreProvider),
+  ),
+);
+// Issue dùng chung store với Transaction để nhãn "có sự cố" luôn khớp.
+final issueQueryRepositoryProvider = Provider<IssueQueryRepository>(
+  (ref) => MockIssueQueryRepository(
     demoViewerId: ref.watch(demoViewerIdProvider),
     store: ref.watch(mockTransactionStoreProvider),
   ),

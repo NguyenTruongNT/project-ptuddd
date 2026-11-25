@@ -60,10 +60,12 @@ class RefuseHandoverInput {
 class CreateIssueInput {
   const CreateIssueInput({
     required this.transactionId,
+    required this.type,
     required this.reason,
     this.handoverId,
   });
   final String transactionId;
+  final IssueType type;
   final String reason;
   final String? handoverId;
 }
