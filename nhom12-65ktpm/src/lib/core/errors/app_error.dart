@@ -18,6 +18,8 @@ enum DomainErrorCode {
   issueBlockingAction('ISSUE_BLOCKING_ACTION'),
   cancellationObligationPending('CANCELLATION_OBLIGATION_PENDING'),
   networkUnavailable('NETWORK_UNAVAILABLE'),
+  backendUnavailable('BACKEND_UNAVAILABLE'),
+  unexpectedError('UNEXPECTED_ERROR'),
   timeoutUnknown('TIMEOUT_UNKNOWN'); // Chỉ sinh tại client khi chưa rõ ACK.
 
   const DomainErrorCode(this.wire);
@@ -28,7 +30,7 @@ enum DomainErrorCode {
       if (value.wire == raw) return value;
     }
     // Lỗi server mới/chưa biết được hiển thị an toàn; không lộ raw payload.
-    return DomainErrorCode.conflict;
+    return DomainErrorCode.unexpectedError;
   }
 }
 

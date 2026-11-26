@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -54,12 +55,20 @@ class WorkflowRpc {
     // Cố định JWT của actor cho request này. Auth có thể đổi trong lúc HTTP
     // đang chờ; không để request bị gửi bằng JWT của tài khoản vừa đăng nhập.
     final token = client.auth.currentSession!.accessToken;
-    final result = await client
-        .rpc(name, params: params)
-        .setHeader('Authorization', 'Bearer $token')
-        .timeout(timeout);
-    _session();
-    return result;
+    try {
+      final result = await client
+          .rpc(name, params: params)
+          .setHeader('Authorization', 'Bearer $token')
+          .timeout(timeout);
+      _session();
+      return result;
+    } on PostgrestException catch (error) {
+      // Chỉ log tên RPC/mã lỗi ở debug, không log JWT, tham số hoặc payload riêng tư.
+      if (kDebugMode) {
+        debugPrint('StudyShare RPC $name: ${error.code ?? 'UNKNOWN'}');
+      }
+      rethrow;
+    }
   }
 
   Future<T> read<T>(
@@ -111,20 +120,68 @@ class WorkflowRpc {
     }
   }
 
+  // ACK Listing chưa có TransactionEvent: dùng receipt server thật.
+  Future<CommandResult<T>> receiptCommand<T>(
+    String name,
+    Map<String, dynamic> params,
+    T Function(Object?) decode,
+  ) async {
+    try {
+      final raw = await _call(name, params);
+      if (raw is! Map<String, dynamic> ||
+          raw['ok'] != true ||
+          raw['command_id'] is! String ||
+          raw['server_revision'] is! num ||
+          raw['data'] == null) {
+        throw const FormatException('Missing command receipt');
+      }
+      return CommandOk.receipt(
+        decode(raw['data']),
+        commandId: raw['command_id'] as String,
+        serverRevision: (raw['server_revision'] as num).toInt(),
+      );
+    } catch (error) {
+      try {
+        _session();
+      } on AppError catch (e) {
+        return CommandError(e.code, e.safeMessage);
+      }
+      final safe = _error(error, command: true);
+      return CommandError(safe.code, safe.safeMessage);
+    }
+  }
+
   AppError _error(Object error, {required bool command}) {
     if (error is AppError) return error;
     DomainErrorCode code;
     if (error is AuthException) {
       code = DomainErrorCode.authRequired;
+    } else if (error is PostgrestException && error.code == 'P0001') {
+      code = DomainErrorCode.fromWire(error.message);
     } else if (error is PostgrestException) {
       code = switch (error.code) {
         '42501' => DomainErrorCode.forbidden,
         'PGRST301' || 'PGRST302' || 'PGRST303' => DomainErrorCode.authRequired,
+        // Thiếu hàm/bảng/cột hoặc chữ ký không khớp là lỗi triển khai backend,
+        // không phải xung đột dữ liệu của người dùng; tải lại không tự sửa được.
+        'PGRST200' ||
+        'PGRST202' ||
+        'PGRST203' ||
+        'PGRST204' ||
+        '42P01' ||
+        '42703' ||
+        '42883' => DomainErrorCode.backendUnavailable,
+        '23505' || '40001' || '40P01' => DomainErrorCode.conflict,
+        '22P02' ||
+        '22023' ||
+        '22003' ||
+        '23514' ||
+        '23502' => DomainErrorCode.invalidInput,
         '57014' =>
           command
               ? DomainErrorCode.timeoutUnknown
               : DomainErrorCode.networkUnavailable,
-        _ => DomainErrorCode.conflict,
+        _ => DomainErrorCode.unexpectedError,
       };
     } else if (error is TimeoutException || error is http.ClientException) {
       code = command
@@ -134,7 +191,7 @@ class WorkflowRpc {
       // Sau khi đã gửi command mà ACK không đọc được, giữ key để đối soát lại.
       code = command
           ? DomainErrorCode.timeoutUnknown
-          : DomainErrorCode.conflict;
+          : DomainErrorCode.unexpectedError;
     }
     return AppError(code, workflowErrorMessage(code));
   }
@@ -156,6 +213,10 @@ String workflowErrorMessage(DomainErrorCode code) => switch (code) {
     'Người bán chưa xác nhận nhận đủ tiền.',
   DomainErrorCode.networkUnavailable =>
     'Không thể tải dữ liệu. Kiểm tra kết nối và thử lại.',
+  DomainErrorCode.backendUnavailable =>
+    'Chức năng tạm thời chưa sẵn sàng. Vui lòng thử lại sau.',
+  DomainErrorCode.unexpectedError =>
+    'Không thể hoàn tất thao tác. Vui lòng thử lại sau.',
   DomainErrorCode.timeoutUnknown => 'Chưa rõ máy chủ đã ghi nhận hay chưa. Hãy thử lại cùng thao tác để đối soát, không gửi yêu cầu mới.',
   _ => 'Dữ liệu hoặc phương án đã thay đổi. Hãy tải lại và kiểm tra trước khi tiếp tục.',
 };
