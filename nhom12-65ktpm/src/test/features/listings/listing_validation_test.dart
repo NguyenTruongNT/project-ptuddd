@@ -60,6 +60,28 @@ void main() {
       expect(ListingValidation.text('ẩn\x00', 2000), isFalse);
     },
   );
+  test('Lưu HIDDEN SELL bắt buộc giá; DRAFT vẫn được thiếu giá', () {
+    String? validate(ListingStatus? status, String price) =>
+        ListingValidation.validate(
+          offer: OfferType.sell,
+          priceText: price,
+          description: '',
+          meetingArea: '',
+          publish: false,
+          currentStatus: status,
+        );
+    expect(validate(null, ''), isNull);
+    expect(validate(ListingStatus.draft, ''), isNull);
+    for (final status in [
+      ListingStatus.hidden,
+      ListingStatus.published,
+      ListingStatus.archived,
+    ]) {
+      expect(validate(status, ''), isNotNull);
+      expect(validate(status, '0'), isNotNull);
+      expect(validate(status, '1'), isNull);
+    }
+  });
   test(
     'Khôi phục command giữ key và revisions; hide không gửi field nội dung',
     () {

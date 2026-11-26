@@ -45,7 +45,7 @@ Tại thư mục gốc repository:
 
 - Có 5 tab, 26 route chính, theme/l10n, Supabase foundation và module Transaction mock (PR #21).
 - Nhánh Auth/Profile bổ sung Splash, đăng nhập/đăng ký, xác minh email, quên/đổi mật khẩu qua PKCE deep link, auth guard, hồ sơ cá nhân và logout; lưu tùy chọn giao diện trên thiết bị.
-- Material và Listing đã có repository/RPC/RLS thật; Transactions/Payment/Issues theo module của Sơn. ExchangeRequest/Handover/Notification còn điểm tích hợp theo phân công. Không lấy tài khoản A/B từ mock làm actor khi chạy thật; cache riêng tư được tái tạo khi đổi tài khoản hoặc logout. Xem [CONTRACTS §15](../docs/CONTRACTS.md#15-listing-ngày-3-theo-đặc-tả-đã-được-trường-đồng-ý) để kiểm thử và bàn giao Listing.
+- Material và Listing đã có repository/RPC/RLS thật; Transactions/Payment/Issues theo module của Sơn. ExchangeRequest/Handover/Notification còn điểm tích hợp theo phân công. Không lấy tài khoản A/B từ mock làm actor khi chạy thật; cache riêng tư được tái tạo khi đổi tài khoản hoặc logout. Xem [CONTRACTS §15](../docs/CONTRACTS.md#15-listing-ngày-3) để kiểm thử và bàn giao Listing.
 - Không suy diễn dữ liệu mock là giao dịch đã được xác nhận; quyền và state transition phải được kiểm tra tại server.
 
 Phân công module, quy trình commit và checklist bàn giao: **`../docs/SHARED_HANDOFF.md`** và **`../docs/QUY_TRINH_GIT_NHOM.md`**.

@@ -43,6 +43,16 @@ insert into public.transactions(id,listing_id,request_id,material_id,type,owner_
  'AWAITING_PAYMENT',100,'{"agreed_before_day3":true}');
 insert into legacy_ctx select 'original_terms',terms_snapshot from public.transactions
  where id='d3400000-0000-4000-8000-000000000030';
+select extensions.is((select outcome from studyshare_private.listing_snapshot_audit()
+ where listing_id='d3400000-0000-4000-8000-000000000010'),'ELIGIBLE','Báo cáo nhận diện tin đủ điều kiện nhưng chưa chuyển đổi');
+select extensions.ok((select publication_snapshot is null from public.listings
+ where id='d3400000-0000-4000-8000-000000000010'),'Báo cáo chỉ đọc, không tự thay snapshot');
+update storage.objects set metadata='{"size":69,"mimetype":"image/png"}'
+ where bucket_id='studyshare-material-images' and name=(select v->>'storage_path' from legacy_ctx where k='upload');
+select extensions.is((select reason from studyshare_private.listing_snapshot_audit()
+ where listing_id='d3400000-0000-4000-8000-000000000010'),'STORAGE_METADATA_MISMATCH','Báo rõ metadata object không khớp registry');
+update storage.objects set metadata='{"size":68,"mimetype":"image/png"}'
+ where bucket_id='studyshare-material-images' and name=(select v->>'storage_path' from legacy_ctx where k='upload');
 select extensions.is(studyshare_private.backfill_legacy_listing_snapshots(),1,'Chuyển đổi đúng tin có ảnh hợp lệ');
 select extensions.is((select status::text from public.listings where id='d3400000-0000-4000-8000-000000000010'),
  'HIDDEN','Giữ nguyên trạng thái ẩn');
@@ -57,6 +67,12 @@ select extensions.ok((select publication_snapshot is null from public.listings
 select extensions.is((select count(*) from public.listing_snapshot_images
  where listing_id='d3400000-0000-4000-8000-000000000010'),1::bigint,'Có tham chiếu media thật');
 select extensions.is(studyshare_private.backfill_legacy_listing_snapshots(),0,'Chạy lại không thay snapshot/revision');
+select extensions.is((select outcome from studyshare_private.listing_snapshot_audit()
+ where listing_id='d3400000-0000-4000-8000-000000000010'),'READY','Báo cáo nhận diện tin đã chuyển đổi');
+select extensions.is((select reason from studyshare_private.listing_snapshot_audit()
+ where listing_id='d3400000-0000-4000-8000-000000000011'),'MISSING_IMAGES','Báo cáo chỉ rõ lý do tin PUBLISHED bị loại');
+select extensions.is((select count(*) from studyshare_private.listing_snapshot_audit()
+ where listing_id='d3400000-0000-4000-8000-000000000011' and outcome='SKIPPED'),1::bigint,'Có đếm riêng tin PUBLISHED bị bỏ qua');
 select extensions.ok(not has_function_privilege('authenticated',
  'studyshare_private.backfill_legacy_listing_snapshots()','EXECUTE'),'Client không gọi được hàm chuyển đổi');
 select extensions.ok(not has_function_privilege('anon',

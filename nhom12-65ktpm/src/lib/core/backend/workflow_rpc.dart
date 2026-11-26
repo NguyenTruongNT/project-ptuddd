@@ -157,6 +157,8 @@ class WorkflowRpc {
     if (error is AuthException) {
       code = DomainErrorCode.authRequired;
     } else if (error is PostgrestException && error.code == 'P0001') {
+      // SQL chỉ được trả mã nghiệp vụ đã chốt. Mã lạ dùng thông báo an toàn,
+      // không suy diễn thành xung đột và không đưa message SQL thô lên UI.
       code = DomainErrorCode.fromWire(error.message);
     } else if (error is PostgrestException) {
       code = switch (error.code) {

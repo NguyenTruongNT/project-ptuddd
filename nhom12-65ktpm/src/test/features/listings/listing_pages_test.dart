@@ -155,6 +155,23 @@ Future<void> _sell(WidgetTester tester) async {
 
 void main() {
   testWidgets(
+    'HIDDEN SELL thiếu giá bị chặn trước confirm/RPC, vẫn lưu local được',
+    (tester) async {
+      final repo = _Listings()..hidden = true;
+      final drafts = _Drafts();
+      await tester.pumpWidget(_app(repo, drafts));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const ValueKey('listing-price')), '');
+      await _tap(tester, find.text('Lưu nháp lên máy chủ'));
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(repo.commands, isEmpty);
+      expect(find.textContaining('Giá bán phải là số nguyên'), findsOneWidget);
+      await _tap(tester, find.text('Lưu nháp trên thiết bị'));
+      expect(drafts.entries, isNotEmpty);
+      expect(repo.commands, isEmpty);
+    },
+  );
+  testWidgets(
     'Lưu local không cho hiện lại nội dung HIDDEN chưa đồng bộ server',
     (tester) async {
       final repo = _Listings()..hidden = true;

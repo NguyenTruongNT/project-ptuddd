@@ -30,10 +30,16 @@ class ListingValidation {
     required String description,
     required String meetingArea,
     required bool publish,
+    ListingStatus? currentStatus,
   }) {
     if (offer == null) return 'Chọn một hình thức đăng tin.';
     if (offer == OfferType.sell) {
-      if ((publish || priceText.trim().isNotEmpty) &&
+      // Nút lưu nháp trên tin HIDDEN vẫn giữ HIDDEN, không chuyển về DRAFT.
+      // Chỉ tin mới/DRAFT được để trống giá; lưu local không gọi validation server này.
+      final requiresPrice =
+          publish ||
+          (currentStatus != null && currentStatus != ListingStatus.draft);
+      if ((requiresPrice || priceText.trim().isNotEmpty) &&
           price(priceText) == null) {
         return 'Giá bán phải là số nguyên VND lớn hơn 0 và trong giới hạn cho phép.';
       }

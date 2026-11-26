@@ -335,9 +335,9 @@ Các contracts Auth/Profile bổ sung ở mục 13; không thay đổi enum ho�
 - Cloud có migration riêng 20261125120000_transactions_payment_issues_rpc của Sơn chưa trong nhánh này. Đối chiếu lịch sử qua snapshot bị Git bỏ qua, không copy module Sơn vào đóng góp Material, không repair lịch sử.
 - Listing publish/QR và quản lý tham chiếu snapshot nối tiếp ngày 3/4. Không tạo Listing/QR/Transaction giả để đáp ứng ACK Material.
 
-## 15. Listing ngày 3 theo đặc tả đã được Trường đồng ý
+## 15. Listing ngày 3
 
-Nguồn quy tắc: SS-BR Phụ lục B, N3-D01–N3-D08 được Trường đồng ý ngày 26/11/2026. Migration mới `20261126000100_listing_workspace.sql`; không sửa các migrations ngày 1/2 hoặc migration workflow của Sơn. QR vẫn thuộc ngày 4.
+Nguồn quy tắc: [SS-BR §3.1.2](QUY_TAC_NGHIEP_VU.md#312-quy-tắc-listing), N3-D01–N3-D08. Luồng kỹ thuật/kịch bản xem [đặc tả triển khai Listing](DAC_TA_TRIEN_KHAI_LISTING.md). Migration `20261126000100_listing_workspace.sql` bổ sung trên nền ngày 1/2 và workflow Transaction; QR Material thuộc ngày 4. Contract dùng chung với Request/Transaction phải được review trước merge.
 
 Đợt tinh chỉnh UI được Trường duyệt bổ sung `20261126000300_listing_owner_cover.sql` và `20261126000400_listing_legacy_snapshots.sql`, cùng migration ảnh lịch sử `20261126000200_listing_history_images.sql`. Cả 4 migration đã được áp dụng local và cloud development `studyshare-nhom12-dev` ngày 26/11/2026 sau kiểm thử local. Code và tài liệu được bàn giao qua PR Listing vào `integration/nhom12-65ktpm`; chỉ merge sau khi thành viên khác review đạt.
 
@@ -352,7 +352,7 @@ Nguồn quy tắc: SS-BR Phụ lục B, N3-D01–N3-D08 được Trường đồ
 | `get_listing_image_path` | `p_listing_id`, `p_image_id` → path đúng ảnh snapshot đang PUBLISHED hoặc null. Repository ký URL 300 giây, không đưa path vào ListingDetails |
 | `get_transaction_listing_image_path` | `p_transaction_id`, `p_image_id` → path ảnh được snapshot trong đúng Transaction; chỉ A/B của Transaction hoặc null. Migration bổ sung `20261126000200_listing_history_images.sql`; dùng cho module lịch sử, không dùng đường Discovery để vượt trạng thái ẩn/archive |
 
-`p_payload` chỉ nhận `offer_type`, `asking_price_vnd`, `description`, `meeting_area` với draft/publish; hide/show bắt buộc object rỗng. Không nhận owner/holder/actor/status/snapshot/path do mobile tự gửi. Trường tùy chọn trim/rỗng thành null. Nháp SELL cho giá null có chủ đích, nhưng giá đã nhập phải nguyên dương; publish/show không có giao dịch active bắt buộc đủ giá/ảnh. BORROW/DONATE giá luôn null. Server khóa Material trước Listing, kiểm tra revisions/quyền/trạng thái rồi ghi domain và receipt cùng transaction.
+`p_payload` chỉ nhận `offer_type`, `asking_price_vnd`, `description`, `meeting_area` với draft/publish; hide/show bắt buộc object rỗng. Không nhận owner/holder/actor/status/snapshot/path do mobile tự gửi. Trường tùy chọn trim/rỗng thành null. Chỉ DRAFT SELL cho giá null; lưu sửa HIDDEN bằng action draft vẫn bắt buộc giá nguyên dương. Publish/show không có giao dịch active bắt buộc đủ giá/ảnh. BORROW/DONATE giá luôn null. Server khóa Material trước Listing, kiểm tra revisions/quyền/trạng thái rồi ghi domain và receipt cùng transaction.
 
 `ListingWorkspaceRepository` bổ sung execute/getCommandResult/getManaged/searchMine/getPublishedDetails/searchPage. Giữ `ListingRepository` và `ListingQueryRepository` cũ bằng adapter; adapter tra receipt trước khi dựng lại revision cho retry. `ListingCommand` giữ trọn ý định và key; Android lưu trong SQLite thông qua ListingDrafts, tách theo account. Sau timeout giữ nguyên command; app tra receipt rồi gửi lại cùng payload nếu chưa có kết quả. Đổi account loại kết quả UI của phiên trước.
 
@@ -398,3 +398,42 @@ Repository preview trả cùng model, có condition, hai loại mô tả, tên c
 Khi nối UI: giữ loading/error riêng; kết quả null là tin không còn công khai, không fallback sang fixture. URL ảnh thật có thể null/hết hạn; tải lại provider để xin URL mới theo quyền hiện thời. Các trường mô tả/ISBN/khu vực tùy chọn được phép null. Route SCR-06 vẫn `/listings/:listingId`; Khanh hoàn thiện giao diện trên contract này, giữ header/Back và điểm vào từ luồng đăng tin.
 
 Kiểm tra bổ sung policy/mock SCR-06: `flutter analyze --no-pub` không có issue; `flutter test --no-pub --reporter expanded` đạt 277 test, 6 test tích hợp opt-in bỏ qua. Có 9 test mới cho dữ liệu công khai thật/mock, biên số ngày, CTA theo viewer, đổi phiên demo và tin không còn công khai. Không thay đổi SQL hoặc chạy lại script ghi dữ liệu cloud trong đợt bổ sung này.
+
+### 15.2. Contract dùng chung để Request/Transaction/Issue review
+
+| Trường hợp gateway | Mã client / hành vi |
+|---|---|
+| P0001 có message trùng mã nghiệp vụ đã khai báo; envelope ok=false có code đã biết | Giữ đúng DomainErrorCode; không dùng thông báo SQL thô |
+| Mã wire/P0001 không nhận diện; SQL lỗi chưa phân loại; read sai DTO | UNEXPECTED_ERROR, thông báo chung an toàn |
+| Thiếu hàm/bảng/cột/chữ ký, gồm PGRST202/42883/42P01/42703 | BACKEND_UNAVAILABLE, không hướng người dùng xử lý như xung đột dữ liệu |
+| Unique conflict, serialization/deadlock | CONFLICT; tải bản mới và xem lại trước thao tác mới |
+| 23514/23502 và lỗi kiểu/miền số | INVALID_INPUT; RPC vẫn phải chủ động kiểm tra trước ghi để giữ lỗi nghiệp vụ rõ ràng |
+| Timeout đọc / timeout ghi hoặc không đọc được ACK ghi | NETWORK_UNAVAILABLE / TIMEOUT_UNKNOWN; giữ key ghi để đối soát |
+
+Gateway được dùng bởi cả Transaction/Issue/Listing. Test gateway phải gọi các repository đọc Transaction và Issue, command có Event, command có receipt, đồng thời giữ phân biệt lỗi đọc và ACK chưa rõ. Thay đổi kỳ vọng một test DTO không thay cho toàn bộ ma trận này.
+
+| Điểm nối DB | Contract và giới hạn |
+|---|---|
+| Listing revision | Mọi UPDATE kể cả archive tăng revision/updated_at; material_id/created_by bất biến. RPC archive của Transaction không phải tự tăng revision |
+| Request approval | Khóa Material trước Request; kiểm tra PUBLISHED/khả dụng; ACCEPTED trước INSERT Transaction, cùng transaction DB với việc từ chối các PENDING cạnh tranh, Event/receipt của Request |
+| Snapshot Transaction | Trigger khóa Material; nếu publication_snapshot tồn tại thì ghi đè namespace `terms_snapshot.listing` bằng dữ liệu server version 1. Giữ nguyên các khóa khác; không sửa terms của Transaction cũ |
+| Ẩn/hiện và hủy/archive | Ẩn/hiện không đổi thỏa thuận hay nghĩa vụ. Archive thắng thì không được hiện lại tin cũ; revision cũ trả CONFLICT |
+
+**Trạng thái phối hợp:** code/test của PR Listing không tự đại diện xác nhận của Sơn/Khanh. Sơn cần xác nhận mapping lỗi, namespace snapshot và archive; Khanh cần xác nhận thứ tự khóa/duyệt trên RPC Request sản phẩm. Harness local chứng minh giao điểm dưới JWT, không chứng minh module Request đầy đủ đã tích hợp. Việc Request của Khanh ghi Event/receipt/từ chối các yêu cầu cạnh tranh vẫn phải được nghiệm thu trên module đó.
+
+### 15.3. Kiểm kê cloud và chuyển đổi snapshot
+
+Số liệu đọc trực tiếp lúc **26/11/2026 22:30:53 +07:00**, không ghi dữ liệu: 176 Listing, gồm 136 PUBLISHED, 4 HIDDEN, 4 DRAFT, 32 ARCHIVED. PUBLISHED có snapshot 136/136, bị loại vì thiếu snapshot **0**; HIDDEN thiếu snapshot **0**. Chênh lệch 176 tổng tin và 140 snapshot PUBLISHED/HIDDEN là 36 DRAFT/ARCHIVED, không phải 36 tin công khai biến mất.
+
+Trên dữ liệu khác, backfill có thể bỏ qua tin chưa đủ điều kiện. Migration `20261126000500_listing_review_contracts.sql` bổ sung hàm private chỉ đọc `listing_snapshot_audit()`: READY/SNAPSHOT_READY, ELIGIBLE/BACKFILL_ELIGIBLE hoặc SKIPPED với lý do OWNER_CHANGED, MISSING_IMAGES, TOO_MANY_IMAGES, IMAGE_NOT_ATTACHED, STORAGE_OBJECT_MISSING, STORAGE_METADATA_MISMATCH, REFERENCES_WITHOUT_SNAPSHOT. Không cấp execute cho anon/authenticated. File `src/supabase/audits/listing_snapshots.sql` thống kê và liệt kê ID cần xử lý bằng kết nối quản trị; không tự sửa hoặc cấp quyền ảnh rộng hơn.
+
+Đợt sửa review giữ nguyên bốn migration cloud đã chạy; migration 005 cần triển khai riêng sau review và kiểm thử. Chỉ chạy báo cáo private sau khi database đã có migration này. Với cloud chưa có 005, kiểm kê tổng/PUBLISHED thiếu snapshot bằng truy vấn đọc trên `listings`; không chạy lại SQL cũ hoặc reset cloud.
+
+### 15.4. Chạy kiểm tra phần sửa review
+
+- Local: `npx.cmd supabase@3.3.0 migration up --local --include-all`, sau đó `npx.cmd supabase@3.3.0 test db`.
+- JWT/Storage/shared contracts: serve `verify-material-image`, chạy `tool/test_listing_local.ps1 -IncludeSharedContracts`. Script chỉ nhận localhost, cài hai RPC `_test_listing_review_*` tạm trên local rồi dọn trong finally; secret quản trị chỉ vào môi trường tiến trình test.
+- Harness chỉ nhận account fixture `n3-a/b-...@example.test`; kiểm tra PENDING/ACCEPTED dưới JWT, thứ tự sai/rollback, snapshot, Request đua với hide và RPC hủy/archive thật của Sơn đua với show. Fixture và harness phải được dọn sau lần chạy.
+- Flutter: `flutter analyze --no-pub`, `flutter test --no-pub --reporter expanded`. UI test phải chặn HIDDEN SELL thiếu giá trước confirm/RPC và vẫn cho lưu local.
+
+Kết quả đợt sửa review: analyze không có issue; Flutter đạt **293 test**, 6 test tích hợp opt-in bỏ qua trong lệnh chung; pgTAP local **156/156** (7 file); DB lint local không có error/warning. `test_listing_local.ps1 -IncludeSharedContracts` chạy riêng đạt với JWT Auth A/B, ảnh Storage/Edge thật, rollback sai thứ tự duyệt, bảo toàn snapshot/khóa ngoài namespace, Request đua hide và RPC hủy của Sơn đua show; retry hủy không làm tăng revision lần nữa. Kiểm tra sau chạy còn **0 RPC harness và 0 account fixture n3-a/b**. Migration 005 mới áp dụng local; chưa triển khai cloud. Các kết quả này không thay thế review của Sơn/Khanh hoặc nghiệm thu RPC Request sản phẩm.

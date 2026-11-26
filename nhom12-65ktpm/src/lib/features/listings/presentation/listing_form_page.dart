@@ -341,6 +341,7 @@ class _ListingFormPageState extends ConsumerState<ListingFormPage> {
         description: _description.text,
         meetingArea: _area.text,
         publish: action == ListingAction.publish,
+        currentStatus: _managed?.listing.status,
       );
       if (error != null) {
         setState(() => _message = error);
