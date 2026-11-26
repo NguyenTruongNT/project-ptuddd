@@ -43,6 +43,7 @@ class ListingDetailsPage extends ConsumerWidget {
               ),
             );
           }
+          final borrowPolicy = d.borrowPolicy;
           return Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 760),
@@ -87,10 +88,15 @@ class ListingDetailsPage extends ConsumerWidget {
                     ),
                   if (d.meetingArea != null)
                     Text('${t.listingArea}: ${d.meetingArea}'),
-                  if (d.card.offerType.wire == 'BORROW')
+                  if (borrowPolicy != null)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Text(t.listingBorrowPolicy),
+                      child: Text(
+                        t.listingBorrowPolicy(
+                          borrowPolicy.minDays,
+                          borrowPolicy.maxDays,
+                        ),
+                      ),
                     ),
                   const SizedBox(height: 20),
                   if (d.card.isOwner)

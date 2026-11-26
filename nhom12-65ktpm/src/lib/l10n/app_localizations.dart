@@ -455,8 +455,8 @@ abstract class AppLocalizations {
   /// No description provided for @listingBorrowPolicy.
   ///
   /// In vi, this message translates to:
-  /// **'Mượn từ 1–30 ngày, theo số ngày người mượn đề xuất và chủ sách chấp thuận.'**
-  String get listingBorrowPolicy;
+  /// **'Mượn từ {minDays}–{maxDays} ngày, người mượn đề xuất và chủ sách chấp thuận đúng số ngày hoặc từ chối.'**
+  String listingBorrowPolicy(int minDays, int maxDays);
 
   /// No description provided for @listingRestore.
   ///

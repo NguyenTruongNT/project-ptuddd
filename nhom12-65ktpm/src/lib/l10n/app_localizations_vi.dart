@@ -200,8 +200,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get listingOwnRequest => 'Xem yêu cầu';
 
   @override
-  String get listingBorrowPolicy =>
-      'Mượn từ 1–30 ngày, theo số ngày người mượn đề xuất và chủ sách chấp thuận.';
+  String listingBorrowPolicy(int minDays, int maxDays) {
+    return 'Mượn từ $minDays–$maxDays ngày, người mượn đề xuất và chủ sách chấp thuận đúng số ngày hoặc từ chối.';
+  }
 
   @override
   String get listingRestore =>

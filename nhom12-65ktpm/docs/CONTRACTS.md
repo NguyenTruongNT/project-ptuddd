@@ -377,3 +377,24 @@ Cloud smoke chủ động: `src/tool/test_listing_cloud.ps1` chỉ cho đúng pr
 Kiểm tra giá trên Chrome: `src/tool/check_listing_web_price.ps1` biên dịch production validator bằng `dart compile js` và chạy fixture trong Chrome headless có profile riêng dưới `.dart_tool/`. Cách này kiểm tra số JavaScript thật, không thay đổi Flutter SDK. `flutter test --platform chrome` trên Flutter SDK Windows hiện tại gặp lỗi handler CanvasKit trả 404; không lấy lần chạy treo này làm bằng chứng kiểm thử đạt.
 
 Kết quả đợt hoàn thiện ngày 26/11/2026: `flutter analyze` không có issue; `flutter test` đạt 268 test, 6 test tích hợp opt-in được bỏ qua trong lệnh chung; pgTAP đạt 138/138. Các script Listing local, cloud, Android và kiểm tra giá Chrome đã chạy riêng và đạt. Build web và APK debug ứng dụng thường thành công sau chỉnh sửa cuối. `db lint` local không có error, còn một warning biến `changed` chưa đọc trong `save_listing`, không ảnh hưởng kết quả command. Không reset dữ liệu; fixture cloud đã dọn và còn 0 tài khoản smoke. Đây là bằng chứng kiểm tra trước khi bàn giao PR, không thay thế việc review và nghiệm thu tích hợp của nhóm.
+
+### 15.1. Bàn giao read model SCR-06 cho Khanh
+
+Giữ tên `ListingDetails`, không tạo thêm `ListingDetailsModel`. UI đọc `listingDetailsProvider(listingId)` trong `features/listings/providers/listing_providers.dart`; provider gọi `ListingWorkspaceRepository.getPublishedDetails(listingId)`. `ListingQueryRepository` cũ vẫn phục vụ card, không có phương thức details. Không dùng `getMyMaterial()` hoặc ghép `MockFixtures` trong UI để dựng chi tiết công khai.
+
+| Dữ liệu SCR-06 | Field |
+|---|---|
+| Tên, môn, tình trạng, hình thức, giá, bìa và trạng thái theo viewer | `details.card` (`condition`, `isOwner`, `isReserved`, `hasPendingRequest`, `isRequestable`) |
+| Mô tả sách / nội dung lượt đăng | `materialDescription` / `description` |
+| Người đăng công khai | `ownerId`, `ownerName`; không có email/holder/ngân hàng |
+| Gallery theo thứ tự, ISBN và khu vực chung | `images`, `isbn`, `meetingArea` |
+| Chính sách mượn | `borrowPolicy`: chỉ BORROW có `BorrowPolicy.mvp`; SELL/DONATE trả null |
+| Lý do khóa CTA | `requestBlockedReason`: OWNER/RESERVED/REQUEST_PENDING/MATERIAL_UNAVAILABLE hoặc chuỗi rỗng |
+
+`BorrowPolicy` bất biến theo BR-20: `minDays=1`, `maxDays=30`, `requesterProposesDays=true`, `ownerMustAcceptRequestedDays=true`, `allowsExtension=false`. `acceptsDays(int?)` chặn trống/ngoài khoảng; kiểu số nguyên được giữ bởi contract Dart. Đây là quy tắc chung, không phải cấu hình chủ tin tự đặt, không thêm cột/migration hoặc payload ghi Listing. RPC Request phải kiểm tra lại đầu vào tại server. SCR-06 hiển thị giới hạn từ policy thay vì tự ghi số trong UI.
+
+Repository preview trả cùng model, có condition, hai loại mô tả, tên công khai từ fixture, khu vực và gallery/bìa nhất quán. URL ảnh minh họa chỉ dành cho demo, không đại diện ảnh đã xác minh trên Supabase; UI dùng placeholder nếu tải ảnh lỗi. Viewer lấy theo phiên demo, owner/PENDING/RESERVED khóa CTA tương ứng; đổi viewer làm provider đọc lại. Không đổi ID/trạng thái fixture chung.
+
+Khi nối UI: giữ loading/error riêng; kết quả null là tin không còn công khai, không fallback sang fixture. URL ảnh thật có thể null/hết hạn; tải lại provider để xin URL mới theo quyền hiện thời. Các trường mô tả/ISBN/khu vực tùy chọn được phép null. Route SCR-06 vẫn `/listings/:listingId`; Khanh hoàn thiện giao diện trên contract này, giữ header/Back và điểm vào từ luồng đăng tin.
+
+Kiểm tra bổ sung policy/mock SCR-06: `flutter analyze --no-pub` không có issue; `flutter test --no-pub --reporter expanded` đạt 277 test, 6 test tích hợp opt-in bỏ qua. Có 9 test mới cho dữ liệu công khai thật/mock, biên số ngày, CTA theo viewer, đổi phiên demo và tin không còn công khai. Không thay đổi SQL hoặc chạy lại script ghi dữ liệu cloud trong đợt bổ sung này.

@@ -47,6 +47,63 @@ void main() {
     askingPriceVnd: 100,
     idempotencyKey: 'key',
   );
+  for (final offer in OfferType.values) {
+    test(
+      'SCR-06 giải mã ${offer.wire} cùng policy, giữ metadata khi ảnh không cấp được URL',
+      () async {
+        backend.onRpc = (request) {
+          if (request.url.path.endsWith('/get_listing_image_path')) {
+            // Không có quyền/ảnh không còn cấp được: không ký URL tùy ý ở client.
+            expect(jsonDecode(request.body)['p_image_id'], 'image-1');
+            return workflowResponse(null);
+          }
+          expect(request.url.path, endsWith('/get_published_listing'));
+          expect(jsonDecode(request.body), {'p_listing_id': 'listing-public'});
+          return workflowResponse({
+            'id': 'listing-public',
+            'material_id': 'material-public',
+            'title': 'Tài liệu công khai',
+            'subject': 'Lập trình',
+            'condition': 'Tốt',
+            'offer_type': offer.wire,
+            'asking_price_vnd': offer == OfferType.sell ? 90000 : null,
+            'is_requestable': true,
+            'is_reserved': false,
+            'owner_id': workflowActorB,
+            'owner_name': 'Người đăng công khai',
+            'material_description': 'Nội dung tài liệu',
+            'description': 'Nội dung tin đăng',
+            'meeting_area': 'Khu vực thư viện',
+            'images': [
+              {'id': 'image-1'},
+            ],
+          });
+        };
+        final details = (await repo.getPublishedDetails('listing-public'))!;
+        expect(details.card.condition, 'Tốt');
+        expect(details.ownerName, 'Người đăng công khai');
+        expect(details.materialDescription, 'Nội dung tài liệu');
+        expect(details.description, 'Nội dung tin đăng');
+        expect(details.meetingArea, 'Khu vực thư viện');
+        expect(details.images.single.id, 'image-1');
+        expect(details.images.single.url, isNull);
+        expect(details.requestBlockedReason, isEmpty);
+        if (offer == OfferType.borrow) {
+          expect(details.borrowPolicy!.minDays, 1);
+          expect(details.borrowPolicy!.maxDays, 30);
+        } else {
+          expect(details.borrowPolicy, isNull);
+        }
+      },
+    );
+  }
+  test(
+    'Tin không còn công khai trả null, không chuyển về dữ liệu demo',
+    () async {
+      backend.onRpc = (_) => workflowResponse(null);
+      expect(await repo.getPublishedDetails('hidden-listing'), isNull);
+    },
+  );
   test(
     'Thiếu RPC không bị báo nhầm là dữ liệu thay đổi; lỗi lạ không lộ payload',
     () async {

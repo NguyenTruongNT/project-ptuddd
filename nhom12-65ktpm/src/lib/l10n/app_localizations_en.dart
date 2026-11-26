@@ -200,8 +200,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listingOwnRequest => 'View request';
 
   @override
-  String get listingBorrowPolicy =>
-      'Borrow for 1–30 days as requested and approved.';
+  String listingBorrowPolicy(int minDays, int maxDays) {
+    return 'Borrow for $minDays–$maxDays days. The borrower proposes the duration; the owner accepts those exact days or declines.';
+  }
 
   @override
   String get listingRestore =>

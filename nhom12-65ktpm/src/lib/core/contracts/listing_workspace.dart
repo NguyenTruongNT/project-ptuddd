@@ -95,6 +95,23 @@ class ListingImage {
   final String? url;
 }
 
+// Chính sách chung BR-20, không phải cấu hình riêng do chủ tin nhập.
+// Constructor private giữ một nguồn quy tắc cho cả dữ liệu thật và mock.
+final class BorrowPolicy {
+  const BorrowPolicy._();
+  static const mvp = BorrowPolicy._();
+
+  int get minDays => 1;
+  int get maxDays => 30;
+  bool get requesterProposesDays => true;
+  bool get ownerMustAcceptRequestedDays => true;
+  bool get allowsExtension => false;
+
+  // UI kiểm tra sớm; RPC Request vẫn phải xác thực lại số ngày tại server.
+  bool acceptsDays(int? days) =>
+      days != null && days >= minDays && days <= maxDays;
+}
+
 // Projection cho Khanh/SCR-06: không QR/holder/private path.
 class ListingDetails {
   const ListingDetails({
@@ -115,6 +132,11 @@ class ListingDetails {
   final String? description;
   final String? meetingArea;
   final String? isbn;
+  // Dẫn xuất từ offer để SELL/DONATE không mang nhầm chính sách BORROW.
+  // Không cần thêm cột Listing hoặc thay payload RPC cho quy tắc chung này.
+  BorrowPolicy? get borrowPolicy =>
+      card.offerType == OfferType.borrow ? BorrowPolicy.mvp : null;
+
   String get requestBlockedReason => card.isOwner
       ? 'OWNER'
       : card.isReserved
@@ -145,6 +167,8 @@ abstract interface class ListingWorkspaceRepository
   Future<CommandResult<ManagedListing>?> getCommandResult(
     ListingCommand command,
   );
+  // SCR-06 đọc projection công khai này; không ghép bằng getMyMaterial của owner.
+  // Null khi tin không còn công khai; lỗi backend được trả qua AppError.
   Future<ListingDetails?> getPublishedDetails(String listingId);
   Future<ListingPage<ListingCardModel>> searchPage({
     String keyword = '',

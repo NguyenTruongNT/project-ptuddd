@@ -9,7 +9,7 @@ import '../../../core/mock/mock_fixtures.dart';
 // Demo chỉ đọc, không tạo ACK hoặc giao dịch giả. Backend lỗi không vào đây.
 class ListingPreviewRepository extends MockListingQueryRepository
     implements ListingWorkspaceRepository {
-  const ListingPreviewRepository();
+  const ListingPreviewRepository({super.demoViewerId});
   @override
   Future<ManagedListing?> getManaged({
     String? listingId,
@@ -34,11 +34,17 @@ class ListingPreviewRepository extends MockListingQueryRepository
     final card = await getPublishedCard(listingId);
     if (card == null) return null;
     final m = MockFixtures.materials.firstWhere((m) => m.id == card.materialId);
+    final listing = MockFixtures.listings.firstWhere((l) => l.id == listingId);
+    // Ghép fixture trong repository để SCR-06 chỉ tiêu thụ shared read model.
     return ListingDetails(
       card: card,
       ownerId: m.ownerId,
-      ownerName: 'Demo',
+      ownerName: MockFixtures.displayNames[m.ownerId] ?? 'Người dùng (demo)',
+      images: MockFixtures.listingImages[listingId] ?? const [],
       materialDescription: m.description,
+      description: listing.description,
+      meetingArea: listing.meetingArea,
+      isbn: m.isbn,
     );
   }
 
