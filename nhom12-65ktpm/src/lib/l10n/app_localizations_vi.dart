@@ -10,6 +10,228 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
+  String get listingTitle => 'Đăng tin';
+
+  @override
+  String get listingCreate => 'Đăng tin mới';
+
+  @override
+  String get listingCreateFormTitle => 'Tạo tin đăng';
+
+  @override
+  String get listingEditDraftTitle => 'Chỉnh sửa bản nháp';
+
+  @override
+  String get listingDetailsTitle => 'Chi tiết tin đăng';
+
+  @override
+  String get listingPickerTitle => 'Chọn tài liệu';
+
+  @override
+  String get listingPickerHint =>
+      'Chọn tài liệu để tạo hoặc tiếp tục tin đăng.';
+
+  @override
+  String get listingMaterialSearch => 'Tìm tài liệu';
+
+  @override
+  String get listingFilterTitle => 'Lọc theo trạng thái';
+
+  @override
+  String listingFilterLabel(String status) {
+    return 'Trạng thái: $status ▾';
+  }
+
+  @override
+  String get listingLocalSection => 'Nháp trên thiết bị';
+
+  @override
+  String get listingNoResults => 'Không có kết quả phù hợp.';
+
+  @override
+  String get listingNoMaterials =>
+      'Bạn chưa có tài liệu. Thêm tài liệu để bắt đầu đăng tin.';
+
+  @override
+  String get listingClearFilters => 'Xóa bộ lọc và từ khóa';
+
+  @override
+  String get listingClearSearch => 'Xóa từ khóa';
+
+  @override
+  String get listingContinueDraft => 'Tiếp tục bản nháp';
+
+  @override
+  String get listingManagePublished => 'Quản lý tin đang công bố';
+
+  @override
+  String get listingManageHidden => 'Quản lý tin đã ẩn';
+
+  @override
+  String get listingMaterialUnavailable =>
+      'Tài liệu đang được giữ hoặc có giao dịch; xem thông tin để biết chi tiết.';
+
+  @override
+  String get listingBackendUnavailable =>
+      'Chức năng đăng tin tạm thời chưa sẵn sàng. Vui lòng thử lại sau.';
+
+  @override
+  String get listingUnexpectedError =>
+      'Không thể tải hoặc lưu tin đăng. Vui lòng thử lại sau.';
+
+  @override
+  String get listingSaveBeforeShow =>
+      'Lưu các thay đổi lên máy chủ trước khi hiện lại tin.';
+
+  @override
+  String get listingFormTitle => 'Quản lý tin đăng';
+
+  @override
+  String get listingChoose => 'Chọn tài liệu để đăng';
+
+  @override
+  String get listingMine => 'Tin của tôi';
+
+  @override
+  String get listingEmpty => 'Chưa có tin đăng trong mục này.';
+
+  @override
+  String get listingAddMaterial => 'Thêm tài liệu';
+
+  @override
+  String get listingOffer => 'Hình thức';
+
+  @override
+  String get listingBorrow => 'Cho mượn';
+
+  @override
+  String get listingDonate => 'Tặng';
+
+  @override
+  String get listingSell => 'Bán';
+
+  @override
+  String get listingPrice => 'Giá bán (VND)';
+
+  @override
+  String get listingDescription => 'Mô tả đề nghị';
+
+  @override
+  String get listingArea => 'Khu vực hẹn chung (không bắt buộc)';
+
+  @override
+  String get listingSave => 'Lưu nháp lên máy chủ';
+
+  @override
+  String get listingLocal => 'Lưu nháp trên thiết bị';
+
+  @override
+  String get listingPublish => 'Công bố';
+
+  @override
+  String get listingHide => 'Ẩn tin';
+
+  @override
+  String get listingShow => 'Hiện lại tin';
+
+  @override
+  String get listingDraft => 'Bản nháp';
+
+  @override
+  String get listingPublished => 'Đang công bố';
+
+  @override
+  String get listingHidden => 'Đã ẩn';
+
+  @override
+  String get listingArchived => 'Đã kết thúc';
+
+  @override
+  String get listingAll => 'Tất cả';
+
+  @override
+  String get listingNoImages =>
+      'Cần ít nhất một ảnh đã lưu vào tài liệu để công bố.';
+
+  @override
+  String get listingLocked =>
+      'Không thể sửa: tin đang công bố, còn yêu cầu chờ hoặc tài liệu không khả dụng.';
+
+  @override
+  String get listingUnknown =>
+      'Chưa rõ máy chủ đã ghi nhận. Kiểm tra kết quả trước khi tạo thao tác mới.';
+
+  @override
+  String get listingCheck => 'Kiểm tra kết quả / gửi lại';
+
+  @override
+  String get listingSaved => 'Đã lưu trên máy chủ.';
+
+  @override
+  String get listingLocalSaved => 'Đã lưu nháp trên thiết bị, chưa công bố.';
+
+  @override
+  String get listingLeave => 'Giữ nháp trên máy trước khi rời?';
+
+  @override
+  String get listingDiscard => 'Bỏ thay đổi';
+
+  @override
+  String get listingStay => 'Tiếp tục sửa';
+
+  @override
+  String get listingNotFound =>
+      'Tin không còn công khai hoặc bạn không có quyền.';
+
+  @override
+  String get listingHideConfirm =>
+      'Tin ngừng xuất hiện trong Khám phá. Yêu cầu và giao dịch đang có vẫn được giữ.';
+
+  @override
+  String get listingReserved => 'Đã được đặt';
+
+  @override
+  String get listingManage => 'Quản lý tin';
+
+  @override
+  String get listingRequest => 'Gửi yêu cầu';
+
+  @override
+  String get listingOwnRequest => 'Xem yêu cầu';
+
+  @override
+  String get listingBorrowPolicy =>
+      'Mượn từ 1–30 ngày, theo số ngày người mượn đề xuất và chủ sách chấp thuận.';
+
+  @override
+  String get listingRestore =>
+      'Khôi phục nháp trên thiết bị? Quyền và phiên bản dữ liệu vẫn cần kiểm tra lại.';
+
+  @override
+  String get listingMaterialChanged =>
+      'Dữ liệu đã thay đổi. Hãy tải lại và kiểm tra trước khi gửi.';
+
+  @override
+  String get listingDemo =>
+      'Chế độ mô phỏng chỉ đọc; kết nối Supabase để đăng tin.';
+
+  @override
+  String get listingInvalid =>
+      'Kiểm tra hình thức, giá, độ dài mô tả và ảnh đã lưu.';
+
+  @override
+  String get listingMore => 'Tải thêm';
+
+  @override
+  String get listingSearch => 'Tìm tin theo tên tài liệu';
+
+  @override
+  String get listingRetry => 'Tải lại';
+
+  @override
+  String get listingOwner => 'Người đăng';
+
+  @override
   String get navHome => 'Trang chủ';
 
   @override

@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_routes.dart';
+import '../../../design_system/widgets/feature_scaffold.dart';
 import '../../../core/contracts/material_workspace.dart';
 import '../../../design_system/widgets/study_feedback.dart';
 import '../../../l10n/app_localizations.dart';
 import '../providers/material_providers.dart';
 import 'material_widgets.dart';
+import '../../listings/presentation/publish_page.dart';
 
 class MaterialDetailsPage extends ConsumerWidget {
   const MaterialDetailsPage({super.key, required this.materialId});
@@ -17,18 +19,16 @@ class MaterialDetailsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context)!;
     final data = ref.watch(materialDetailsProvider(materialId));
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.matDetails),
-        actions: [
-          IconButton(
-            tooltip: t.matRefresh,
-            onPressed: () =>
-                ref.invalidate(materialDetailsProvider(materialId)),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+    return FeatureScaffold(
+      title: t.matDetails,
+      fallbackLocation: AppRoutes.myMaterials,
+      actions: [
+        IconButton(
+          tooltip: t.matRefresh,
+          onPressed: () => ref.invalidate(materialDetailsProvider(materialId)),
+          icon: const Icon(Icons.refresh),
+        ),
+      ],
       body: data.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
@@ -47,7 +47,10 @@ class MaterialDetailsPage extends ConsumerWidget {
             : _DetailsBody(
                 details: d,
                 onEdit: () async {
-                  await context.push(AppRoutes.materialEdit(materialId));
+                  // Lưu xong trở về chi tiết hiện tại, không tạo thêm một bản chi tiết.
+                  await context.push(
+                    '${AppRoutes.materialEdit(materialId)}?completion=return',
+                  );
                   if (context.mounted) {
                     ref.invalidate(materialDetailsProvider(materialId));
                   }
@@ -76,6 +79,19 @@ class _DetailsBody extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (!details.isCached) ...[
+                  FilledButton.icon(
+                    onPressed: () =>
+                        context.push(listingFormLocation(materialId: m.id)),
+                    icon: const Icon(Icons.campaign_outlined),
+                    label: Text(
+                      details.listingStatus == null
+                          ? t.listingChoose
+                          : t.listingManage,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 if (details.isCached) ...[
                   MaterialNotice(t.matCached),
                   const SizedBox(height: 16),

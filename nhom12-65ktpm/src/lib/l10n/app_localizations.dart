@@ -98,6 +98,414 @@ abstract class AppLocalizations {
     Locale('vi'),
   ];
 
+  /// No description provided for @listingTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng tin'**
+  String get listingTitle;
+
+  /// No description provided for @listingCreate.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng tin mới'**
+  String get listingCreate;
+
+  /// No description provided for @listingCreateFormTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo tin đăng'**
+  String get listingCreateFormTitle;
+
+  /// No description provided for @listingEditDraftTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chỉnh sửa bản nháp'**
+  String get listingEditDraftTitle;
+
+  /// No description provided for @listingDetailsTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chi tiết tin đăng'**
+  String get listingDetailsTitle;
+
+  /// No description provided for @listingPickerTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chọn tài liệu'**
+  String get listingPickerTitle;
+
+  /// No description provided for @listingPickerHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chọn tài liệu để tạo hoặc tiếp tục tin đăng.'**
+  String get listingPickerHint;
+
+  /// No description provided for @listingMaterialSearch.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm tài liệu'**
+  String get listingMaterialSearch;
+
+  /// No description provided for @listingFilterTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lọc theo trạng thái'**
+  String get listingFilterTitle;
+
+  /// No description provided for @listingFilterLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Trạng thái: {status} ▾'**
+  String listingFilterLabel(String status);
+
+  /// No description provided for @listingLocalSection.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nháp trên thiết bị'**
+  String get listingLocalSection;
+
+  /// No description provided for @listingNoResults.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không có kết quả phù hợp.'**
+  String get listingNoResults;
+
+  /// No description provided for @listingNoMaterials.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bạn chưa có tài liệu. Thêm tài liệu để bắt đầu đăng tin.'**
+  String get listingNoMaterials;
+
+  /// No description provided for @listingClearFilters.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xóa bộ lọc và từ khóa'**
+  String get listingClearFilters;
+
+  /// No description provided for @listingClearSearch.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xóa từ khóa'**
+  String get listingClearSearch;
+
+  /// No description provided for @listingContinueDraft.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếp tục bản nháp'**
+  String get listingContinueDraft;
+
+  /// No description provided for @listingManagePublished.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quản lý tin đang công bố'**
+  String get listingManagePublished;
+
+  /// No description provided for @listingManageHidden.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quản lý tin đã ẩn'**
+  String get listingManageHidden;
+
+  /// No description provided for @listingMaterialUnavailable.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài liệu đang được giữ hoặc có giao dịch; xem thông tin để biết chi tiết.'**
+  String get listingMaterialUnavailable;
+
+  /// No description provided for @listingBackendUnavailable.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chức năng đăng tin tạm thời chưa sẵn sàng. Vui lòng thử lại sau.'**
+  String get listingBackendUnavailable;
+
+  /// No description provided for @listingUnexpectedError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không thể tải hoặc lưu tin đăng. Vui lòng thử lại sau.'**
+  String get listingUnexpectedError;
+
+  /// No description provided for @listingSaveBeforeShow.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu các thay đổi lên máy chủ trước khi hiện lại tin.'**
+  String get listingSaveBeforeShow;
+
+  /// No description provided for @listingFormTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quản lý tin đăng'**
+  String get listingFormTitle;
+
+  /// No description provided for @listingChoose.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chọn tài liệu để đăng'**
+  String get listingChoose;
+
+  /// No description provided for @listingMine.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tin của tôi'**
+  String get listingMine;
+
+  /// No description provided for @listingEmpty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có tin đăng trong mục này.'**
+  String get listingEmpty;
+
+  /// No description provided for @listingAddMaterial.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thêm tài liệu'**
+  String get listingAddMaterial;
+
+  /// No description provided for @listingOffer.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hình thức'**
+  String get listingOffer;
+
+  /// No description provided for @listingBorrow.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cho mượn'**
+  String get listingBorrow;
+
+  /// No description provided for @listingDonate.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tặng'**
+  String get listingDonate;
+
+  /// No description provided for @listingSell.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bán'**
+  String get listingSell;
+
+  /// No description provided for @listingPrice.
+  ///
+  /// In vi, this message translates to:
+  /// **'Giá bán (VND)'**
+  String get listingPrice;
+
+  /// No description provided for @listingDescription.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mô tả đề nghị'**
+  String get listingDescription;
+
+  /// No description provided for @listingArea.
+  ///
+  /// In vi, this message translates to:
+  /// **'Khu vực hẹn chung (không bắt buộc)'**
+  String get listingArea;
+
+  /// No description provided for @listingSave.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu nháp lên máy chủ'**
+  String get listingSave;
+
+  /// No description provided for @listingLocal.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu nháp trên thiết bị'**
+  String get listingLocal;
+
+  /// No description provided for @listingPublish.
+  ///
+  /// In vi, this message translates to:
+  /// **'Công bố'**
+  String get listingPublish;
+
+  /// No description provided for @listingHide.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ẩn tin'**
+  String get listingHide;
+
+  /// No description provided for @listingShow.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hiện lại tin'**
+  String get listingShow;
+
+  /// No description provided for @listingDraft.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bản nháp'**
+  String get listingDraft;
+
+  /// No description provided for @listingPublished.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang công bố'**
+  String get listingPublished;
+
+  /// No description provided for @listingHidden.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã ẩn'**
+  String get listingHidden;
+
+  /// No description provided for @listingArchived.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã kết thúc'**
+  String get listingArchived;
+
+  /// No description provided for @listingAll.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tất cả'**
+  String get listingAll;
+
+  /// No description provided for @listingNoImages.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cần ít nhất một ảnh đã lưu vào tài liệu để công bố.'**
+  String get listingNoImages;
+
+  /// No description provided for @listingLocked.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không thể sửa: tin đang công bố, còn yêu cầu chờ hoặc tài liệu không khả dụng.'**
+  String get listingLocked;
+
+  /// No description provided for @listingUnknown.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa rõ máy chủ đã ghi nhận. Kiểm tra kết quả trước khi tạo thao tác mới.'**
+  String get listingUnknown;
+
+  /// No description provided for @listingCheck.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kiểm tra kết quả / gửi lại'**
+  String get listingCheck;
+
+  /// No description provided for @listingSaved.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã lưu trên máy chủ.'**
+  String get listingSaved;
+
+  /// No description provided for @listingLocalSaved.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã lưu nháp trên thiết bị, chưa công bố.'**
+  String get listingLocalSaved;
+
+  /// No description provided for @listingLeave.
+  ///
+  /// In vi, this message translates to:
+  /// **'Giữ nháp trên máy trước khi rời?'**
+  String get listingLeave;
+
+  /// No description provided for @listingDiscard.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bỏ thay đổi'**
+  String get listingDiscard;
+
+  /// No description provided for @listingStay.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếp tục sửa'**
+  String get listingStay;
+
+  /// No description provided for @listingNotFound.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tin không còn công khai hoặc bạn không có quyền.'**
+  String get listingNotFound;
+
+  /// No description provided for @listingHideConfirm.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tin ngừng xuất hiện trong Khám phá. Yêu cầu và giao dịch đang có vẫn được giữ.'**
+  String get listingHideConfirm;
+
+  /// No description provided for @listingReserved.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã được đặt'**
+  String get listingReserved;
+
+  /// No description provided for @listingManage.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quản lý tin'**
+  String get listingManage;
+
+  /// No description provided for @listingRequest.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gửi yêu cầu'**
+  String get listingRequest;
+
+  /// No description provided for @listingOwnRequest.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xem yêu cầu'**
+  String get listingOwnRequest;
+
+  /// No description provided for @listingBorrowPolicy.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mượn từ 1–30 ngày, theo số ngày người mượn đề xuất và chủ sách chấp thuận.'**
+  String get listingBorrowPolicy;
+
+  /// No description provided for @listingRestore.
+  ///
+  /// In vi, this message translates to:
+  /// **'Khôi phục nháp trên thiết bị? Quyền và phiên bản dữ liệu vẫn cần kiểm tra lại.'**
+  String get listingRestore;
+
+  /// No description provided for @listingMaterialChanged.
+  ///
+  /// In vi, this message translates to:
+  /// **'Dữ liệu đã thay đổi. Hãy tải lại và kiểm tra trước khi gửi.'**
+  String get listingMaterialChanged;
+
+  /// No description provided for @listingDemo.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chế độ mô phỏng chỉ đọc; kết nối Supabase để đăng tin.'**
+  String get listingDemo;
+
+  /// No description provided for @listingInvalid.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kiểm tra hình thức, giá, độ dài mô tả và ảnh đã lưu.'**
+  String get listingInvalid;
+
+  /// No description provided for @listingMore.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tải thêm'**
+  String get listingMore;
+
+  /// No description provided for @listingSearch.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm tin theo tên tài liệu'**
+  String get listingSearch;
+
+  /// No description provided for @listingRetry.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tải lại'**
+  String get listingRetry;
+
+  /// No description provided for @listingOwner.
+  ///
+  /// In vi, this message translates to:
+  /// **'Người đăng'**
+  String get listingOwner;
+
   /// No description provided for @navHome.
   ///
   /// In vi, this message translates to:

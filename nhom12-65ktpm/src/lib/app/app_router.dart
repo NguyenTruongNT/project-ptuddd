@@ -22,6 +22,10 @@ import 'auth_redirect.dart';
 import '../features/materials/presentation/my_materials_page.dart';
 import '../features/materials/presentation/material_form_page.dart';
 import '../features/materials/presentation/material_details_page.dart';
+import '../features/listings/presentation/publish_page.dart';
+import '../features/listings/presentation/listing_form_page.dart';
+import '../features/listings/presentation/listing_details_page.dart';
+import '../features/listings/presentation/listing_material_picker_page.dart';
 
 class _AuthRouterRefresh extends ChangeNotifier {
   void refresh() => notifyListeners();
@@ -83,8 +87,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.publishTab,
-                builder: (context, state) =>
-                    const TabContent(section: TabSection.publish),
+                builder: (context, state) => const PublishPage(),
               ),
               GoRoute(
                 path: AppRoutes.myMaterials,
@@ -152,20 +155,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.authCallback,
         builder: (_, _) => const SplashPage(),
       ),
-      _placeholder(AppRoutes.listingForm, 'SCR-10', 'Tạo/sửa tin đăng'),
-      _placeholder(
-        AppRoutes.listingDetailsPattern,
-        'SCR-06',
-        'Chi tiết tin đăng',
+      GoRoute(
+        path: AppRoutes.listingForm,
+        builder: (_, state) => ListingFormPage(
+          materialId: state.uri.queryParameters['materialId'],
+          listingId: state.uri.queryParameters['listingId'],
+          returnPublishedResult:
+              state.uri.queryParameters['completion'] == 'return',
+        ),
+      ),
+      // Đặt route tĩnh trước /listings/:listingId để không nhầm tên bước thành ID.
+      GoRoute(
+        path: AppRoutes.listingMaterialPicker,
+        builder: (_, _) => const ListingMaterialPickerPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.listingDetailsPattern,
+        builder: (_, state) =>
+            ListingDetailsPage(listingId: state.pathParameters['listingId']!),
       ),
       GoRoute(
         path: AppRoutes.materialForm,
-        builder: (_, _) => const MaterialFormPage(),
+        builder: (_, state) => MaterialFormPage(
+          returnSavedResult:
+              state.uri.queryParameters['completion'] == 'return',
+        ),
       ),
       GoRoute(
         path: AppRoutes.materialEditPattern,
-        builder: (_, state) =>
-            MaterialFormPage(materialId: state.pathParameters['materialId']!),
+        builder: (_, state) => MaterialFormPage(
+          materialId: state.pathParameters['materialId']!,
+          returnSavedResult:
+              state.uri.queryParameters['completion'] == 'return',
+        ),
       ),
       GoRoute(
         path: AppRoutes.materialDetailsPattern,

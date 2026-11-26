@@ -10,6 +10,227 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get listingTitle => 'Publish';
+
+  @override
+  String get listingCreate => 'New listing';
+
+  @override
+  String get listingCreateFormTitle => 'Create listing';
+
+  @override
+  String get listingEditDraftTitle => 'Edit draft';
+
+  @override
+  String get listingDetailsTitle => 'Listing details';
+
+  @override
+  String get listingPickerTitle => 'Choose material';
+
+  @override
+  String get listingPickerHint =>
+      'Choose material to create or continue a listing.';
+
+  @override
+  String get listingMaterialSearch => 'Search materials';
+
+  @override
+  String get listingFilterTitle => 'Filter by status';
+
+  @override
+  String listingFilterLabel(String status) {
+    return 'Status: $status ▾';
+  }
+
+  @override
+  String get listingLocalSection => 'Drafts on this device';
+
+  @override
+  String get listingNoResults => 'No matching results.';
+
+  @override
+  String get listingNoMaterials =>
+      'You have no materials. Add one to start a listing.';
+
+  @override
+  String get listingClearFilters => 'Clear filters and search';
+
+  @override
+  String get listingClearSearch => 'Clear search';
+
+  @override
+  String get listingContinueDraft => 'Continue draft';
+
+  @override
+  String get listingManagePublished => 'Manage published listing';
+
+  @override
+  String get listingManageHidden => 'Manage hidden listing';
+
+  @override
+  String get listingMaterialUnavailable =>
+      'Material is held or has an ongoing transaction; open it for details.';
+
+  @override
+  String get listingBackendUnavailable =>
+      'Publishing is temporarily unavailable. Please try again later.';
+
+  @override
+  String get listingUnexpectedError =>
+      'Could not load or save the listing. Please try again later.';
+
+  @override
+  String get listingSaveBeforeShow =>
+      'Save your changes to the server before showing the listing again.';
+
+  @override
+  String get listingFormTitle => 'Manage listing';
+
+  @override
+  String get listingChoose => 'Choose a material';
+
+  @override
+  String get listingMine => 'My listings';
+
+  @override
+  String get listingEmpty => 'No listings in this section.';
+
+  @override
+  String get listingAddMaterial => 'Add material';
+
+  @override
+  String get listingOffer => 'Offer type';
+
+  @override
+  String get listingBorrow => 'Lend';
+
+  @override
+  String get listingDonate => 'Donate';
+
+  @override
+  String get listingSell => 'Sell';
+
+  @override
+  String get listingPrice => 'Price (VND)';
+
+  @override
+  String get listingDescription => 'Offer description';
+
+  @override
+  String get listingArea => 'General meeting area (optional)';
+
+  @override
+  String get listingSave => 'Save server draft';
+
+  @override
+  String get listingLocal => 'Save on device';
+
+  @override
+  String get listingPublish => 'Publish';
+
+  @override
+  String get listingHide => 'Hide';
+
+  @override
+  String get listingShow => 'Show again';
+
+  @override
+  String get listingDraft => 'Draft';
+
+  @override
+  String get listingPublished => 'Published';
+
+  @override
+  String get listingHidden => 'Hidden';
+
+  @override
+  String get listingArchived => 'Archived';
+
+  @override
+  String get listingAll => 'All';
+
+  @override
+  String get listingNoImages =>
+      'Save at least one material image before publishing.';
+
+  @override
+  String get listingLocked =>
+      'Editing is blocked: published listing, pending requests or unavailable material.';
+
+  @override
+  String get listingUnknown =>
+      'Result unknown. Check the previous command before starting another.';
+
+  @override
+  String get listingCheck => 'Check result / retry';
+
+  @override
+  String get listingSaved => 'Saved on server.';
+
+  @override
+  String get listingLocalSaved => 'Saved on device; not published.';
+
+  @override
+  String get listingLeave => 'Keep a device draft before leaving?';
+
+  @override
+  String get listingDiscard => 'Discard changes';
+
+  @override
+  String get listingStay => 'Keep editing';
+
+  @override
+  String get listingNotFound =>
+      'Listing is unavailable or you do not have access.';
+
+  @override
+  String get listingHideConfirm =>
+      'The listing leaves Explore. Existing requests and transactions remain.';
+
+  @override
+  String get listingReserved => 'Reserved';
+
+  @override
+  String get listingManage => 'Manage listing';
+
+  @override
+  String get listingRequest => 'Send request';
+
+  @override
+  String get listingOwnRequest => 'View request';
+
+  @override
+  String get listingBorrowPolicy =>
+      'Borrow for 1–30 days as requested and approved.';
+
+  @override
+  String get listingRestore =>
+      'Restore the device draft? Permissions and revisions must still be checked.';
+
+  @override
+  String get listingMaterialChanged =>
+      'Data changed. Reload and review before submitting.';
+
+  @override
+  String get listingDemo => 'Read-only demo; connect Supabase to publish.';
+
+  @override
+  String get listingInvalid =>
+      'Check offer, price, text length and saved images.';
+
+  @override
+  String get listingMore => 'Load more';
+
+  @override
+  String get listingSearch => 'Search material title';
+
+  @override
+  String get listingRetry => 'Reload';
+
+  @override
+  String get listingOwner => 'Posted by';
+
+  @override
   String get navHome => 'Home';
 
   @override
