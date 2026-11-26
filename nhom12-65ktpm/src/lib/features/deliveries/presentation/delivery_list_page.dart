@@ -23,11 +23,26 @@ class DeliveryListPage extends ConsumerWidget {
     final myTasksAsync = ref.watch(myDeliveryTasksProvider);
     final availableTasksAsync = ref.watch(availableDeliveryTasksProvider);
 
-    return DefaultTabController(
-      length: DeliveryTab.values.length,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Nhiệm vụ giao hộ'),
+    final router = GoRouter.of(context);
+    void handleBack() {
+      if (router.canPop()) {
+        router.pop();
+      } else {
+        router.go(AppRoutes.profile);
+      }
+    }
+
+    return PopScope(
+      canPop: router.canPop(),
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) handleBack();
+      },
+      child: DefaultTabController(
+        length: DeliveryTab.values.length,
+        child: Scaffold(
+          appBar: AppBar(
+            leading: BackButton(onPressed: handleBack),
+            title: const Text('Nhiệm vụ giao hộ'),
           bottom: TabBar(
             isScrollable: true,
             tabs: [
@@ -131,6 +146,7 @@ class DeliveryListPage extends ConsumerWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
