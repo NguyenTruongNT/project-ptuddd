@@ -276,7 +276,7 @@ Các hình mockup minh họa trong DOCX và gói assets **không phải thiết 
 | UI-18 | Cá nhân và cài đặt | SCR-25, SCR-26 |
 
 ## 5. Sơ đồ điều hướng thống nhất
-**Shell 5 tab**: `/home` → SCR-04; `/explore` → SCR-05; `Đăng tin` → chọn Material SCR-07/08 rồi SCR-10; `/transactions` → SCR-13; `/profile` → SCR-25. Các route chi tiết push bên trong Shell hoặc overlay toàn màn có back chuẩn; camera/ảnh/xác nhận Handover có thể ẩn Bottom Navigation.
+**Shell 5 tab**: `/home` → SCR-04; `/explore` → SCR-05; `/publish` → quản lý tin và bắt đầu chọn Material rồi SCR-10; `/transactions` → SCR-13; `/profile` → SCR-25. Theo tinh chỉnh được Trường duyệt ngày 26/11/2026, các màn chức năng con mở ngoài Shell, ẩn Bottom Navigation, có header gồm Back và tên chức năng. Đây là quy tắc áp dụng cho các màn con phát triển tiếp theo.
 
 ```mermaid
 flowchart TD
@@ -300,6 +300,18 @@ flowchart TD
 **Back stack:** Tab → root tab; Detail → parent; form có thay đổi chưa lưu phải confirm rời trang; logout reset stack về auth. Back trong scanner trả màn Handover không tự thay nghiệp vụ.
 
 ### Route đề xuất (`go_router`, chưa khóa tên thực tế)
+
+**Tinh chỉnh luồng Đăng tin đã duyệt và triển khai ngày 3 (26/11/2026):**
+
+- Tab `/publish`: một header “Đăng tin” + tải lại, CTA “Đăng tin mới”, tìm tin theo tên tài liệu, nút “Trạng thái: … ▾” mở bảng 5 trạng thái. Không đặt 5 chip thành nhiều hàng; không lặp header StudyShare ở trên. Nháp local có nhãn riêng; danh sách có ảnh bìa/tên/hình thức/trạng thái/giá SELL. Bộ lọc/từ khóa không có kết quả có lối xóa lọc.
+- Màn phụ `/listings/select-material`: header “← Chọn tài liệu”, hướng dẫn ngắn, “Thêm tài liệu”, tìm tài liệu và các thẻ cách nhau 12dp. Hiển thị hành động cụ thể Tạo tin/Tiếp tục nháp/Quản lý tin đang công bố/Quản lý tin ẩn; vẫn hiện tài liệu bị khóa kèm lý do. Không có nút “Tin của tôi”, bộ lọc Listing hay Bottom Navigation. Màn này là bước phụ của SCR-10, không tăng số mã SCR chính.
+- SCR-08 mở từ bước chọn trả Material đã ACK về đúng màn chọn, đưa tài liệu mới vào vùng kết quả. Hủy giữ trạng thái chọn trước đó. Sửa Material từ SCR-09/SCR-10 trả về đúng màn nguồn sau lưu; không chồng thêm trang chi tiết giống nhau.
+- SCR-10 có tiêu đề Tạo tin đăng/Chỉnh sửa bản nháp/Quản lý tin đăng theo dữ liệu thật. Chỉ hiển thị thao tác hợp lệ; nội dung đang công bố chỉ đọc. Lưu local giữ thay đổi trên thiết bị, chưa cho hiện lại nội dung HIDDEN chưa đồng bộ server.
+- Header và Android Back cùng quay về màn nguồn, giữ từ khóa/bộ lọc/số trang/vị trí cuộn. Form chưa lưu hỏi Ở lại/Lưu local/Bỏ thay đổi; command chưa rõ ACK không được bỏ key. Header vẫn hoạt động khi loading/empty/error. Deep link không có lịch sử về màn cha an toàn.
+- Sau công bố ACK từ tab: đóng chọn/form, mở chi tiết tin; Back về tab đã cập nhật. Thành công không đưa người dùng trở lại form cũ. Lỗi thiếu RPC hiển thị tạm chưa sẵn sàng, không báo nhầm dữ liệu thay đổi hay danh sách trống.
+
+Các tên route thực tế của luồng này được ưu tiên so với bảng định hướng cũ bên dưới; không đổi route đã bàn giao cho đồng đội.
+
 | Nhóm | Path | Màn | Ghi chú |
 |---|---|---|---|
 | Ứng dụng | /splash | SCR-01 | Khởi tạo + auth guard |

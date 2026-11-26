@@ -23,7 +23,7 @@ flutter run -d emulator-5554
 
 - Nếu mã thiết bị thay đổi, dùng đúng ID trong `flutter devices`.
 - Mặc định ứng dụng kết nối Supabase Cloud development bằng `src/assets/config/supabase.public.json` đã có trong Git. Không cần tạo file JSON cá nhân; cần Internet và tài khoản thử nghiệm riêng của từng thành viên.
-- Auth/Profile, Material/ảnh SCR-07/08/09 và Transactions/Payment/Issues dùng Supabase thật khi đăng nhập. Listing/Request/Delivery/Handover chưa tích hợp vẫn giữ trạng thái hiện có; không coi chúng là đã nối backend chỉ vì có bảng hoặc dữ liệu.
+- Auth/Profile, Material/ảnh SCR-07/08/09, Listing ngày 3 và Transactions/Payment/Issues dùng Supabase thật khi đăng nhập. Bốn migration Listing `20261126000100`–`20261126000400` đã có trên cloud development ngày 26/11/2026. Request/Delivery/Handover chưa tích hợp vẫn giữ trạng thái hiện có; không coi chúng là đã nối backend chỉ vì có bảng hoặc dữ liệu.
 - File cấu hình công khai nằm ngoài `.dart_tool/`, nên được giữ lại sau `flutter clean`.
 
 Để phát triển giao diện với dữ liệu mock mà không kết nối Supabase:

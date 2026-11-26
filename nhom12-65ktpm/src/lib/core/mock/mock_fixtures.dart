@@ -1,4 +1,5 @@
 import '../contracts/domain_enums.dart';
+import '../contracts/listing_workspace.dart';
 import '../contracts/models/models.dart';
 
 // Dữ liệu ẢO, ID cố định để cả nhóm test. Không dùng dữ liệu sinh viên thật.
@@ -19,28 +20,63 @@ class MockFixtures {
 
   static List<Material> get materials => const [
     Material(id: 'mat-borrow-01', ownerId: userA, holderId: userB,
-        title: 'Giáo trình Giải tích', subject: 'Toán cao cấp', condition: 'Tốt'),
+        title: 'Giáo trình Giải tích', subject: 'Toán cao cấp', condition: 'Tốt',
+        description: 'Tài liệu demo về giới hạn, đạo hàm và tích phân; có ghi chú bằng bút chì.'),
     Material(id: 'mat-borrow-02', ownerId: userA, holderId: userA,
         title: 'Giáo trình Giải tích', subject: 'Toán cao cấp', condition: 'Như mới'),
     Material(id: 'mat-sell-01', ownerId: userA, holderId: userA,
-        title: 'Nhập môn Python', subject: 'Lập trình', condition: 'Như mới'),
+        title: 'Nhập môn Python', subject: 'Lập trình', condition: 'Như mới',
+        description: 'Sách demo nhập môn Python, có ví dụ và bài tập thực hành.'),
     Material(id: 'mat-donate-01', ownerId: userA, holderId: userA,
-        title: 'Cấu trúc dữ liệu', subject: 'CNTT', condition: 'Đã sử dụng'),
+        title: 'Cấu trúc dữ liệu', subject: 'CNTT', condition: 'Đã sử dụng',
+        description: 'Tài liệu demo về danh sách, cây và đồ thị; bìa có dấu sử dụng.'),
     Material(id: 'mat-delivery-01', ownerId: userA, holderId: userA,
-        title: 'Mạng máy tính', subject: 'Mạng', condition: 'Tốt'),
+        title: 'Mạng máy tính', subject: 'Mạng', condition: 'Tốt',
+        description: 'Tài liệu demo về các tầng mạng và giao thức TCP/IP.'),
   ];
 
   static List<Listing> get listings => const [
     Listing(id: 'list-borrow-01', materialId: 'mat-borrow-01',
-        offerType: OfferType.borrow, status: ListingStatus.published),
+        offerType: OfferType.borrow, status: ListingStatus.published,
+        description: 'Cho mượn tài liệu demo; giữ gìn sách và trả đúng hạn.',
+        meetingArea: 'Khu vực thư viện (demo)'),
     Listing(id: 'list-sell-01', materialId: 'mat-sell-01',
         offerType: OfferType.sell, status: ListingStatus.published,
-        askingPriceVnd: 90000),
+        askingPriceVnd: 90000,
+        description: 'Nhượng lại sách demo cho người cần học Python.',
+        meetingArea: 'Khu vực cổng trường (demo)'),
     Listing(id: 'list-donate-01', materialId: 'mat-donate-01',
-        offerType: OfferType.donate, status: ListingStatus.published),
+        offerType: OfferType.donate, status: ListingStatus.published,
+        description: 'Tặng tài liệu demo cho bạn cần ôn cấu trúc dữ liệu.',
+        meetingArea: 'Khu vực thư viện (demo)'),
     Listing(id: 'list-delivery-01', materialId: 'mat-delivery-01',
-        offerType: OfferType.donate, status: ListingStatus.published),
+        offerType: OfferType.donate, status: ListingStatus.published,
+        description: 'Tặng tài liệu mạng máy tính demo.',
+        meetingArea: 'Khu vực sân trường (demo)'),
   ];
+
+  // Ảnh minh họa công khai chỉ dùng trong demo; không giả làm ảnh Storage đã xác minh.
+  // Card và gallery cùng lấy từ đây để bìa luôn là ảnh đầu của đúng Listing.
+  static const listingImages = <String, List<ListingImage>>{
+    'list-borrow-01': [
+      ListingImage(id: 'demo-borrow-cover',
+        url: 'https://placehold.co/600x800/png?text=Giai+tich'),
+      ListingImage(id: 'demo-borrow-pages',
+        url: 'https://placehold.co/800x600/png?text=Ghi+chu+Giai+tich'),
+    ],
+    'list-sell-01': [
+      ListingImage(id: 'demo-sell-cover',
+        url: 'https://placehold.co/600x800/png?text=Python'),
+    ],
+    'list-donate-01': [
+      ListingImage(id: 'demo-donate-cover',
+        url: 'https://placehold.co/600x800/png?text=Cau+truc+du+lieu'),
+    ],
+    'list-delivery-01': [
+      ListingImage(id: 'demo-delivery-cover',
+        url: 'https://placehold.co/600x800/png?text=Mang+may+tinh'),
+    ],
+  };
 
   static List<ExchangeRequest> get requests => [
     ExchangeRequest(id: 'req-borrow-01', listingId: 'list-borrow-01',

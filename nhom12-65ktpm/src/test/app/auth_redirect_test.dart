@@ -5,6 +5,50 @@ import 'package:studyshare/core/auth/auth_repository.dart';
 
 void main() {
   const signedIn = AuthSnapshot.signedIn(AuthIdentity(id: 'a'));
+  test(
+    'SCR-10 khôi phục đúng ID sau login, chỉ giữ UUID đơn được cho phép',
+    () {
+      const material = 'e3300000-0000-4000-8000-000000000001';
+      final target = '/listings/new?materialId=$material';
+      expect(
+        safeAuthDestination(
+          '$target&access_token=secret&completion=return#secret',
+        ),
+        target,
+      );
+      expect(
+        safeAuthDestination('/listings/new?materialId=bad&listingId=bad'),
+        '/listings/new',
+      );
+      expect(
+        safeAuthDestination('$target&materialId=$material'),
+        '/listings/new',
+      );
+      final login = authRedirect(
+        location: Uri.parse(target),
+        session: const AuthSnapshot.signedOut(),
+        loading: false,
+        demo: false,
+      )!;
+      expect(Uri.parse(login).queryParameters['from'], target);
+      expect(
+        authRedirect(
+          location: Uri.parse(login),
+          session: signedIn,
+          loading: false,
+          demo: false,
+        ),
+        target,
+      );
+      final splash = authRedirect(
+        location: Uri.parse(target),
+        session: null,
+        loading: true,
+        demo: false,
+      )!;
+      expect(Uri.parse(splash).queryParameters['from'], target);
+    },
+  );
   test('Chỉ khôi phục đường dẫn nội bộ đã biết, không giữ token/query', () {
     for (final path in [
       'https://evil.test/profile',

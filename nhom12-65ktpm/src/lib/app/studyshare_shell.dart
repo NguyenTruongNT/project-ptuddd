@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/auth/auth_session_providers.dart';
 
 import '../l10n/app_localizations.dart';
+import 'app_routes.dart';
 
 class StudyShareShell extends ConsumerWidget {
   const StudyShareShell({super.key, required this.navigationShell});
@@ -15,7 +16,10 @@ class StudyShareShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: navigationShell.currentIndex == 4
+      // Tab Đăng tin có AppBar riêng, tránh lặp StudyShare + tiêu đề chức năng.
+      appBar:
+          navigationShell.currentIndex == 4 ||
+              GoRouterState.of(context).uri.path == AppRoutes.publishTab
           ? null
           : AppBar(title: const Text('StudyShare')),
       body: Column(

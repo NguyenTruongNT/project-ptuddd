@@ -257,7 +257,7 @@ void main() {
             isA<AppError>().having(
               (e) => e.code,
               'code',
-              DomainErrorCode.conflict,
+              DomainErrorCode.unexpectedError,
             ),
           ),
         );

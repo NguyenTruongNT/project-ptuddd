@@ -21,6 +21,8 @@ class AppRoutes {
   static const materialDetailsPattern = '/materials/:materialId';
   static const materialEditPattern = '/materials/:materialId/edit';
   static const listingForm = '/listings/new';
+  // Màn phụ của luồng SCR-10, không tăng số mã màn hình nghiệp vụ.
+  static const listingMaterialPicker = '/listings/select-material';
   static const createRequestPattern = '/requests/new/:listingId';
   static const requestCenter = '/requests';
   static const transactions = '/transactions';

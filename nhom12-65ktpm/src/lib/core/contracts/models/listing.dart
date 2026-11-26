@@ -8,6 +8,9 @@ class Listing {
     required this.offerType,
     required this.status,
     this.askingPriceVnd,
+    this.revision = 1,
+    this.description,
+    this.meetingArea,
   });
 
   final String id;
@@ -15,6 +18,9 @@ class Listing {
   final OfferType offerType;
   final ListingStatus status;
   final int? askingPriceVnd;
+  final int revision;
+  final String? description;
+  final String? meetingArea;
 }
 
 // DTO công khai cho Explore. isRequestable là GỢI Ý UI từ server/read model;
@@ -30,6 +36,10 @@ class ListingCardModel {
     required this.isReserved,
     this.coverUrl,
     this.askingPriceVnd,
+    this.condition = '',
+    this.publishedAt,
+    this.isOwner = false,
+    this.hasPendingRequest = false,
   });
 
   final String listingId;
@@ -41,4 +51,8 @@ class ListingCardModel {
   final bool isReserved; // Nhãn dẫn xuất, KHÔNG phải Listing.status.
   final String? coverUrl;
   final int? askingPriceVnd;
+  final String condition;
+  final DateTime? publishedAt;
+  final bool isOwner;
+  final bool hasPendingRequest;
 }

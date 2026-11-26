@@ -23,8 +23,13 @@ import '../providers/material_providers.dart';
 import 'material_widgets.dart';
 
 class MaterialFormPage extends ConsumerStatefulWidget {
-  const MaterialFormPage({super.key, this.materialId});
+  const MaterialFormPage({
+    super.key,
+    this.materialId,
+    this.returnSavedResult = false,
+  });
   final String? materialId;
+  final bool returnSavedResult;
   @override
   ConsumerState<MaterialFormPage> createState() => _MaterialFormPageState();
 }
@@ -513,7 +518,7 @@ class _MaterialFormPageState extends ConsumerState<MaterialFormPage> {
         if (!mounted || !_sameActor) return;
       }
       setState(() => _progress = t.matSaveProgress);
-      // Persist same key + uploaded IDs before the network command.
+      // Giữ nguyên key và ID ảnh trước khi gửi để retry không tạo tài liệu trùng.
       _uncertain = true;
       if (!await _saveDraft(notify: false)) {
         _uncertain = false;
@@ -554,7 +559,16 @@ class _MaterialFormPageState extends ConsumerState<MaterialFormPage> {
       ref.invalidate(materialDetailsProvider(saved.id));
       feedback?.show(t.matSaved);
       setState(() => _allowPop = true);
-      context.pushReplacement(AppRoutes.materialDetails(saved.id));
+      // Khi được mở từ bước chọn, trả Material đã ACK thay vì đi sang màn khác.
+      // Đợi PopScope cập nhật để Back không bị chặn bởi trạng thái form cũ.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_sameActor) return;
+        if (widget.returnSavedResult && context.canPop()) {
+          context.pop(saved);
+        } else {
+          context.pushReplacement(AppRoutes.materialDetails(saved.id));
+        }
+      });
     } catch (e) {
       if (mounted) {
         setState(() => _error = e);
