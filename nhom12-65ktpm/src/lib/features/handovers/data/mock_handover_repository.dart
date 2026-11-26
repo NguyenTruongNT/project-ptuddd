@@ -4,13 +4,13 @@ import '../../../core/contracts/domain_enums.dart';
 import '../../../core/contracts/models/handover.dart';
 import '../../../core/contracts/models/issue.dart';
 import '../../../core/contracts/models/transaction.dart';
-import '../../../core/contracts/repositories/handover_repository.dart';
 import '../../../core/errors/app_error.dart';
 import '../../../core/mock/mock_fixtures.dart';
 import '../../../core/mock/mock_transaction_store.dart';
+import '../domain/handover_feature_repository.dart';
 
 /// Triển khai Mock Repository cho Handover và QR.
-class MockHandoverRepository implements HandoverRepository {
+class MockHandoverRepository implements HandoverFeatureRepository {
   MockHandoverRepository({
     required this.actorId,
     required this.store,
@@ -260,5 +260,44 @@ class MockHandoverRepository implements HandoverRepository {
     );
 
     return CommandOk(issue, 'evt-receipt-refused-${input.handoverId}');
+  }
+
+  @override
+  Future<CommandResult<Handover>> createHandover({
+    required String transactionId,
+    required String toUserId,
+    String? deliveryTaskId,
+    required String idempotencyKey,
+  }) async {
+    if (transactionId.trim().isEmpty || toUserId.trim().isEmpty) {
+      return CommandError(DomainErrorCode.invalidInput, 'Thiếu thông tin giao dịch hoặc người nhận.');
+    }
+    if (actorId == toUserId) {
+      return CommandError(DomainErrorCode.invalidInput, 'Người giao và người nhận không thể trùng nhau.');
+    }
+    final id = 'handover-mock-${_handovers.length + 1}';
+    final handover = Handover(
+      id: id,
+      transactionId: transactionId,
+      fromUserId: actorId,
+      toUserId: toUserId,
+      deliveryTaskId: deliveryTaskId,
+      status: HandoverStatus.pending,
+      evidencePhotoCount: 0,
+    );
+    _handovers[id] = handover;
+    return CommandOk(handover, 'evt-handover-created-$id');
+  }
+
+  @override
+  Future<CommandResult<bool>> verifyWithFallback(
+    String handoverId,
+    String reason, {
+    required String idempotencyKey,
+  }) async {
+    if (reason.trim().isEmpty) {
+      return CommandError(DomainErrorCode.invalidInput, 'Vui lòng nhập lý do đối chiếu thủ công.');
+    }
+    return CommandOk(true, 'evt-fallback-verified-$handoverId');
   }
 }

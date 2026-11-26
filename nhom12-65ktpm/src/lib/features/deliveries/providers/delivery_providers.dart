@@ -1,11 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/auth/auth_session_providers.dart';
+import '../../../core/backend/workflow_rpc.dart';
 import '../../../core/contracts/models/delivery.dart';
 import '../../../core/providers/mock_query_providers.dart';
 import '../data/mock_delivery_repository.dart';
+import '../data/supabase_delivery_repository.dart';
+import '../domain/delivery_feature_repository.dart';
 
-/// Provider cung cấp MockDeliveryRepository dùng chung
-final deliveryRepositoryProvider = Provider<MockDeliveryRepository>((ref) {
+/// Provider cung cấp Repository giao hộ: dùng Supabase RPC thật khi đã đăng nhập,
+/// chỉ dùng Mock khi đang ở chế độ Demo không có Supabase client.
+final deliveryRepositoryProvider = Provider<DeliveryFeatureRepository>((ref) {
+  final client = ref.watch(supabaseClientProvider);
+  final boundary = ref.watch(sessionBoundaryProvider);
+  if (client != null && boundary.isNotEmpty && boundary != 'demo') {
+    final rpc = ref.watch(workflowRpcProvider);
+    if (rpc != null) {
+      return SupabaseDeliveryRepository(rpc);
+    }
+  }
   final actorId = ref.watch(demoViewerIdProvider);
   return MockDeliveryRepository(actorId: actorId);
 });
@@ -21,6 +34,13 @@ final availableDeliveryTasksProvider =
 final myDeliveryTasksProvider = FutureProvider<List<DeliveryTask>>((ref) async {
   final repo = ref.watch(deliveryRepositoryProvider);
   return repo.getAllRelatedTasks();
+});
+
+/// Chi tiết một nhiệm vụ giao hộ cụ thể kèm danh sách ứng viên & mô tả điểm hẹn
+final deliveryTaskBundleProvider =
+    FutureProvider.family<DeliveryTaskBundle?, String>((ref, taskId) async {
+  final repo = ref.watch(deliveryRepositoryProvider);
+  return repo.getTaskBundle(taskId);
 });
 
 /// Chi tiết một nhiệm vụ giao hộ cụ thể
@@ -42,6 +62,7 @@ void refreshDeliveries(WidgetRef ref, {String? taskId}) {
   ref.invalidate(availableDeliveryTasksProvider);
   ref.invalidate(myDeliveryTasksProvider);
   if (taskId != null) {
+    ref.invalidate(deliveryTaskBundleProvider(taskId));
     ref.invalidate(deliveryTaskDetailsProvider(taskId));
     ref.invalidate(deliveryApplicationsProvider(taskId));
   }
