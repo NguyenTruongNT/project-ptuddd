@@ -3,13 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_routes.dart';
-import '../../../core/contracts/command_inputs.dart';
 import '../../../core/contracts/command_result.dart';
 import '../../../core/mock/mock_fixtures.dart';
+import '../../../design_system/widgets/feature_scaffold.dart';
+import '../../handovers/providers/handover_providers.dart';
+import '../../transactions/providers/transaction_providers.dart';
 import '../providers/delivery_providers.dart';
 
-/// SCR-16 – Tạo nhiệm vụ giao hộ (UI-10 + UI-12). Phụ trách: Vũ Hải Đăng.
-/// Lập nhiệm vụ giao hộ mới liên kết với Transaction hiện hành.
+/// SCR-16 – Tạo nhiệm vụ giao hộ / chọn phương thức giao (UI-10 + UI-12).
+/// Phụ trách: Vũ Hải Đăng.
 class CreateDeliveryPage extends ConsumerStatefulWidget {
   const CreateDeliveryPage({
     super.key,
@@ -46,12 +48,52 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
     setState(() {
       _attachGps = value;
       if (value) {
-        // Tọa độ mẫu mô phỏng khuôn viên trường Đại học Thủy Lợi theo MVP-D07
         _gpsCoords = '21.0074° N, 105.8239° E (Đại học Thủy Lợi)';
       } else {
         _gpsCoords = null;
       }
     });
+  }
+
+  String _resolveCounterpartyId() {
+    final txnAsync = ref.read(transactionDetailsProvider(widget.transactionId));
+    final details = txnAsync.asData?.value;
+    if (details != null) {
+      final txn = details.transaction;
+      // Nếu người gọi là owner thì giao cho receiver; ngược lại (chiều trả) giao cho owner.
+      return details.viewerRole.name == 'owner'
+          ? txn.receiverId
+          : txn.ownerAtAcceptance;
+    }
+    return MockFixtures.userB;
+  }
+
+  Future<void> _handleStartDirectHandover() async {
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+
+    final handoverRepo = ref.read(handoverRepositoryProvider);
+    final toUserId = _resolveCounterpartyId();
+    final idempotencyKey =
+        'direct-handover-${widget.transactionId}-${DateTime.now().millisecondsSinceEpoch}';
+
+    final result = await handoverRepo.createHandover(
+      transactionId: widget.transactionId,
+      toUserId: toUserId,
+      idempotencyKey: idempotencyKey,
+    );
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    switch (result) {
+      case CommandOk(:final data):
+        context.push(AppRoutes.prepareHandover(data.id));
+      case CommandError(:final safeMessage):
+        setState(() => _errorMessage = safeMessage);
+    }
   }
 
   Future<void> _handleSubmit() async {
@@ -63,21 +105,23 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
     });
 
     final repo = ref.read(deliveryRepositoryProvider);
-    final idempotencyKey = 'create-delivery-${widget.transactionId}-${DateTime.now().millisecondsSinceEpoch}';
+    final idempotencyKey =
+        'create-delivery-${widget.transactionId}-${DateTime.now().millisecondsSinceEpoch}';
 
-    final result = await repo.createTask(
-      CreateDeliveryTaskInput(
-        transactionId: widget.transactionId,
-        finalReceiverId: MockFixtures.userB,
-      ),
+    final pickupText = _gpsCoords == null
+        ? _pickupController.text.trim()
+        : '${_pickupController.text.trim()} ($_gpsCoords)';
+
+    final result = await repo.createTaskWithDescriptions(
+      transactionId: widget.transactionId,
+      finalReceiverId: _resolveCounterpartyId(),
+      pickupDescription: pickupText,
+      dropoffDescription: _dropoffController.text.trim(),
       idempotencyKey: idempotencyKey,
     );
 
     if (!mounted) return;
-
-    setState(() {
-      _isSubmitting = false;
-    });
+    setState(() => _isSubmitting = false);
 
     switch (result) {
       case CommandOk(:final data):
@@ -89,7 +133,7 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
             duration: const Duration(seconds: 3),
           ),
         );
-        context.pop();
+        context.pushReplacement(AppRoutes.deliveryDetails(data.id));
       case CommandError(:final safeMessage):
         setState(() {
           _errorMessage = safeMessage;
@@ -101,10 +145,9 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tạo nhiệm vụ giao hộ'),
-      ),
+    return FeatureScaffold(
+      title: 'Tạo nhiệm vụ giao hộ',
+      fallbackLocation: AppRoutes.deliveries,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -112,7 +155,6 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Thông tin giao dịch liên kết
               Card(
                 color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -134,7 +176,6 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
               ),
               const SizedBox(height: 16),
 
-              // Lựa chọn phương thức bàn giao (UI-10: Giao trực tiếp hoặc Giao hộ)
               Text(
                 'Hình thức giao nhận tài liệu',
                 style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
@@ -155,10 +196,29 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
                 ],
                 selected: {_isDirectHandover},
                 onSelectionChanged: (newSelection) {
-                  setState(() => _isDirectHandover = newSelection.first);
+                  setState(() {
+                    _isDirectHandover = newSelection.first;
+                    _errorMessage = null;
+                  });
                 },
               ),
               const SizedBox(height: 16),
+
+              if (_errorMessage != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               if (_isDirectHandover) ...[
                 Card(
@@ -183,11 +243,13 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
                         ),
                         const SizedBox(height: 16),
                         FilledButton.icon(
-                          onPressed: () {
-                            context.push(AppRoutes.prepareHandover('handover-borrow-01'));
-                          },
+                          onPressed: _isSubmitting ? null : _handleStartDirectHandover,
                           icon: const Icon(Icons.camera_alt),
-                          label: const Text('Bắt đầu chuẩn bị bàn giao trực tiếp'),
+                          label: Text(
+                            _isSubmitting
+                                ? 'Đang tạo lượt bàn giao...'
+                                : 'Bắt đầu chuẩn bị bàn giao trực tiếp',
+                          ),
                           style: FilledButton.styleFrom(
                             minimumSize: const Size.fromHeight(48),
                             backgroundColor: const Color(0xFF16A34A),
@@ -198,102 +260,77 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
                   ),
                 ),
               ] else ...[
-              if (_errorMessage != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
+                TextFormField(
+                  controller: _pickupController,
+                  decoration: const InputDecoration(
+                    labelText: 'Điểm lấy tài liệu (Pickup) *',
+                    hintText: 'VD: Cổng chính Đại học Thủy Lợi, 175 Tây Sơn',
+                    prefixIcon: Icon(Icons.location_on_outlined),
+                    border: OutlineInputBorder(),
                   ),
-                  child: Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
-                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Vui lòng nhập địa điểm lấy tài liệu cụ thể.';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
-              ],
-
-              // Điểm hẹn lấy tài liệu (Bắt buộc)
-              TextFormField(
-                controller: _pickupController,
-                decoration: const InputDecoration(
-                  labelText: 'Điểm lấy tài liệu (Pickup) *',
-                  hintText: 'VD: Cổng chính Đại học Thủy Lợi, 175 Tây Sơn',
-                  prefixIcon: Icon(Icons.location_on_outlined),
-                  border: OutlineInputBorder(),
+                TextFormField(
+                  controller: _dropoffController,
+                  decoration: const InputDecoration(
+                    labelText: 'Điểm giao tài liệu (Dropoff) *',
+                    hintText: 'VD: Ký túc xá K1, phòng 402',
+                    prefixIcon: Icon(Icons.flag_outlined),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Vui lòng nhập địa điểm giao tài liệu cụ thể.';
+                    }
+                    return null;
+                  },
                 ),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return 'Vui lòng nhập địa điểm lấy tài liệu cụ thể.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Điểm hẹn giao tài liệu (Bắt buộc)
-              TextFormField(
-                controller: _dropoffController,
-                decoration: const InputDecoration(
-                  labelText: 'Điểm giao tài liệu (Dropoff) *',
-                  hintText: 'VD: Ký túc xá K1, phòng 402',
-                  prefixIcon: Icon(Icons.flag_outlined),
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Đính kèm tọa độ GPS hiện tại'),
+                  subtitle: Text(
+                    _gpsCoords ?? 'Hỗ trợ người giao hộ định vị chính xác điểm hẹn',
+                    style: TextStyle(
+                      color: _attachGps ? theme.colorScheme.primary : Colors.grey,
+                      fontSize: 13,
+                    ),
+                  ),
+                  value: _attachGps,
+                  onChanged: _handleToggleGps,
                 ),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return 'Vui lòng nhập địa điểm giao tài liệu cụ thể.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Tùy chọn GPS tọa độ
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Đính kèm tọa độ GPS hiện tại'),
-                subtitle: Text(
-                  _gpsCoords ?? 'Hỗ trợ người giao hộ định vị chính xác điểm hẹn',
-                  style: TextStyle(
-                    color: _attachGps ? theme.colorScheme.primary : Colors.grey,
-                    fontSize: 13,
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _noteController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Ghi chú cho người giao hộ (Tùy chọn)',
+                    hintText: 'Thời gian có thể gặp, số điện thoại liên hệ nhanh...',
+                    border: OutlineInputBorder(),
                   ),
                 ),
-                value: _attachGps,
-                onChanged: _handleToggleGps,
-              ),
-              const SizedBox(height: 16),
-
-              // Ghi chú thêm
-              TextFormField(
-                controller: _noteController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Ghi chú cho người giao hộ (Tùy chọn)',
-                  hintText: 'Thời gian có thể gặp, số điện thoại liên hệ nhanh...',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: _isSubmitting ? null : _handleSubmit,
+                  icon: _isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.add_task),
+                  label: Text(_isSubmitting ? 'Đang tạo nhiệm vụ...' : 'Tạo nhiệm vụ giao hộ'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-
-              // Nút Submit
-              ElevatedButton.icon(
-                onPressed: _isSubmitting ? null : _handleSubmit,
-                icon: _isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(Icons.add_task),
-                label: Text(_isSubmitting ? 'Đang tạo nhiệm vụ...' : 'Tạo nhiệm vụ giao hộ'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
               ],
             ],
           ),

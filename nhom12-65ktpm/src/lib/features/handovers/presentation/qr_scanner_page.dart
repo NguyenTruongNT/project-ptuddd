@@ -318,15 +318,40 @@ class _QrScannerPageState extends ConsumerState<QrScannerPage> {
                             ),
                             const SizedBox(height: 8),
                             FilledButton.tonal(
-                              onPressed: () {
-                                if (_fallbackReasonController.text.trim().isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Vui lòng nhập lý do giải trình cụ thể.')),
-                                  );
-                                  return;
-                                }
-                                context.pop(true);
-                              },
+                              onPressed: _isVerifying
+                                  ? null
+                                  : () async {
+                                      final reason = _fallbackReasonController.text.trim();
+                                      if (reason.isEmpty) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Vui lòng nhập lý do giải trình cụ thể.'),
+                                          ),
+                                        );
+                                        return;
+                                      }
+                                      setState(() => _isVerifying = true);
+                                      final repo = ref.read(handoverRepositoryProvider);
+                                      final res = await repo.verifyWithFallback(
+                                        widget.handoverId,
+                                        reason,
+                                        idempotencyKey:
+                                            'fallback-${widget.handoverId}-${DateTime.now().millisecondsSinceEpoch}',
+                                      );
+                                      if (!context.mounted) return;
+                                      setState(() => _isVerifying = false);
+                                      switch (res) {
+                                        case CommandOk():
+                                          context.pop(true);
+                                        case CommandError(:final safeMessage):
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(safeMessage),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                      }
+                                    },
                               child: const Text('Xác nhận dùng đối chiếu thủ công'),
                             ),
                           ],

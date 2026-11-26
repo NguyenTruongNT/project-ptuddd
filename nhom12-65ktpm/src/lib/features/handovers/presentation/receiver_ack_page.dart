@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/app_routes.dart';
 import '../../../core/contracts/command_inputs.dart';
 import '../../../core/contracts/command_result.dart';
 import '../../../core/contracts/domain_enums.dart';
 import '../../../core/contracts/models/handover.dart';
 import '../../../core/providers/mock_query_providers.dart';
+import '../../../design_system/widgets/feature_scaffold.dart';
 import '../../../design_system/widgets/study_empty.dart';
 import '../../../design_system/widgets/study_error.dart';
 import '../../../design_system/widgets/study_loading.dart';
@@ -157,8 +159,7 @@ class _ReceiverAckPageState extends ConsumerState<ReceiverAckPage> {
             duration: const Duration(seconds: 3),
           ),
         );
-        // Điều hướng sang màn hình xem Issue SCR-23 hoặc lùi lại
-        context.pop();
+        context.pushReplacement(AppRoutes.issues);
       case CommandError(:final safeMessage):
         setState(() {
           _errorMessage = safeMessage;
@@ -172,10 +173,9 @@ class _ReceiverAckPageState extends ConsumerState<ReceiverAckPage> {
     final currentUserId = ref.watch(demoViewerIdProvider);
     final handoverAsync = ref.watch(handoverDetailsProvider(widget.handoverId));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Xác nhận nhận tài liệu'),
-      ),
+    return FeatureScaffold(
+      title: 'Xác nhận nhận tài liệu',
+      fallbackLocation: AppRoutes.deliveries,
       body: handoverAsync.when(
         loading: () => const StudyLoading(),
         error: (err, stack) => StudyError(
