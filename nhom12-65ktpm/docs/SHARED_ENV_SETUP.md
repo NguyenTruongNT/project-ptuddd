@@ -23,7 +23,7 @@ flutter run -d emulator-5554
 
 - Nếu mã thiết bị thay đổi, dùng đúng ID trong `flutter devices`.
 - Mặc định ứng dụng kết nối Supabase Cloud development bằng `src/assets/config/supabase.public.json` đã có trong Git. Không cần tạo file JSON cá nhân; cần Internet và tài khoản thử nghiệm riêng của từng thành viên.
-- Auth/Profile dùng Supabase thật. Các module nghiệp vụ chưa nối backend vẫn dùng dữ liệu mock.
+- Auth/Profile, Material/ảnh SCR-07/08/09, Listing ngày 3 và Transactions/Payment/Issues dùng Supabase thật khi đăng nhập. Bốn migration Listing `20261126000100`–`20261126000400` đã có trên cloud development ngày 26/11/2026. Request/Delivery/Handover chưa tích hợp vẫn giữ trạng thái hiện có; không coi chúng là đã nối backend chỉ vì có bảng hoặc dữ liệu.
 - File cấu hình công khai nằm ngoài `.dart_tool/`, nên được giữ lại sau `flutter clean`.
 
 Để phát triển giao diện với dữ liệu mock mà không kết nối Supabase:
@@ -71,7 +71,7 @@ Khi dùng điện thoại Android thật, địa chỉ `10.0.2.2` không áp d�
 - File ghi đè cá nhân có thể đặt ở `src/.env.supabase.json` (đã bị Git bỏ qua), rồi chạy `flutter run -d emulator-5554 --dart-define-from-file=.env.supabase.json`. Flutter không tự đọc file này khi thiếu tham số.
 - Publishable key được thiết kế để dùng trong ứng dụng phía người dùng; quyền dữ liệu vẫn phải được bảo vệ bằng Auth/RLS. Bí mật quản trị chỉ dùng ở môi trường tin cậy, không đưa vào ứng dụng hoặc repo công khai. Nguồn: [Supabase API keys](https://supabase.com/docs/guides/getting-started/api-keys).
 - Migration chỉ được áp dụng lên cloud **sau review và kiểm thử local**; sao lưu trước thay đổi phá hủy.
-- RLS/Storage đã có nền tảng, nhưng **không đồng nghĩa** các RPC giao dịch đã sẵn sàng; không mở quyền ghi trực tiếp chỉ để demo.
+- RPC Transactions/Payment/Issues đã có ở migration `20261125120000_transactions_payment_issues_rpc.sql`. Các workflow khác phải kiểm tra riêng; không mở quyền ghi trực tiếp chỉ để demo.
 - Chỉ lưu khóa publishable development đã được duyệt trong file JSON công khai nói trên; không chép giá trị khóa vào `README.md`, file `.dart`, Issue, PR hoặc ảnh chụp màn hình. Không đưa secret key, `service_role`, mật khẩu database, SMTP hoặc OAuth Client Secret vào JSON.
 
 ## 5. Kiểm tra trước mỗi PR
@@ -267,3 +267,62 @@ Hướng dẫn chính thức: [Supabase GitHub](https://supabase.com/docs/guides
 - Hủy cấp quyền hoặc lỗi callback không cấp phiên giả; người dùng vẫn thao tác lại được trên màn đăng nhập.
 - Kiểm thử cả Chrome và Android, đăng xuất/đăng nhập lại và phân quyền giữa hai user như Auth email/password. Không mở rộng RLS/Storage grants để làm OAuth chạy.
 - Bật provider không cần thêm Client Secret vào `assets/config/supabase.public.json`. Flutter tiếp tục dùng Project URL và publishable key hiện có.
+
+## 13. Material/ảnh ngày 2 — 25/11/2026
+
+Material SCR-07/08/09 dùng Cloud development mặc định. Từ Cá nhân → Tài liệu của tôi → Thêm tài liệu. Demo tường minh dùng store mock riêng, không fallback khi Supabase lỗi.
+
+Bốn migration Material ngày 25/11 và Edge verify-material-image đã triển khai đúng project development. Không đưa key backend vào asset hoặc Dart define.
+
+- Local: mở stack, chạy riêng npx supabase@3.3.0 functions serve verify-material-image --no-verify-jwt, rồi ./tool/test_material_local.ps1.
+- Cloud development: ./tool/test_material_cloud.ps1. CLI cần quyền project; script giữ key trong tiến trình, khôi phục biến môi trường, không ghi key ra log.
+- Cả hai chạy test/integration/material_supabase_test.dart: Auth A/B, JPEG/PNG/WebP, giả MIME, create/update, trùng ISBN khác ID, retry/conflict, bìa, revision race, session mới, RLS và chuyển chủ.
+- Database: npx supabase@3.3.0 test db và db lint. Flutter: flutter analyze, flutter test, flutter build apk --debug.
+- Test integration mặc định skip khi không có RUN_MATERIAL_SUPABASE. Lỗi cleanup giữ UUID test trong .dart_tool để dọn chính xác; không reset DB hoặc xóa dữ liệu người khác.
+- Ảnh chụp/log/dữ liệu QA ở .dart_tool, không commit. QR và publish Listing thuộc ngày 4/3.
+- Kết quả 25/11: analyze sạch; 224 test Flutter đạt (3 integration opt-in mặc định skip), 13 test Material mock/UI, 74 kiểm tra pgTAP đạt và db lint sạch. Integration opt-in đã chạy riêng trên local/Cloud, có cache offline và tách A/B.
+- Android đã thử thư viện ảnh thật, nháp SQLite qua force-stop, tạo/sửa có confirm, mở lại tải đúng Cloud; đã sửa SafeArea và nút lưu trên bàn phím. Giữ một account/bản sách QA để người dùng nghiệm thu; tài khoản của test tự động được dọn riêng.
+
+Khi Cloud có migration đồng đội chưa trong checkout: đọc lịch sử, đối chiếu nguồn và dry-run từ snapshot riêng đủ lịch sử. Không migration repair để bỏ qua phiên bản lạ, không tự merge/commit code đồng đội.
+
+## 14. Transactions, Payment và Issues — tích hợp Supabase
+
+Trường duyệt tích hợp ba module của Sơn với backend thật. Thành viên được viết adapter Flutter trong phạm vi đã giao; quyền quản lý project, schema, RLS và triển khai Cloud tiếp tục do Trường phụ trách.
+
+- `20261125120000_transactions_payment_issues_rpc.sql` được phục hồi từ 50 câu lệnh trong lịch sử migration Cloud, bổ sung dấu `;` phân cách mà lịch sử không lưu lại. Nội dung từng câu lệnh giữ nguyên; cú pháp SQL và thân hàm PL/pgSQL đã được kiểm tra bằng parser PostgreSQL. Đây là **nguồn backend**, không có dữ liệu demo, tài khoản hoặc SQL seed. Cloud đã áp dụng phiên bản này; không chạy lại, xóa lịch sử hoặc `migration repair` để vượt qua sai lệch.
+- `workflowRpcProvider` chọn backend theo `sessionBoundaryProvider` và `supabaseClientProvider`. Chỉ trả mock khi người dùng chọn demo và backend không cấu hình. Khi Auth lỗi/chưa đăng nhập, không có fallback sang mock.
+- Các provider đọc giao dịch/sự cố, lệnh thanh toán, hủy giao dịch và xử lý sự cố cùng sử dụng một phiên thật. `issueTransactionContextProvider` đọc đúng nguồn Transaction, không trộn dữ liệu mock và Cloud.
+- RPC chỉ nhận ID nghiệp vụ, nội dung và `p_idempotency_key`. Actor lấy từ JWT; client không gửi owner, holder, trạng thái mới hoặc đồng thuận thay người khác. Mỗi request giữ JWT của tài khoản đã bắt đầu thao tác và kiểm tra lại phiên trước khi trả dữ liệu/ACK.
+- Command thành công phải có `ok=true`, `event_id` và DTO hợp lệ. Mất mạng/timeout/ACK không đọc được giữ trạng thái chưa rõ và cùng key để đối soát lại. Không tự tạo ACK, không dùng message lỗi thô từ server.
+- Sau command, UI tải lại snapshot/timeline. Thay đổi tài khoản làm tái tạo repository và cache phụ thuộc; dữ liệu phiên trước không được hiển thị cho tài khoản mới. Ngày hạn mượn `yyyy-MM-dd` giữ theo lịch Việt Nam; timestamp được đọc về UTC.
+
+| Nhóm | RPC có sẵn | Kết quả |
+|---|---|---|
+| Transaction | `get_my_transactions()`, `get_transaction_details(p_transaction_id)`, `get_transaction_timeline(p_transaction_id)` | Danh sách DTO, DTO hoặc null, danh sách event. Chỉ A/B của giao dịch. |
+| Payment | `report_buyer_transfer`, `confirm_seller_payment`, `report_seller_refund`, `confirm_refund_received` | Nhận `p_transaction_id`, `p_idempotency_key`; trả Command ACK + TransactionDetails. |
+| Hủy | `propose_transaction_cancellation`, `withdraw_transaction_cancellation`, `decline_transaction_cancellation`, `accept_transaction_cancellation` | Cùng tham số ID/key; đề nghị thêm `p_reason` 1–500 ký tự. Server kiểm tra nghĩa vụ sách/tiền/sự cố. |
+| Issue đọc | `get_my_issues()`, `get_issue_details(p_issue_id)`, `get_issue_timeline(p_issue_id)` | DTO đã lọc quyền A/B và bên trực tiếp của chặng; không phát ảnh private. |
+| Issue ghi | `report_issue`, `propose_issue_resolution`, `confirm_issue_resolution` | Lần lượt: transaction/type/reason/handover tùy chọn; issue/summary; issue/revision. Mọi lệnh có key. Nội dung 1–1000 ký tự; revision xác nhận phải khớp bản hiện hành. |
+
+Tham số chính xác dùng prefix `p_`, xem adapter và migration đi kèm. Response đọc là JSON trực tiếp; response ghi là `{ok:true,event_id,data}` hoặc `{ok:false,code,message}`. Null/rỗng không được diễn giải thành lỗi quyền khác nhau hoặc thêm fixture vào kết quả.
+
+Kiểm tra thông thường từ `src/`:
+
+```powershell
+flutter analyze
+flutter test
+flutter build apk --debug
+```
+
+Kiểm tra đọc Cloud opt-in (file thông tin đăng nhập local **phải bị Git bỏ qua**, không đặt mật khẩu vào lệnh hoặc source):
+
+```powershell
+$env:WORKFLOW_TEST_ACCOUNTS_FILE = '<duong-dan-file-local-bi-Git-bo-qua>'
+flutter test test/integration/workflow_supabase_test.dart --dart-define=RUN_WORKFLOW_SUPABASE=true
+```
+
+File local có `project_ref` và mảng `accounts` gồm `id`, `email`, `password`; dùng bốn tài khoản kiểm tra được nhóm trưởng cấp riêng. Test đăng nhập qua SDK rồi gọi adapter thật để kiểm tra DTO, quyền đọc, timeline và phiên mới. Không nạp/reset dữ liệu khi chạy test đọc.
+
+Test ghi cần thêm `RUN_WORKFLOW_WRITE_TESTS=true` và biến môi trường `WORKFLOW_WRITE_FIXTURE_FILE`; chỉ chạy khi Trường đã chuẩn bị fixture QA tách biệt (`purpose=workflow-adapter-integration-test`, tài khoản prefix `workflow-qa-`, bản sách prefix `[WORKFLOW QA `). Công cụ chuẩn bị/dọn và thông tin tài khoản chỉ giữ local, không thuộc commit. Không dùng bản ghi demo của nhóm để chạy test ghi tự động.
+
+Phần tích hợp này giữ nguyên UI/confirm hiện có và Shared Contracts. Listing/Request/Delivery/Handover, QR ngân hàng và quyền đọc/upload ảnh chứng cứ cần nghiệm thu riêng theo phân công. Issue hiện trả `evidenceCount=0`, `canViewEvidence=false` cho tới khi backend chứng cứ hoàn thiện; không mở bucket hoặc cấp quyền trực tiếp để lách giới hạn đó.

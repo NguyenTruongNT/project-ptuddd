@@ -10,6 +10,228 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get listingTitle => 'Publish';
+
+  @override
+  String get listingCreate => 'New listing';
+
+  @override
+  String get listingCreateFormTitle => 'Create listing';
+
+  @override
+  String get listingEditDraftTitle => 'Edit draft';
+
+  @override
+  String get listingDetailsTitle => 'Listing details';
+
+  @override
+  String get listingPickerTitle => 'Choose material';
+
+  @override
+  String get listingPickerHint =>
+      'Choose material to create or continue a listing.';
+
+  @override
+  String get listingMaterialSearch => 'Search materials';
+
+  @override
+  String get listingFilterTitle => 'Filter by status';
+
+  @override
+  String listingFilterLabel(String status) {
+    return 'Status: $status ▾';
+  }
+
+  @override
+  String get listingLocalSection => 'Drafts on this device';
+
+  @override
+  String get listingNoResults => 'No matching results.';
+
+  @override
+  String get listingNoMaterials =>
+      'You have no materials. Add one to start a listing.';
+
+  @override
+  String get listingClearFilters => 'Clear filters and search';
+
+  @override
+  String get listingClearSearch => 'Clear search';
+
+  @override
+  String get listingContinueDraft => 'Continue draft';
+
+  @override
+  String get listingManagePublished => 'Manage published listing';
+
+  @override
+  String get listingManageHidden => 'Manage hidden listing';
+
+  @override
+  String get listingMaterialUnavailable =>
+      'Material is held or has an ongoing transaction; open it for details.';
+
+  @override
+  String get listingBackendUnavailable =>
+      'Publishing is temporarily unavailable. Please try again later.';
+
+  @override
+  String get listingUnexpectedError =>
+      'Could not load or save the listing. Please try again later.';
+
+  @override
+  String get listingSaveBeforeShow =>
+      'Save your changes to the server before showing the listing again.';
+
+  @override
+  String get listingFormTitle => 'Manage listing';
+
+  @override
+  String get listingChoose => 'Choose a material';
+
+  @override
+  String get listingMine => 'My listings';
+
+  @override
+  String get listingEmpty => 'No listings in this section.';
+
+  @override
+  String get listingAddMaterial => 'Add material';
+
+  @override
+  String get listingOffer => 'Offer type';
+
+  @override
+  String get listingBorrow => 'Lend';
+
+  @override
+  String get listingDonate => 'Donate';
+
+  @override
+  String get listingSell => 'Sell';
+
+  @override
+  String get listingPrice => 'Price (VND)';
+
+  @override
+  String get listingDescription => 'Offer description';
+
+  @override
+  String get listingArea => 'General meeting area (optional)';
+
+  @override
+  String get listingSave => 'Save server draft';
+
+  @override
+  String get listingLocal => 'Save on device';
+
+  @override
+  String get listingPublish => 'Publish';
+
+  @override
+  String get listingHide => 'Hide';
+
+  @override
+  String get listingShow => 'Show again';
+
+  @override
+  String get listingDraft => 'Draft';
+
+  @override
+  String get listingPublished => 'Published';
+
+  @override
+  String get listingHidden => 'Hidden';
+
+  @override
+  String get listingArchived => 'Archived';
+
+  @override
+  String get listingAll => 'All';
+
+  @override
+  String get listingNoImages =>
+      'Save at least one material image before publishing.';
+
+  @override
+  String get listingLocked =>
+      'Editing is blocked: published listing, pending requests or unavailable material.';
+
+  @override
+  String get listingUnknown =>
+      'Result unknown. Check the previous command before starting another.';
+
+  @override
+  String get listingCheck => 'Check result / retry';
+
+  @override
+  String get listingSaved => 'Saved on server.';
+
+  @override
+  String get listingLocalSaved => 'Saved on device; not published.';
+
+  @override
+  String get listingLeave => 'Keep a device draft before leaving?';
+
+  @override
+  String get listingDiscard => 'Discard changes';
+
+  @override
+  String get listingStay => 'Keep editing';
+
+  @override
+  String get listingNotFound =>
+      'Listing is unavailable or you do not have access.';
+
+  @override
+  String get listingHideConfirm =>
+      'The listing leaves Explore. Existing requests and transactions remain.';
+
+  @override
+  String get listingReserved => 'Reserved';
+
+  @override
+  String get listingManage => 'Manage listing';
+
+  @override
+  String get listingRequest => 'Send request';
+
+  @override
+  String get listingOwnRequest => 'View request';
+
+  @override
+  String listingBorrowPolicy(int minDays, int maxDays) {
+    return 'Borrow for $minDays–$maxDays days. The borrower proposes the duration; the owner accepts those exact days or declines.';
+  }
+
+  @override
+  String get listingRestore =>
+      'Restore the device draft? Permissions and revisions must still be checked.';
+
+  @override
+  String get listingMaterialChanged =>
+      'Data changed. Reload and review before submitting.';
+
+  @override
+  String get listingDemo => 'Read-only demo; connect Supabase to publish.';
+
+  @override
+  String get listingInvalid =>
+      'Check offer, price, text length and saved images.';
+
+  @override
+  String get listingMore => 'Load more';
+
+  @override
+  String get listingSearch => 'Search material title';
+
+  @override
+  String get listingRetry => 'Reload';
+
+  @override
+  String get listingOwner => 'Posted by';
+
+  @override
   String get navHome => 'Home';
 
   @override
@@ -446,4 +668,280 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileIssuesHint => 'Keep track of reported problems';
+
+  @override
+  String get matTitle => 'My materials';
+
+  @override
+  String get matSubtitle => 'Every book has a story to share.';
+
+  @override
+  String get matAdd => 'Add material';
+
+  @override
+  String get matEdit => 'Edit';
+
+  @override
+  String get matDetails => 'Material details';
+
+  @override
+  String get matSearch => 'Search title or ISBN';
+
+  @override
+  String get matAll => 'All';
+
+  @override
+  String get matReady => 'Ready to list';
+
+  @override
+  String get matActive => 'In a transaction';
+
+  @override
+  String get matEmpty => 'Start with a book';
+
+  @override
+  String get matEmptyBody => 'Add a book you own and get ready to share it.';
+
+  @override
+  String get matNoResults => 'No matching materials.';
+
+  @override
+  String get matTryAgain => 'Try again';
+
+  @override
+  String get matLoadMore => 'Load more';
+
+  @override
+  String get matNotFound =>
+      'This material is unavailable or you do not have access.';
+
+  @override
+  String get matNoImage => 'No photos yet';
+
+  @override
+  String get matNoImageHint =>
+      'Add at least one photo before publishing a listing.';
+
+  @override
+  String get matHeldByYou => 'In your possession';
+
+  @override
+  String get matHeldOther => 'Held by another person';
+
+  @override
+  String get matReserved => 'Reserved';
+
+  @override
+  String get matUnlisted => 'Not listed';
+
+  @override
+  String get matPublished => 'Published';
+
+  @override
+  String get matDraftListing => 'Draft listing';
+
+  @override
+  String get matHiddenListing => 'Hidden listing';
+
+  @override
+  String get matReadyLabel => 'Ready to share';
+
+  @override
+  String get matLockedTransaction =>
+      'An active transaction prevents editing this material and its photos.';
+
+  @override
+  String get matLockedListing =>
+      'Hide the published listing before editing this material.';
+
+  @override
+  String get matLockedRequest =>
+      'Resolve pending requests before editing this material.';
+
+  @override
+  String get matLockedHolder =>
+      'Editing is available once the owner holds the material.';
+
+  @override
+  String get matSave => 'Save material';
+
+  @override
+  String get matSaveChanges => 'Save changes';
+
+  @override
+  String get matSaved => 'Material saved.';
+
+  @override
+  String get matConfirmCreate => 'Confirm new material';
+
+  @override
+  String get matConfirmEdit => 'Confirm changes';
+
+  @override
+  String get matConfirmBody =>
+      'The following details and photo order will be saved:';
+
+  @override
+  String get matName => 'Title';
+
+  @override
+  String get matSubject => 'Subject / category';
+
+  @override
+  String get matCondition => 'Condition';
+
+  @override
+  String get matDescription => 'Description';
+
+  @override
+  String get matIsbn => 'ISBN (optional)';
+
+  @override
+  String get matRequired200 => 'Enter 1–200 valid characters.';
+
+  @override
+  String get matRequired100 => 'Enter 1–100 valid characters.';
+
+  @override
+  String get matDescriptionLimit => 'Use up to 2,000 valid characters.';
+
+  @override
+  String get matInvalidIsbn => 'Enter a valid ISBN-10 or ISBN-13.';
+
+  @override
+  String get matImages => 'Material photos';
+
+  @override
+  String get matImagesHint => 'Up to 5 photos • JPEG, PNG, WebP • 5 MiB each';
+
+  @override
+  String get matAddImage => 'Add photo';
+
+  @override
+  String get matCamera => 'Take photo';
+
+  @override
+  String get matGallery => 'Choose from library';
+
+  @override
+  String get matCover => 'Cover';
+
+  @override
+  String get matMakeCover => 'Set as cover';
+
+  @override
+  String get matRemoveImage => 'Remove photo';
+
+  @override
+  String get matRemoveImageBody =>
+      'This photo will be removed from the material when you save.';
+
+  @override
+  String get matImageInvalid =>
+      'Invalid photo. Choose a JPEG, PNG or WebP up to 5 MiB.';
+
+  @override
+  String get matImageFailed =>
+      'Photo upload failed. Your changes are kept; please retry.';
+
+  @override
+  String get matUploadProgress => 'Uploading photos';
+
+  @override
+  String get matSaveProgress => 'Saving material…';
+
+  @override
+  String get matConflict =>
+      'This material changed. Reload before saving; your edits are kept.';
+
+  @override
+  String get matForbidden => 'You do not have permission for this action.';
+
+  @override
+  String get matNetwork =>
+      'Connection failed. Check your network or save a draft.';
+
+  @override
+  String get matUnknown =>
+      'The save result is unknown. Retry to check the same operation without creating a duplicate.';
+
+  @override
+  String get matRefresh => 'Reload data';
+
+  @override
+  String get matLeaveTitle => 'Unsaved changes';
+
+  @override
+  String get matLeaveBody => 'Keep a draft on this device to continue later.';
+
+  @override
+  String get matKeepEditing => 'Keep editing';
+
+  @override
+  String get matSaveDraft => 'Save device draft';
+
+  @override
+  String get matDiscard => 'Discard changes';
+
+  @override
+  String get matDraftSaved => 'Draft saved on this device.';
+
+  @override
+  String get matDraftFound => 'An unfinished draft is available';
+
+  @override
+  String get matResumeDraft => 'Resume draft';
+
+  @override
+  String get matNewInstead => 'Start over';
+
+  @override
+  String get matDraftError =>
+      'Could not save the draft. Keep this screen open and try again.';
+
+  @override
+  String get matCopyId => 'Copy material ID';
+
+  @override
+  String get matIdCopied => 'Material ID copied.';
+
+  @override
+  String get matOwner => 'Owner';
+
+  @override
+  String get matHolder => 'Current holder';
+
+  @override
+  String get matYou => 'You';
+
+  @override
+  String get matDemo => 'Demo data • not saved to Supabase';
+
+  @override
+  String get matDetailsHint => 'One physical book, saved in your collection.';
+
+  @override
+  String get matReloadUrls => 'Reload photos';
+
+  @override
+  String get matTip =>
+      'Show the cover and any marked pages so others can see the book\'s condition.';
+
+  @override
+  String get matNewTitle => 'Add a book.\nOpen a new chapter.';
+
+  @override
+  String get matFormHint =>
+      'Save a physical book you own. You can publish a listing later.';
+
+  @override
+  String get matPhotoPermission =>
+      'Could not open the camera or library. Check permissions and try again.';
+
+  @override
+  String get matSnapshotChanged =>
+      'The latest version is loaded. You can edit this version.';
+
+  @override
+  String get matCached => 'Showing a device copy. Connect to refresh and edit.';
 }

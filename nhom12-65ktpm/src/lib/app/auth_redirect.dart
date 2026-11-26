@@ -1,7 +1,7 @@
 import '../core/auth/auth_repository.dart';
 import 'app_routes.dart';
 
-/// Chỉ giữ đường dẫn nội bộ đã biết; bỏ query/fragment tránh lộ token/PII.
+/// Chỉ giữ đường dẫn nội bộ và ID được cho phép; bỏ token/fragment/query khác.
 String safeAuthDestination(String? raw) {
   if (raw == null) return AppRoutes.home;
   if (raw.split('/').any((p) => p == '..' || p == '.')) return AppRoutes.home;
@@ -26,6 +26,7 @@ String safeAuthDestination(String? raw) {
     '/materials',
     '/materials/new',
     '/listings/new',
+    '/listings/select-material',
     '/requests',
     '/deliveries',
     '/deliveries/new',
@@ -38,10 +39,32 @@ String safeAuthDestination(String? raw) {
   );
   final handover = RegExp(r'^/handovers/[a-zA-Z0-9_-]+/(prepare|scan|ack)$');
   final request = RegExp(r'^/requests/new/[a-zA-Z0-9_-]+$');
+  final materialEdit = RegExp(r'^/materials/[a-zA-Z0-9_-]+/edit$');
+  if (path == AppRoutes.listingForm) {
+    // SCR-10 dùng query cho ID: bỏ toàn bộ sẽ mất tài liệu/tin khi đăng nhập lại.
+    // Chỉ giữ UUID đơn của hai trường này; không mang token hay cờ điều hướng qua Auth.
+    final ids = <String, String>{};
+    final uuid = RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    );
+    for (final name in ['materialId', 'listingId']) {
+      final values = uri.queryParametersAll[name];
+      if (values != null &&
+          values.length == 1 &&
+          uuid.hasMatch(values.single)) {
+        ids[name] = values.single;
+      }
+    }
+    return Uri(
+      path: path,
+      queryParameters: ids.isEmpty ? null : ids,
+    ).toString();
+  }
   return roots.contains(path) ||
           details.hasMatch(path) ||
           handover.hasMatch(path) ||
-          request.hasMatch(path)
+          request.hasMatch(path) ||
+          materialEdit.hasMatch(path)
       ? path
       : AppRoutes.home;
 }
@@ -66,7 +89,9 @@ String? authRedirect({
     if (path == AppRoutes.splash) return null;
     return Uri(
       path: AppRoutes.splash,
-      queryParameters: {'from': safeAuthDestination(isAuth ? from : path)},
+      queryParameters: {
+        'from': safeAuthDestination(isAuth ? from : location.toString()),
+      },
     ).toString();
   }
   if (session?.recovering ?? false) {
@@ -85,7 +110,9 @@ String? authRedirect({
     return Uri(
       path: AppRoutes.signIn,
       queryParameters: {
-        'from': safeAuthDestination(path == AppRoutes.splash ? from : path),
+        'from': safeAuthDestination(
+          path == AppRoutes.splash ? from : location.toString(),
+        ),
       },
     ).toString();
   }

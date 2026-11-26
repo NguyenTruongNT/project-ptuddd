@@ -19,7 +19,10 @@ class AppRoutes {
   static const myMaterials = '/materials';
   static const materialForm = '/materials/new';
   static const materialDetailsPattern = '/materials/:materialId';
+  static const materialEditPattern = '/materials/:materialId/edit';
   static const listingForm = '/listings/new';
+  // Màn phụ của luồng SCR-10, không tăng số mã màn hình nghiệp vụ.
+  static const listingMaterialPicker = '/listings/select-material';
   static const createRequestPattern = '/requests/new/:listingId';
   static const requestCenter = '/requests';
   static const transactions = '/transactions';
@@ -45,6 +48,8 @@ class AppRoutes {
       '/listings/${Uri.encodeComponent(id)}';
   static String materialDetails(String id) =>
       '/materials/${Uri.encodeComponent(id)}';
+  static String materialEdit(String id) =>
+      '/materials/${Uri.encodeComponent(id)}/edit';
   static String transactionDetails(String id) =>
       '/transactions/${Uri.encodeComponent(id)}';
   static String deliveryDetails(String id) =>

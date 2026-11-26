@@ -15,7 +15,7 @@ flutter run -d emulator-5554
 
 Nếu mã thiết bị khác `emulator-5554`, lấy mã chính xác bằng `flutter devices` rồi thay thế. Ứng dụng mặc định đọc `assets/config/supabase.public.json` đã có trong Git để kết nối project development của nhóm. Máy mới không cần tạo `.dart_tool/supabase.cloud.json`; `flutter clean` không xóa file cấu hình công khai này. Cần có Internet và mỗi thành viên dùng tài khoản thử nghiệm riêng.
 
-Auth/Profile dùng Supabase thật; dữ liệu nghiệp vụ Material/Listing, giao dịch và các module chưa nối backend vẫn là mock.
+Auth/Profile, Material/ảnh SCR-07/08/09 và Listing ngày 3 dùng Supabase thật. Cloud development đã có bốn migration Listing ngày 26/11/2026. QR Material thuộc ngày 4; các module khác theo tiến độ riêng. Chạy Chrome bằng `flutter run -d chrome` để kiểm tra với backend mặc định; không coi màn preview mock là dữ liệu Cloud.
 
 ## Chạy demo không kết nối Supabase
 
@@ -45,7 +45,7 @@ Tại thư mục gốc repository:
 
 - Có 5 tab, 26 route chính, theme/l10n, Supabase foundation và module Transaction mock (PR #21).
 - Nhánh Auth/Profile bổ sung Splash, đăng nhập/đăng ký, xác minh email, quên/đổi mật khẩu qua PKCE deep link, auth guard, hồ sơ cá nhân và logout; lưu tùy chọn giao diện trên thiết bị.
-- Material/Listing, ExchangeRequest, Handover, thanh toán, Issue và Notification chưa có backend nghiệp vụ hoàn chỉnh. Auth/Profile thật không lấy tài khoản A/B từ mock làm actor; cache riêng tư được tái tạo khi đổi tài khoản hoặc logout.
+- Material và Listing đã có repository/RPC/RLS thật; Transactions/Payment/Issues theo module của Sơn. ExchangeRequest/Handover/Notification còn điểm tích hợp theo phân công. Không lấy tài khoản A/B từ mock làm actor khi chạy thật; cache riêng tư được tái tạo khi đổi tài khoản hoặc logout. Xem [CONTRACTS §15](../docs/CONTRACTS.md#15-listing-ngày-3) để kiểm thử và bàn giao Listing.
 - Không suy diễn dữ liệu mock là giao dịch đã được xác nhận; quyền và state transition phải được kiểm tra tại server.
 
 Phân công module, quy trình commit và checklist bàn giao: **`../docs/SHARED_HANDOFF.md`** và **`../docs/QUY_TRINH_GIT_NHOM.md`**.

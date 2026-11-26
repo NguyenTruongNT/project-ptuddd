@@ -8,11 +8,15 @@ class CreateMaterialInput {
     required this.subject,
     required this.condition,
     this.isbn,
+    this.description,
+    this.imageIds = const [],
   });
   final String title;
   final String subject;
   final String condition;
   final String? isbn;
+  final String? description;
+  final List<String> imageIds;
 }
 
 class CreateListingInput {
