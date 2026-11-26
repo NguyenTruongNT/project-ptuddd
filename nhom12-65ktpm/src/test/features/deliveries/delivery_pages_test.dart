@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:studyshare/core/contracts/command_inputs.dart';
 import 'package:studyshare/core/contracts/command_result.dart';
@@ -64,17 +65,43 @@ void main() {
       final acceptedApps = apps.where((a) => a.status == DeliveryApplicationStatus.accepted);
       expect(acceptedApps.length, equals(1));
     });
+
+    test('MVP-D04 & INV-08: Rút đơn trước khi nhận và báo giao thất bại tạo hoàn trả', () async {
+      final repoA = MockDeliveryRepository(actorId: MockFixtures.userA);
+      final createRes = await repoA.createTaskWithDescriptions(
+        transactionId: 'txn-delivery-01',
+        finalReceiverId: MockFixtures.userB,
+        pickupDescription: 'Cổng chính TLU',
+        dropoffDescription: 'KTX P.304',
+        idempotencyKey: 'test-create-edge',
+      );
+      final taskId = (createRes as CommandOk).data.id;
+
+      // C ứng tuyển rồi rút đơn khi còn PENDING
+      final repoC = MockDeliveryRepository(actorId: MockFixtures.userC);
+      await repoC.applyForTask(taskId, idempotencyKey: 'test-c-apply-edge');
+      final withdrawRes = await repoC.withdrawApplication(taskId, idempotencyKey: 'test-withdraw');
+      expect(withdrawRes, isA<CommandOk>());
+
+      // Nếu chưa PICKED_UP thì không thể báo giao thất bại
+      final failEarly = await repoC.failTask(taskId, 'Lý do', idempotencyKey: 'test-fail-early');
+      expect(failEarly, isA<CommandError>());
+    });
   });
 
   group('Delivery UI Widget Tests', () {
-    testWidgets('SCR-15 Danh sách giao hộ hiển thị 4 tab đầy đủ', (tester) async {
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: DeliveryListPage(),
+    Widget wrapWithRouter(Widget child) => ProviderScope(
+          child: MaterialApp.router(
+            routerConfig: GoRouter(
+              routes: [
+                GoRoute(path: '/', builder: (_, _) => child),
+              ],
+            ),
           ),
-        ),
-      );
+        );
+
+    testWidgets('SCR-15 Danh sách giao hộ hiển thị 4 tab đầy đủ', (tester) async {
+      await tester.pumpWidget(wrapWithRouter(const DeliveryListPage()));
 
       await tester.pumpAndSettle();
 
@@ -87,11 +114,7 @@ void main() {
 
     testWidgets('SCR-16 Form tạo giao hộ yêu cầu nhập điểm lấy và giao', (tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: CreateDeliveryPage(transactionId: 'txn-delivery-01'),
-          ),
-        ),
+        wrapWithRouter(const CreateDeliveryPage(transactionId: 'txn-delivery-01')),
       );
 
       await tester.pumpAndSettle();
@@ -111,11 +134,7 @@ void main() {
 
     testWidgets('SCR-17 Chi tiết nhiệm vụ hiển thị tiến trình và ứng viên', (tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: DeliveryDetailsPage(taskId: 'task-donate-01'),
-          ),
-        ),
+        wrapWithRouter(const DeliveryDetailsPage(taskId: 'task-donate-01')),
       );
 
       await tester.pumpAndSettle();

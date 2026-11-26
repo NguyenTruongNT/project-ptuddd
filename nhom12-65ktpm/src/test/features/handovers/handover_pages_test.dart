@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:studyshare/core/contracts/command_inputs.dart';
 import 'package:studyshare/core/contracts/command_result.dart';
@@ -127,16 +128,39 @@ void main() {
       final handover = await repoReceiver.getHandover('handover-delivery-h1');
       expect(handover!.status, equals(HandoverStatus.disputed));
     });
+
+    test('Đối chiếu thủ công (Fallback) bắt buộc có lý do giải trình', () async {
+      final repo = MockHandoverRepository(actorId: MockFixtures.userA, store: store);
+      final emptyRes = await repo.verifyWithFallback(
+        'handover-delivery-h1',
+        '   ',
+        idempotencyKey: 'test-fallback-empty',
+      );
+      expect(emptyRes, isA<CommandError>());
+
+      final okRes = await repo.verifyWithFallback(
+        'handover-delivery-h1',
+        'QR trên bìa sách bị rách mờ',
+        idempotencyKey: 'test-fallback-ok',
+      );
+      expect(okRes, isA<CommandOk>());
+    });
   });
 
   group('Handover UI Widget Tests', () {
+    Widget wrapWithRouter(Widget child) => ProviderScope(
+          child: MaterialApp.router(
+            routerConfig: GoRouter(
+              routes: [
+                GoRoute(path: '/', builder: (_, _) => child),
+              ],
+            ),
+          ),
+        );
+
     testWidgets('SCR-18 Chuẩn bị bàn giao có nút chụp ảnh và đối chiếu QR', (tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: PrepareHandoverPage(handoverId: 'handover-borrow-01'),
-          ),
-        ),
+        wrapWithRouter(const PrepareHandoverPage(handoverId: 'handover-borrow-01')),
       );
 
       await tester.pumpAndSettle();
@@ -149,11 +173,7 @@ void main() {
 
     testWidgets('SCR-19 Quét QR hiển thị cảnh báo khi sai mã QR_MISMATCH', (tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: QrScannerPage(handoverId: 'handover-borrow-01'),
-          ),
-        ),
+        wrapWithRouter(const QrScannerPage(handoverId: 'handover-borrow-01')),
       );
 
       await tester.pumpAndSettle();
@@ -170,11 +190,7 @@ void main() {
 
     testWidgets('SCR-20 Xác nhận nhận tài liệu có nút Xác nhận và Từ chối', (tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: ReceiverAckPage(handoverId: 'handover-borrow-01'),
-          ),
-        ),
+        wrapWithRouter(const ReceiverAckPage(handoverId: 'handover-borrow-01')),
       );
 
       await tester.pumpAndSettle();
