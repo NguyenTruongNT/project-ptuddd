@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_routes.dart';
 import '../../../core/contracts/domain_enums.dart';
 import '../../../core/contracts/models/delivery.dart';
+import '../../../core/errors/app_error.dart';
 import '../../../design_system/widgets/study_empty.dart';
 import '../../../design_system/widgets/study_error.dart';
 import '../../../design_system/widgets/study_loading.dart';
@@ -43,7 +44,14 @@ class DeliveryListPage extends ConsumerWidget {
           appBar: AppBar(
             leading: BackButton(onPressed: handleBack),
             title: const Text('Nhiệm vụ giao hộ'),
-          bottom: TabBar(
+            actions: [
+              IconButton(
+                tooltip: 'Tải lại',
+                icon: const Icon(Icons.refresh),
+                onPressed: () => refreshDeliveries(ref),
+              ),
+            ],
+            bottom: TabBar(
             isScrollable: true,
             tabs: [
               for (final tab in DeliveryTab.values)
@@ -57,6 +65,9 @@ class DeliveryListPage extends ConsumerWidget {
             availableTasksAsync.when(
               loading: () => const StudyLoading(),
               error: (err, stack) => StudyError(
+                message: err is AppError
+                    ? err.safeMessage
+                    : 'Không thể tải dữ liệu. Vui lòng thử lại.',
                 onRetry: () => ref.invalidate(availableDeliveryTasksProvider),
               ),
               data: (availableList) {
@@ -92,6 +103,9 @@ class DeliveryListPage extends ConsumerWidget {
             myTasksAsync.when(
               loading: () => const StudyLoading(),
               error: (err, stack) => StudyError(
+                message: err is AppError
+                    ? err.safeMessage
+                    : 'Không thể tải dữ liệu. Vui lòng thử lại.',
                 onRetry: () => ref.invalidate(myDeliveryTasksProvider),
               ),
               data: (allTasks) {
@@ -109,6 +123,9 @@ class DeliveryListPage extends ConsumerWidget {
             myTasksAsync.when(
               loading: () => const StudyLoading(),
               error: (err, stack) => StudyError(
+                message: err is AppError
+                    ? err.safeMessage
+                    : 'Không thể tải dữ liệu. Vui lòng thử lại.',
                 onRetry: () => ref.invalidate(myDeliveryTasksProvider),
               ),
               data: (allTasks) {
@@ -129,6 +146,9 @@ class DeliveryListPage extends ConsumerWidget {
             myTasksAsync.when(
               loading: () => const StudyLoading(),
               error: (err, stack) => StudyError(
+                message: err is AppError
+                    ? err.safeMessage
+                    : 'Không thể tải dữ liệu. Vui lòng thử lại.',
                 onRetry: () => ref.invalidate(myDeliveryTasksProvider),
               ),
               data: (allTasks) {
