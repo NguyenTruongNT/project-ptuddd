@@ -35,7 +35,7 @@
 | Chuyển trạng thái | Ai / command | Điều kiện |
 |---|---|---|
 | Listing DRAFT → PUBLISHED | Owner `publishListing` | title, subject, condition, ≥1 ảnh, offer duy nhất; SELL giá VND >0; Material đủ điều kiện |
-| Listing PUBLISHED ↔ HIDDEN | Owner hide/show | Không phá snapshot Transaction đã chấp thuận |
+| Listing PUBLISHED ↔ HIDDEN | Owner hide/show | SS-BR B.9/N3-D03–04: giữ PENDING và Transaction; active chỉ đổi hiển thị, giữ snapshot, vẫn RESERVED khi hiện |
 | Listing hiện hành → ARCHIVED | Server khi T hoàn tất/hủy hợp lệ | Không tự đưa Listing cũ lên lại; Material và QR có thể đăng lại Listing **mới** |
 | Request PENDING → ACCEPTED | A `approveExchangeRequest` | Atomic: một R ACCEPTED + các R cạnh tranh REJECTED + tạo T + giữ chỗ M + Event |
 | Request PENDING → REJECTED | A `rejectExchangeRequest` hoặc server khi M hết khả dụng | Không tạo T |

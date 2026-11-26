@@ -334,3 +334,46 @@ Các contracts Auth/Profile bổ sung ở mục 13; không thay đổi enum ho�
 - ISBN-13 kiểm tra prefix 978/979 và checksum; không nhận EAN khác chỉ vì đủ 13 số/checksum đúng. [Nguồn International ISBN Agency](https://www.isbn-international.org/index.php/node/10).
 - Cloud có migration riêng 20261125120000_transactions_payment_issues_rpc của Sơn chưa trong nhánh này. Đối chiếu lịch sử qua snapshot bị Git bỏ qua, không copy module Sơn vào đóng góp Material, không repair lịch sử.
 - Listing publish/QR và quản lý tham chiếu snapshot nối tiếp ngày 3/4. Không tạo Listing/QR/Transaction giả để đáp ứng ACK Material.
+
+## 15. Listing ngày 3 theo đặc tả đã được Trường đồng ý
+
+Nguồn quy tắc: SS-BR Phụ lục B, N3-D01–N3-D08 được Trường đồng ý ngày 26/11/2026. Migration mới `20261126000100_listing_workspace.sql`; không sửa các migrations ngày 1/2 hoặc migration workflow của Sơn. QR vẫn thuộc ngày 4.
+
+Đợt tinh chỉnh UI được Trường duyệt bổ sung `20261126000300_listing_owner_cover.sql` và `20261126000400_listing_legacy_snapshots.sql`, cùng migration ảnh lịch sử `20261126000200_listing_history_images.sql`. Cả 4 migration đã được áp dụng local và cloud development `studyshare-nhom12-dev` ngày 26/11/2026 sau kiểm thử local. Code và tài liệu được bàn giao qua PR Listing vào `integration/nhom12-65ktpm`; chỉ merge sau khi thành viên khác review đạt.
+
+| RPC thực tế | Tham số và kết quả |
+|---|---|
+| `get_my_listing` | `p_listing_id?`, `p_material_id?` (ít nhất một); nếu cả hai thì phải khớp. Chi tiết quản lý của owner/người tạo hoặc null; query theo Material trả tin chưa ARCHIVED |
+| `search_my_listings` | `p_status=all/DRAFT/PUBLISHED/HIDDEN/ARCHIVED`, `p_query`, `p_offset>=0`, `p_limit=1..100` mặc định 20 → items/has_more |
+| `save_listing` | `p_action=draft/publish/hide/show`, `p_payload`, `p_idempotency_key`, `p_material_id?`, `p_listing_id?`, `p_expected_revision?`, `p_expected_material_revision?` → `ok`, `data` (ManagedListing), `command_id`, `server_revision` |
+| `get_listing_command_result` | `p_command=listing_draft/listing_publish/listing_hide/listing_show`, `p_key` → receipt của actor khi còn sở hữu Material và là người tạo tin, hoặc null |
+| `get_published_listing` | `p_listing_id` → DTO an toàn PUBLISHED theo viewer; null nếu không công khai |
+| `search_published_listings` | `p_keyword` tối đa 200, offset/limit như trên → items/has_more; tìm tên/môn theo snapshot; published_at giảm dần rồi ID; vẫn gồm RESERVED |
+| `get_listing_image_path` | `p_listing_id`, `p_image_id` → path đúng ảnh snapshot đang PUBLISHED hoặc null. Repository ký URL 300 giây, không đưa path vào ListingDetails |
+| `get_transaction_listing_image_path` | `p_transaction_id`, `p_image_id` → path ảnh được snapshot trong đúng Transaction; chỉ A/B của Transaction hoặc null. Migration bổ sung `20261126000200_listing_history_images.sql`; dùng cho module lịch sử, không dùng đường Discovery để vượt trạng thái ẩn/archive |
+
+`p_payload` chỉ nhận `offer_type`, `asking_price_vnd`, `description`, `meeting_area` với draft/publish; hide/show bắt buộc object rỗng. Không nhận owner/holder/actor/status/snapshot/path do mobile tự gửi. Trường tùy chọn trim/rỗng thành null. Nháp SELL cho giá null có chủ đích, nhưng giá đã nhập phải nguyên dương; publish/show không có giao dịch active bắt buộc đủ giá/ảnh. BORROW/DONATE giá luôn null. Server khóa Material trước Listing, kiểm tra revisions/quyền/trạng thái rồi ghi domain và receipt cùng transaction.
+
+`ListingWorkspaceRepository` bổ sung execute/getCommandResult/getManaged/searchMine/getPublishedDetails/searchPage. Giữ `ListingRepository` và `ListingQueryRepository` cũ bằng adapter; adapter tra receipt trước khi dựng lại revision cho retry. `ListingCommand` giữ trọn ý định và key; Android lưu trong SQLite thông qua ListingDrafts, tách theo account. Sau timeout giữ nguyên command; app tra receipt rồi gửi lại cùng payload nếu chưa có kết quả. Đổi account loại kết quả UI của phiên trước.
+
+Auth guard giữ ý định SCR-10 qua Splash/Login bằng whitelist `materialId`/`listingId` dạng UUID đơn; vẫn bỏ token, fragment, query lạ, ID sai/nhập lặp và cờ completion. Đăng nhập lại không cấp quyền từ ID: form luôn đọc lại ownership và revision qua RPC.
+
+`ManagedListing` có Listing, Material revision, quyền canEdit/canHide/canShow và nhãn pending/active. `ListingDetails` có card, gallery ID/URL ngắn hạn, người đăng an toàn, mô tả Material/Listing, ISBN/khu vực chung; requestBlockedReason dẫn xuất OWNER/RESERVED/REQUEST_PENDING/MATERIAL_UNAVAILABLE. Không có QR, holder, email, ngân hàng, evidence hoặc storage path. Query card chỉ cấp URL bìa; query details mới cấp gallery.
+
+RPC quản lý riêng bổ sung `title`, `cover_storage_path` của Material hiện tại; repository đổi path thành URL ký 300 giây trong `ManagedListing.coverUrl`, không lưu URL vào nháp. Projection Khám phá không nhận private path. `BACKEND_UNAVAILABLE` phân biệt thiếu RPC/chữ ký/schema với `CONFLICT`; lỗi không xác định dùng `UNEXPECTED_ERROR`. Debug chỉ log tên RPC/mã lỗi, không log JWT hoặc payload. Android xử lý giá bigint nguyên chính xác; Chrome preview từ chối giá không còn nguyên vẹn khi mã hóa JSON, không tự làm tròn.
+
+Snapshot công bố có phiên bản, Material/Listing revisions và media IDs theo thứ tự. `listing_snapshot_images` giữ tham chiếu file độc lập gallery; Transaction sao chép publication_snapshot vào `terms_snapshot.listing` khi tạo. Gỡ gallery không xóa file lịch sử. Bucket private, thêm policy chỉ đọc ảnh snapshot PUBLISHED; ẩn/archive không cấp quyền ảnh công bố mới, URL đã ký có thể còn hạn tối đa 5 phút.
+
+Tin PUBLISHED/HIDDEN có sẵn trước ngày 3 chỉ được chuyển đổi snapshot khi 1–5 ảnh có registry ATTACHED, đúng Material và metadata Storage. Snapshot ghi `captured_from=legacy_migration`, là dữ liệu tại lúc chuyển đổi; không diễn giải thành điều khoản tại thời điểm duyệt giao dịch cũ. Không sửa `terms_snapshot` cũ, owner/holder, trạng thái hay ngày công bố. Hàm chuyển đổi private không cấp quyền execute cho anon/authenticated; chạy lại không ghi đè snapshot. Đã đối chiếu cloud: 176 Listing giữ nguyên trạng thái/ngày công bố, 140 snapshot hợp lệ (136 PUBLISHED/4 HIDDEN), hashes điều khoản giao dịch và quyền sở hữu giữ nguyên.
+
+Trigger Request bổ sung khóa Material và kiểm tra khả dụng/PUBLISHED khi tạo PENDING hoặc duyệt ACCEPTED từ JWT authenticated; không triển khai RPC Request thay Khanh. Module Khanh phải khóa Material trước khi khóa/chuyển Request để thống nhất thứ tự, snapshot giá/loại/số ngày đúng dữ liệu đã duyệt. Archive vẫn do workflow kết thúc/hủy Transaction; Listing không thay owner/holder hoặc tự hoàn tất giao dịch.
+
+Kiểm tra local: `npx.cmd supabase@3.3.0 migration up --local --include-all`, `npx.cmd supabase@3.3.0 test db`; serve `verify-material-image` rồi chạy `src/tool/test_listing_local.ps1` để kiểm tra Auth/Storage/ảnh thật, A/B, retry mất ACK và hai lệnh công bố cạnh tranh. Script chỉ nhận URL localhost và giữ service key trong môi trường tiến trình test. Không áp dụng migration lên cloud từ lệnh kiểm tra này.
+
+Android Emulator: `src/tool/test_listing_android.ps1 -Device emulator-5554` tạo account local dùng một lần ở host, reverse cổng 54321 rồi chạy `integration_test/listing_android_test.dart` bằng SDK integration_test. Test kiểm tra SQLite trên Android, ảnh thật, SELL công bố/ẩn/hiện và đọc lại qua repository; finally dọn đúng fixture của account vừa tạo. Service key không được đưa vào APK; tài khoản test bị xóa sau lần chạy. Sau test, build lại target ứng dụng thường nếu cần APK demo, vì APK integration_test không phải bản demo để bàn giao.
+
+Cloud smoke chủ động: `src/tool/test_listing_cloud.ps1` chỉ cho đúng project development được cấu hình/link, đọc admin key vào tiến trình host qua CLI đã đăng nhập, tạo A/B tạm, kiểm tra Auth/Storage/Edge verify/validation/publish/retry/Discovery/quyền/ẩn/hiện; finally chỉ xóa dữ liệu theo UUID của hai account vừa tạo. Không chạy script này tự động trong Flutter test/CI. Lần kiểm tra ngày 26/11/2026 đạt và không còn account smoke trên cloud. Chrome chạy bình thường bằng `flutter run -d chrome`; không thêm `SUPABASE_ENABLED=false` khi nghiệm thu backend thật.
+
+Kiểm tra giá trên Chrome: `src/tool/check_listing_web_price.ps1` biên dịch production validator bằng `dart compile js` và chạy fixture trong Chrome headless có profile riêng dưới `.dart_tool/`. Cách này kiểm tra số JavaScript thật, không thay đổi Flutter SDK. `flutter test --platform chrome` trên Flutter SDK Windows hiện tại gặp lỗi handler CanvasKit trả 404; không lấy lần chạy treo này làm bằng chứng kiểm thử đạt.
+
+Kết quả đợt hoàn thiện ngày 26/11/2026: `flutter analyze` không có issue; `flutter test` đạt 268 test, 6 test tích hợp opt-in được bỏ qua trong lệnh chung; pgTAP đạt 138/138. Các script Listing local, cloud, Android và kiểm tra giá Chrome đã chạy riêng và đạt. Build web và APK debug ứng dụng thường thành công sau chỉnh sửa cuối. `db lint` local không có error, còn một warning biến `changed` chưa đọc trong `save_listing`, không ảnh hưởng kết quả command. Không reset dữ liệu; fixture cloud đã dọn và còn 0 tài khoản smoke. Đây là bằng chứng kiểm tra trước khi bàn giao PR, không thay thế việc review và nghiệm thu tích hợp của nhóm.
