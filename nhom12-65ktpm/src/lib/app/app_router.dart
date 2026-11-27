@@ -26,6 +26,8 @@ import '../features/materials/presentation/material_form_page.dart';
 import '../features/materials/presentation/my_materials_page.dart';
 import '../features/profile_settings/profile_page.dart';
 import '../features/profile_settings/settings_page.dart';
+import '../features/requests/presentation/create_request_page.dart';
+import '../features/requests/presentation/request_center_page.dart';
 import '../features/transactions/presentation/my_transactions_page.dart';
 import '../features/transactions/presentation/transaction_details_page.dart';
 import 'app_routes.dart';
@@ -261,9 +263,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // SCR-11 và SCR-12 chưa triển khai.
-      _placeholder(AppRoutes.createRequestPattern, 'SCR-11', 'Gửi yêu cầu'),
-      _placeholder(AppRoutes.requestCenter, 'SCR-12', 'Trung tâm yêu cầu'),
+      // SCR-11: Gửi yêu cầu trao đổi (module Request của Khanh).
+      GoRoute(
+        path: AppRoutes.createRequestPattern,
+        builder: (_, state) {
+          return CreateRequestPage(
+            listingId: state.pathParameters['listingId']!,
+          );
+        },
+      ),
+
+      // SCR-12: Trung tâm yêu cầu (đã gửi / nhận được).
+      GoRoute(
+        path: AppRoutes.requestCenter,
+        builder: (_, _) => const RequestCenterPage(),
+      ),
 
       // SCR-14: module Transaction của Sơn.
       GoRoute(

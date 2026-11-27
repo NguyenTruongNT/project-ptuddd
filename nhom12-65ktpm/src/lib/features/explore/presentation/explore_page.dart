@@ -208,7 +208,22 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
             ),
           ),
           const SizedBox(width: 12),
-          Icon(Icons.travel_explore_rounded, size: 48, color: scheme.primary),
+          Column(
+            children: [
+              Icon(
+                Icons.travel_explore_rounded,
+                size: 48,
+                color: scheme.primary,
+              ),
+              const SizedBox(height: 8),
+              IconButton.filledTonal(
+                key: const ValueKey('explore-open-requests'),
+                tooltip: 'Yêu cầu của tôi',
+                onPressed: () => context.push(AppRoutes.requestCenter),
+                icon: const Icon(Icons.inbox_outlined),
+              ),
+            ],
+          ),
         ],
       ),
     );

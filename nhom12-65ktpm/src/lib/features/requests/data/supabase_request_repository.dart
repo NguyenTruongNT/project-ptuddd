@@ -5,15 +5,15 @@ import '../../../core/contracts/command_result.dart';
 import '../../../core/contracts/domain_enums.dart';
 import '../../../core/contracts/models/exchange_request.dart';
 import '../../../core/contracts/models/transaction.dart';
-import '../../../core/contracts/repositories/request_repository.dart';
-import '../../transactions/data/supabase_transaction_repository.dart';
 import '../../../core/errors/app_error.dart';
+import '../../transactions/data/supabase_transaction_repository.dart';
+import '../domain/request_view.dart';
 
 /// Repository Request kết nối trực tiếp với Supabase RPC.
 ///
 /// Flutter chỉ gửi dữ liệu đầu vào nghiệp vụ và idempotency key.
 /// Actor, quyền, trạng thái và Transaction được xác định tại backend.
-class SupabaseRequestRepository implements RequestRepository {
+class SupabaseRequestRepository implements RequestCenterRepository {
   const SupabaseRequestRepository(this._rpc);
 
   final WorkflowRpc _rpc;
@@ -26,6 +26,19 @@ class SupabaseRequestRepository implements RequestRepository {
       (Object? raw) {
         return List<ExchangeRequest>.unmodifiable(
           WorkflowJson.list(raw).map(_requestFromRpc),
+        );
+      },
+    );
+  }
+
+  @override
+  Future<List<RequestView>> getMyRequestViews() {
+    return _rpc.read<List<RequestView>>(
+      'get_my_exchange_requests',
+      const <String, dynamic>{},
+      (Object? raw) {
+        return List<RequestView>.unmodifiable(
+          WorkflowJson.list(raw).map(requestViewFromRpc),
         );
       },
     );
