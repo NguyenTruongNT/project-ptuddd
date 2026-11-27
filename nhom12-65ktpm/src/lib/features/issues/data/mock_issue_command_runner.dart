@@ -5,6 +5,7 @@ import '../../../core/errors/app_error.dart';
 import '../../../core/mock/mock_fixtures.dart';
 import '../../../core/mock/mock_issue_access.dart';
 import '../../../core/mock/mock_issue_query_repository.dart';
+import '../../../core/mock/mock_notification_fanout.dart';
 import '../../../core/mock/mock_transaction_store.dart';
 
 // Kết quả kiểm tra + ghi của một lệnh Issue mock.
@@ -83,10 +84,13 @@ class MockIssueCommandRunner {
       return CommandOk(await _details(previous.entityId!), previous.eventId);
     }
 
+    final mark = store.eventMark;
     switch (body(txn)) {
       case MockIssueFail(:final code, :final safeMessage):
         return CommandError(code, safeMessage);
       case MockIssueOk(issueId: final id, :final eventId):
+        // Cùng "giao dịch DB" với Event: báo cho các bên liên quan.
+        fanOutNotifications(store, mark, actorId);
         store.saveReceipt(
             actorId,
             command,
