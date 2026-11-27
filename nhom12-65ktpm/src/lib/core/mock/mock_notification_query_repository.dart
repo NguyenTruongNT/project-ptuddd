@@ -14,6 +14,17 @@ class MockNotificationQueryRepository implements NotificationQueryRepository {
   final MockTransactionStore store;
 
   @override
-  Future<List<AppNotification>> getMyNotifications() async =>
-      store.notificationsFor(demoViewerId);
+  Future<List<AppNotification>> getMyNotifications({
+    int offset = 0,
+    int limit = 100,
+  }) async {
+    final all = store.notificationsFor(demoViewerId);
+    if (offset < 0 || limit <= 0 || offset >= all.length) return const [];
+    final end = (offset + limit).clamp(0, all.length);
+    return all.sublist(offset, end);
+  }
+
+  @override
+  Future<int> getUnreadCount() async =>
+      store.notificationsFor(demoViewerId).where((n) => !n.isRead).length;
 }

@@ -32,38 +32,46 @@ trigger `AFTER INSERT` trên hai bảng Event.
 
 Quy tắc chung:
 
-- Không gửi cho chính `actor_id` của Event.
+- Không gửi cho chính `actor_id` của Event. Nếu `actor_id` là `NULL` (sự kiện hệ thống/tự động, không do một người dùng cụ thể kích hoạt) thì gửi cho tất cả người nhận hợp lệ trong ma trận.
+- Chống trùng ở mức dữ liệu bằng ràng buộc duy nhất `(source_event_type, source_event_id, recipient_id)` (hoặc tương đương) để một Event không bao giờ sinh 2 thông báo cho cùng người nhận.
 - Event `ISSUE_*` ở `transaction_events` bỏ qua vì `issue_events` đã có bản tương ứng.
   Bỏ qua để mỗi việc chỉ sinh một thông báo.
 - `type` = `event_type` gốc (vd. `PAYMENT_REPORTED`).
-- `preview_safe` = `<tên tài liệu>: <safe_description>`. Không đưa vào preview:
+- `preview_safe` phải dùng **mẫu cố định theo `event_type`** và chỉ điền trường công khai an toàn (vd. `<tên tài liệu>`), **không** lấy nguyên `safe_description` của Event hiện có vì một số Event đang ghép nội dung người dùng nhập (ví dụ `20261127000100_delivery_handover_rpc.sql:995` ghi `'Từ chối nhận tài liệu: ' || v_reason`). Tuyệt đối không đưa vào preview:
   - bằng chứng, ảnh, URL ký;
   - số tài khoản, số tiền chưa xác nhận;
-  - lý do Issue do người dùng tự nhập.
+  - lý do Issue / lý do từ chối do người dùng tự nhập.
+  Cần bổ sung test kiểm tra chuỗi reason/URL/tài khoản không lọt ra `preview_safe`.
 - Câu chữ `PAYMENT_REPORTED` không được nói "thanh toán thành công" (BR-29).
+- Ma trận người nhận cần bao phủ thêm:
+  - **Courier C** ở Delivery/Handover (`DELIVERY_ASSIGNED`, `HANDOVER_*`, `DELIVERY_*`) trong phạm vi chặng được phân công;
+  - **Request `PENDING`** trước khi có Transaction (ví dụ `REQUEST_CREATED`, `REQUEST_ACCEPTED`, `REQUEST_REJECTED`) với `entity_type = 'REQUEST'` để chủ sách và người gửi nhận thông báo kịp thời.
 
-Mock trong `lib/core/mock/mock_notification_fanout.dart` đang mô phỏng đúng các
-quy tắc này. Test `test/features/notifications/mock_notification_test.dart` là
+Mock trong `lib/core/mock/mock_notification_fanout.dart` đang mô phỏng các
+quy tắc cơ bản cho Transaction/Issue. Test `test/features/notifications/mock_notification_test.dart` là
 kịch bản kiểm thử tương ứng.
 
 ## 3. Ràng buộc và chỉ mục
 
 - `CHECK (entity_type IN ('TRANSACTION','ISSUE','REQUEST','DELIVERY_TASK','HANDOVER'))`.
   Client vẫn chịu được mã lạ: hiển thị thông báo nhưng không mở.
-- Chỉ mục `(recipient_id, created_at DESC)` cho hộp thư. Thêm chỉ mục một phần
+- Ràng buộc `UNIQUE` chống trùng theo `(source_event_type, source_event_id, recipient_id)`.
+- Chỉ mục `(recipient_id, created_at DESC, id DESC)` cho hộp thư. Thêm chỉ mục một phần
   `WHERE read_at IS NULL` cho badge chưa đọc.
 
 ## 4. RPC đề xuất (thay cho truy cập bảng trực tiếp)
 
-Theo phong bì hiện có `{ok, data, event_id}` / `{ok:false, code, message}`. Tham số dạng `p_*` text.
+Theo phong bì hiện có `{ok, data, event_id}` / `{ok:false, code, message}`. Tham số dạng `p_*` text (trừ tham số phân trang số nguyên).
 
-- `get_my_notifications(p_limit int default 100)` trả mảng
-  `{id, type, entityType, entityId, safePreview, createdAt, readAt}`.
+- `get_my_notifications(p_limit int default 100, p_offset int default 0)` trả
+  `{items: [...], unreadCount: <int>, hasMore: <bool>}` (mỗi item gồm
+  `{id, type, entityType, entityId, previewSafe, createdAt, readAt}`); tổng `unreadCount` đếm độc lập trên toàn hộp thư của actor, không suy từ trang hiện tại.
 - `mark_notification_read(p_notification_id text, p_idempotency_key text)`:
   - chỉ ghi khi `read_at IS NULL`, dùng giờ server;
   - không phải người nhận thì trả `FORBIDDEN` chung;
   - lưu `command_receipts`.
-- `mark_all_notifications_read(p_idempotency_key text)` trả `data = {count}`.
+- `mark_all_notifications_read(p_idempotency_key text)`:
+  - lưu `command_receipts` theo `(actor, command, idempotency_key)` để khi mất ACK và retry sẽ trả lại đúng `data = {count}` của lần ghi đầu, không đánh dấu nhầm thông báo mới phát sinh sau thời điểm lệnh đầu.
 
 Sau khi có RPC, nên **thu hồi** `UPDATE (read_at)` trực tiếp. Hiện client có thể
 đặt `read_at` thành giá trị tùy ý, kể cả `NULL` hoặc một thời điểm tương lai,

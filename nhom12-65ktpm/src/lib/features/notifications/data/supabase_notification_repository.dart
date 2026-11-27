@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart' show CountOption;
+
 import '../../../core/backend/workflow_json.dart';
 import '../../../core/backend/workflow_rpc.dart';
 import '../../../core/contracts/command_result.dart';
@@ -39,36 +41,69 @@ AppNotification notificationFromRow(Object? raw) {
 List<AppNotification> _rows(Object? raw) =>
     List.unmodifiable(WorkflowJson.list(raw).map(notificationFromRow));
 
+List<String> _idList(Object? raw) => List.unmodifiable(
+  WorkflowJson.list(raw).map((e) => WorkflowJson.text(WorkflowJson.object(e)['id'])),
+);
+
 class SupabaseNotificationQueryRepository
     implements NotificationQueryRepository {
   const SupabaseNotificationQueryRepository(this.rpc);
   final WorkflowRpc rpc;
 
   @override
-  Future<List<AppNotification>> getMyNotifications() => rpc.table(
+  Future<List<AppNotification>> getMyNotifications({
+    int offset = 0,
+    int limit = notificationFetchLimit,
+  }) => rpc.table(
     'notifications.select',
     // Lọc recipient_id thêm cho rõ ý; RLS vẫn là lớp chặn thật.
-    (client, token) => client
-        .from(_table)
-        .select(_columns)
-        .eq('recipient_id', rpc.actor)
-        .order('created_at', ascending: false)
-        .order('id', ascending: false)
-        .limit(notificationFetchLimit)
-        .setHeader('Authorization', 'Bearer $token'),
+    (client, token) {
+      final base = client
+          .from(_table)
+          .select(_columns)
+          .eq('recipient_id', rpc.actor)
+          .order('created_at', ascending: false)
+          .order('id', ascending: false);
+      final paged = offset <= 0
+          ? base.limit(limit)
+          : base.range(offset, offset + limit - 1);
+      return paged.setHeader('Authorization', 'Bearer $token');
+    },
     _rows,
   );
+
+  @override
+  Future<int> getUnreadCount() => rpc.table(
+    'notifications.unread_count',
+    (client, token) => client
+        .from(_table)
+        .count(CountOption.exact)
+        .eq('recipient_id', rpc.actor)
+        .isFilter('read_at', null)
+        .setHeader('Authorization', 'Bearer $token'),
+    (raw) => raw as int,
+  );
+}
+
+class _MarkAllIntent {
+  _MarkAllIntent(this.targetIds);
+  final List<String> targetIds;
+  int? acknowledgedCount;
 }
 
 // ACK của hai lệnh dưới đây là các dòng server trả về sau UPDATE (read_at do
 // server ghi), không có TransactionEvent vì đọc thông báo không đổi nghiệp vụ.
-// Thao tác tự idempotent nhờ điều kiện `read_at IS NULL`; idempotency key vẫn
-// bắt buộc để giữ chữ ký thống nhất khi chuyển sang RPC có command_receipts.
+// `markAllRead` cố định tập ID chưa đọc của lần thử đầu theo (actor, key)
+// để khi mất ACK và retry sẽ không đánh dấu nhầm thông báo mới vừa đến.
 class SupabaseNotificationRepository implements NotificationRepository {
-  const SupabaseNotificationRepository(this.rpc);
+  SupabaseNotificationRepository(this.rpc);
   final WorkflowRpc rpc;
 
+  final Map<String, _MarkAllIntent> _markAllIntents = {};
+
   static const _missingKey = 'Thiếu mã thao tác, vui lòng thử lại.';
+  static const _markAllPageSize = 1000;
+  static const _markAllChunkSize = 200;
 
   @override
   Future<CommandResult<AppNotification>> markRead(
@@ -123,20 +158,59 @@ class SupabaseNotificationRepository implements NotificationRepository {
     if (idempotencyKey.trim().isEmpty) {
       return const CommandError(DomainErrorCode.invalidInput, _missingKey);
     }
+    final intentKey = '${rpc.actor}|$idempotencyKey';
     try {
-      final count = await rpc.table(
-        'notifications.mark_all_read',
-        (client, token) => client
-            .from(_table)
-            .update({'read_at': 'now'})
-            .eq('recipient_id', rpc.actor)
-            .isFilter('read_at', null)
-            .select('id')
-            .setHeader('Authorization', 'Bearer $token'),
-        (raw) => WorkflowJson.list(raw).length,
-        command: true,
-      );
-      return CommandOk(count, null);
+      var intent = _markAllIntents[intentKey];
+      if (intent?.acknowledgedCount != null) {
+        return CommandOk(intent!.acknowledgedCount!, null);
+      }
+      if (intent == null) {
+        final ids = <String>[];
+        for (var offset = 0; ; offset += _markAllPageSize) {
+          final batch = await rpc.table(
+            'notifications.unread_ids',
+            (client, token) => client
+                .from(_table)
+                .select('id')
+                .eq('recipient_id', rpc.actor)
+                .isFilter('read_at', null)
+                .order('created_at', ascending: true)
+                .order('id', ascending: true)
+                .range(offset, offset + _markAllPageSize - 1)
+                .setHeader('Authorization', 'Bearer $token'),
+            _idList,
+            command: true,
+          );
+          ids.addAll(batch);
+          if (batch.length < _markAllPageSize) break;
+        }
+        intent = _MarkAllIntent(List.unmodifiable(ids));
+        _markAllIntents[intentKey] = intent;
+      }
+      if (intent.targetIds.isEmpty) {
+        intent.acknowledgedCount = 0;
+        return const CommandOk(0, null);
+      }
+      var updatedCount = 0;
+      for (var i = 0; i < intent.targetIds.length; i += _markAllChunkSize) {
+        final end = (i + _markAllChunkSize).clamp(0, intent.targetIds.length);
+        final chunk = intent.targetIds.sublist(i, end);
+        updatedCount += await rpc.table(
+          'notifications.mark_all_read',
+          (client, token) => client
+              .from(_table)
+              .update({'read_at': 'now'})
+              .inFilter('id', chunk)
+              .eq('recipient_id', rpc.actor)
+              .isFilter('read_at', null)
+              .select('id')
+              .setHeader('Authorization', 'Bearer $token'),
+          (raw) => WorkflowJson.list(raw).length,
+          command: true,
+        );
+      }
+      intent.acknowledgedCount = updatedCount;
+      return CommandOk(updatedCount, null);
     } on AppError catch (error) {
       return CommandError(error.code, error.safeMessage);
     }

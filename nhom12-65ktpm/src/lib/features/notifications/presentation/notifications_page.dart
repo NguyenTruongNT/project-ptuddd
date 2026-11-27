@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/app_routes.dart';
 import '../../../core/contracts/command_result.dart';
 import '../../../core/contracts/models/notification_item.dart';
 import '../../../core/errors/app_error.dart';
+import '../../../design_system/widgets/feature_scaffold.dart';
 import '../../../design_system/widgets/study_empty.dart';
 import '../../../design_system/widgets/study_error.dart';
 import '../../../design_system/widgets/study_loading.dart';
 import '../../transactions/domain/idempotency_key.dart';
+import '../data/supabase_notification_repository.dart'
+    show notificationFetchLimit;
 import '../domain/notification_labels.dart';
 import '../providers/notification_providers.dart';
 import 'widgets/notification_card.dart';
@@ -28,16 +32,55 @@ class NotificationsPage extends ConsumerStatefulWidget {
 class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   // Mỗi ý định "đánh dấu đã đọc" một key; retry sau timeout dùng lại key cũ.
   final Map<String, String> _pendingKeys = {};
+  final List<AppNotification> _extraItems = [];
   String? _busyId;
   bool _markingAll = false;
+  bool _loadingMore = false;
+  bool? _hasMore;
 
   @override
   void initState() {
     super.initState();
     // Mở hộp thư luôn lấy snapshot mới, không dùng bản cache lúc chuông tải.
     Future.microtask(() {
-      if (mounted) refreshNotifications(ref);
+      if (mounted) _reload();
     });
+  }
+
+  void _reload() {
+    setState(() {
+      _extraItems.clear();
+      _hasMore = null;
+    });
+    refreshNotifications(ref);
+  }
+
+  Future<void> _loadMore(List<AppNotification> current) async {
+    if (_loadingMore) return;
+    setState(() => _loadingMore = true);
+    try {
+      final next = await ref
+          .read(notificationQueryRepositoryProvider)
+          .getMyNotifications(
+            offset: current.length,
+            limit: notificationFetchLimit,
+          );
+      if (!mounted) return;
+      final existingIds = current.map((n) => n.id).toSet();
+      setState(() {
+        _extraItems.addAll(next.where((n) => !existingIds.contains(n.id)));
+        _hasMore = next.length >= notificationFetchLimit;
+        _loadingMore = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _loadingMore = false);
+      _toast(
+        error is AppError
+            ? error.safeMessage
+            : 'Không tải được thêm thông báo. Kiểm tra kết nối và thử lại.',
+      );
+    }
   }
 
   void _toast(String message) {
@@ -78,7 +121,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       setState(() => _busyId = null);
       _settleKey(operation, result);
       if (result case CommandError(:final safeMessage)) readError = safeMessage;
-      refreshNotifications(ref);
+      _reload();
     }
 
     // Không đánh dấu được đã đọc vẫn cho mở nội dung: đọc thông báo không
@@ -91,7 +134,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     if (readError != null) _toast(readError);
     await context.push(target);
     // Quay lại hộp thư: tải lại vì có thể đã phát sinh thông báo mới.
-    if (mounted) refreshNotifications(ref);
+    if (mounted) _reload();
   }
 
   Future<void> _markAll() async {
@@ -117,7 +160,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       CommandOk() => 'Không còn thông báo chưa đọc.',
       CommandError(:final safeMessage) => safeMessage,
     });
-    refreshNotifications(ref);
+    _reload();
   }
 
   @override
@@ -125,25 +168,24 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     final notices = ref.watch(myNotificationsProvider);
     final unread = ref.watch(unreadNotificationCountProvider) ?? 0;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Thông báo'),
-        actions: [
-          IconButton(
-            tooltip: 'Đánh dấu tất cả đã đọc',
-            onPressed: unread > 0 && !_markingAll && _busyId == null
-                ? _markAll
-                : null,
-            icon: _markingAll
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.done_all),
-          ),
-        ],
-      ),
+    return FeatureScaffold(
+      title: 'Thông báo',
+      fallbackLocation: AppRoutes.home,
+      actions: [
+        IconButton(
+          tooltip: 'Đánh dấu tất cả đã đọc',
+          onPressed: unread > 0 && !_markingAll && _busyId == null
+              ? _markAll
+              : null,
+          icon: _markingAll
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.done_all),
+        ),
+      ],
       body: notices.when(
         // Giữ danh sách cũ khi đang tải lại để không nháy màn hình.
         skipLoadingOnRefresh: true,
@@ -154,17 +196,42 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
             message: error is AppError
                 ? error.safeMessage
                 : 'Không tải được thông báo. Kiểm tra kết nối và thử lại.',
-            onRetry: () => refreshNotifications(ref),
+            onRetry: _reload,
           ),
         ),
-        data: (items) => RefreshIndicator(
-          onRefresh: () => ref.refresh(myNotificationsProvider.future),
-          child: _NotificationList(
-            items: items,
-            busyId: _busyId,
-            onOpen: _open,
-          ),
-        ),
+        data: (items) {
+          final firstIds = items.map((n) => n.id).toSet();
+          final allItems = [
+            ...items,
+            ..._extraItems.where((n) => !firstIds.contains(n.id)),
+          ];
+          final hasMore = _hasMore ?? (items.length >= notificationFetchLimit);
+          return RefreshIndicator(
+            onRefresh: () async {
+              if (mounted) {
+                setState(() {
+                  _extraItems.clear();
+                  _hasMore = null;
+                });
+              }
+              ref.invalidate(unreadCountFromServerProvider);
+              ref.invalidate(myNotificationsProvider);
+              await Future.wait([
+                ref.read(unreadCountFromServerProvider.future),
+                ref.read(myNotificationsProvider.future),
+              ]);
+            },
+            child: _NotificationList(
+              items: allItems,
+              totalUnread: unread,
+              hasMore: hasMore,
+              loadingMore: _loadingMore,
+              busyId: _busyId,
+              onOpen: _open,
+              onLoadMore: () => _loadMore(allItems),
+            ),
+          );
+        },
       ),
     );
   }
@@ -173,13 +240,21 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
 class _NotificationList extends StatelessWidget {
   const _NotificationList({
     required this.items,
+    required this.totalUnread,
+    required this.hasMore,
+    required this.loadingMore,
     required this.busyId,
     required this.onOpen,
+    required this.onLoadMore,
   });
 
   final List<AppNotification> items;
+  final int totalUnread;
+  final bool hasMore;
+  final bool loadingMore;
   final String? busyId;
   final ValueChanged<AppNotification> onOpen;
+  final VoidCallback onLoadMore;
 
   @override
   Widget build(BuildContext context) {
@@ -197,6 +272,7 @@ class _NotificationList extends StatelessWidget {
     }
     final unread = items.where((n) => !n.isRead).toList(growable: false);
     final read = items.where((n) => n.isRead).toList(growable: false);
+    final olderUnread = totalUnread - unread.length;
 
     Widget card(AppNotification notice) => Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -212,6 +288,17 @@ class _NotificationList extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
+        if (olderUnread > 0 && hasMore) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              'Còn $olderUnread thông báo chưa đọc cũ hơn ngoài trang hiện tại.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
         if (unread.isNotEmpty) ...[
           _SectionHeader('Chưa đọc (${unread.length})'),
           for (final notice in unread) card(notice),
@@ -220,6 +307,21 @@ class _NotificationList extends StatelessWidget {
           if (unread.isNotEmpty) const SizedBox(height: 8),
           const _SectionHeader('Đã đọc'),
           for (final notice in read) card(notice),
+        ],
+        if (hasMore) ...[
+          const SizedBox(height: 8),
+          Center(
+            child: OutlinedButton(
+              onPressed: loadingMore ? null : onLoadMore,
+              child: loadingMore
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Tải thêm thông báo'),
+            ),
+          ),
         ],
       ],
     );

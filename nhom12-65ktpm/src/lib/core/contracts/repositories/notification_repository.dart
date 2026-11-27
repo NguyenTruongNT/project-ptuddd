@@ -4,7 +4,13 @@ import '../models/notification_item.dart';
 
 abstract interface class NotificationQueryRepository {
   // Mới nhất trước. Không có quyền/không có dữ liệu đều trả danh sách rỗng.
-  Future<List<AppNotification>> getMyNotifications();
+  Future<List<AppNotification>> getMyNotifications({
+    int offset = 0,
+    int limit = 100,
+  });
+
+  // Tổng số thông báo chưa đọc của chính mình, độc lập với trang đang xem.
+  Future<int> getUnreadCount();
 }
 
 abstract interface class NotificationRepository {

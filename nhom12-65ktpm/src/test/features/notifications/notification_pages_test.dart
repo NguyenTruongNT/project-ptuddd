@@ -76,11 +76,17 @@ Widget _app({
 class _FailingQuery implements NotificationQueryRepository {
   int calls = 0;
   @override
-  Future<List<AppNotification>> getMyNotifications() async {
+  Future<List<AppNotification>> getMyNotifications({
+    int offset = 0,
+    int limit = 100,
+  }) async {
     calls++;
     throw const AppError(DomainErrorCode.networkUnavailable,
         'Không thể tải dữ liệu. Kiểm tra kết nối và thử lại.');
   }
+
+  @override
+  Future<int> getUnreadCount() async => 0;
 }
 
 void main() {
@@ -233,6 +239,69 @@ void main() {
     expect(find.text('Giao dịch txn-sell-01'), findsOneWidget);
     expect(find.textContaining('Chưa rõ máy chủ'), findsOneWidget);
     expect(store.notification('notice-a-01')!.isRead, isFalse);
+  });
+
+  testWidgets('Mở trực tiếp SCR-24 có nút Back quay về Home ở cả trạng thái lỗi/dữ liệu',
+      (tester) async {
+    await tester.pumpWidget(_app(
+      store: _store(),
+      overrides: [
+        notificationQueryRepositoryProvider.overrideWithValue(_FailingQuery()),
+      ],
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BackButton), findsOneWidget);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.byType(NotificationBell), findsOneWidget);
+  });
+
+  testWidgets('Quá 100 thông báo: badge và nút đánh dấu tất cả vẫn thấy thông báo cũ chưa đọc',
+      (tester) async {
+    var tick = DateTime.utc(2026, 11, 20, 0);
+    final store = MockTransactionStore.fromFixtures(
+      clock: () {
+        tick = tick.add(const Duration(minutes: 1));
+        return tick;
+      },
+    );
+    // Tạo 100 thông báo mới hơn đã đọc (fixture notice-a-01 lúc 2026-11-23 là cũ nhất, chưa đọc).
+    for (var i = 0; i < 100; i++) {
+      tick = DateTime.utc(2026, 11, 24).add(Duration(minutes: i));
+      final item = store.appendNotification(
+        recipientId: a,
+        type: 'PAYMENT_CONFIRMED',
+        entityType: NotificationEntityType.transaction,
+        entityId: 'txn-sell-01',
+        safePreview: 'Thông báo mới #$i',
+      );
+      store.markNotificationRead(item.id);
+    }
+
+    await tester.pumpWidget(_app(store: store, initial: '/home'));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Thông báo (1 chưa đọc)'), findsOneWidget);
+
+    await tester.tap(find.byType(NotificationBell));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Còn 1 thông báo chưa đọc cũ hơn ngoài trang hiện tại.'),
+      findsOneWidget,
+    );
+    final markAllButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.done_all),
+    );
+    expect(markAllButton.onPressed, isNotNull);
+
+    await tester.scrollUntilVisible(find.text('Tải thêm thông báo'), 400);
+    await tester.tap(find.text('Tải thêm thông báo'));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(find.text('Chưa đọc (1)'), -400);
+    expect(find.text('Chưa đọc (1)'), findsOneWidget);
+    expect(find.text('Người mua báo đã chuyển khoản'), findsOneWidget);
   });
 }
 

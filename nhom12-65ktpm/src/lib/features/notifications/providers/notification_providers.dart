@@ -36,12 +36,18 @@ final myNotificationsProvider = FutureProvider<List<AppNotification>>(
   (ref) => ref.watch(notificationQueryRepositoryProvider).getMyNotifications(),
 );
 
+// Tổng chưa đọc truy vấn riêng trên server, độc lập với trang hộp thư 100 dòng.
+final unreadCountFromServerProvider = FutureProvider<int>(
+  (ref) => ref.watch(notificationQueryRepositoryProvider).getUnreadCount(),
+);
+
 // Số chưa đọc cho chuông; null khi đang tải hoặc lỗi (không hiện badge sai).
-final unreadNotificationCountProvider = Provider<int?>((ref) {
-  final items = ref.watch(myNotificationsProvider).asData?.value;
-  return items?.where((notice) => !notice.isRead).length;
-});
+final unreadNotificationCountProvider = Provider<int?>(
+  (ref) => ref.watch(unreadCountFromServerProvider).asData?.value,
+);
 
 /// Sau mỗi lệnh (thành công hay lỗi) tải lại snapshot server, không tự sửa UI.
-void refreshNotifications(WidgetRef ref) =>
-    ref.invalidate(myNotificationsProvider);
+void refreshNotifications(WidgetRef ref) {
+  ref.invalidate(myNotificationsProvider);
+  ref.invalidate(unreadCountFromServerProvider);
+}

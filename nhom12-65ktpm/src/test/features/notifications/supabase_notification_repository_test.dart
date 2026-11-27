@@ -137,6 +137,26 @@ void main() {
     expect((result as CommandError<int>).code, DomainErrorCode.timeoutUnknown);
   });
 
+  test('Đếm tổng chưa đọc độc lập với trang 100 bản ghi', () async {
+    final (backend, rpc) = await _backend();
+    backend.onRpc = (request) {
+      expect(request.method, 'HEAD');
+      expect(request.url.queryParameters['recipient_id'], 'eq.$workflowActorA');
+      expect(request.url.queryParameters['read_at'], 'is.null');
+      return http.Response(
+        '',
+        200,
+        headers: {
+          'content-type': 'application/json; charset=utf-8',
+          'content-range': '0-0/105',
+        },
+      );
+    };
+
+    final unread = await SupabaseNotificationQueryRepository(rpc).getUnreadCount();
+    expect(unread, 105);
+  });
+
   test('Đánh dấu tất cả trả số dòng server đã đổi', () async {
     final (backend, rpc) = await _backend();
     backend.onRpc = (_) => workflowResponse([
@@ -148,9 +168,46 @@ void main() {
         .markAllRead(idempotencyKey: 'k1');
 
     expect((result as CommandOk<int>).data, 2);
-    final query = backend.requests.single.url.queryParameters;
-    expect(query['recipient_id'], 'eq.$workflowActorA');
-    expect(query['read_at'], 'is.null');
+    expect(backend.requests.map((r) => r.method), ['GET', 'PATCH']);
+    final patchQuery = backend.requests.last.url.queryParameters;
+    expect(patchQuery['recipient_id'], 'eq.$workflowActorA');
+    expect(patchQuery['read_at'], 'is.null');
+    expect(patchQuery['id'], contains(_noticeId));
+  });
+
+  test('Retry markAllRead sau mất ACK không đánh dấu thông báo mới đến', () async {
+    final (backend, rpc) = await _backend();
+    final repo = SupabaseNotificationRepository(rpc);
+    const id2 = '0b9a2f3e-1111-4c2d-9e8f-000000000002';
+    const id3New = '0b9a2f3e-1111-4c2d-9e8f-000000000003';
+    var patchAttempt = 0;
+
+    backend.onRpc = (request) {
+      if (request.method == 'GET') {
+        // Lần đầu trả id1, id2; nếu có GET thứ hai sẽ trả thêm id3New.
+        return workflowResponse(
+          patchAttempt == 0
+              ? [{'id': _noticeId}, {'id': id2}]
+              : [{'id': _noticeId}, {'id': id2}, {'id': id3New}],
+        );
+      }
+      patchAttempt++;
+      if (patchAttempt == 1) {
+        throw http.ClientException('lost ack');
+      }
+      expect(request.url.queryParameters['id'], isNot(contains(id3New)));
+      expect(request.url.queryParameters['id'], contains(_noticeId));
+      expect(request.url.queryParameters['id'], contains(id2));
+      return workflowResponse([]);
+    };
+
+    final first = await repo.markAllRead(idempotencyKey: 'k-retry');
+    expect((first as CommandError<int>).code, DomainErrorCode.timeoutUnknown);
+
+    final retry = await repo.markAllRead(idempotencyKey: 'k-retry');
+    expect(retry, isA<CommandOk<int>>());
+    // Retry không gọi lại GET lấy tập unread mới, chỉ PATCH đúng tập ID ban đầu.
+    expect(backend.requests.map((r) => r.method), ['GET', 'PATCH', 'PATCH']);
   });
 
   group('Provider chọn nguồn dữ liệu', () {
@@ -166,12 +223,22 @@ void main() {
           isA<MockNotificationRepository>());
       // Demo xem bằng A: có một thông báo chưa đọc từ fixture.
       await c.read(myNotificationsProvider.future);
+      await c.read(unreadCountFromServerProvider.future);
       expect(c.read(unreadNotificationCountProvider), 1);
     });
 
     test('Phiên thật đọc bảng notifications qua Supabase', () async {
       final (backend, _) = await _backend();
-      backend.onRpc = (_) => workflowResponse([_row()]);
+      backend.onRpc = (request) => request.method == 'HEAD'
+          ? http.Response(
+              '',
+              200,
+              headers: {
+                'content-type': 'application/json; charset=utf-8',
+                'content-range': '0-0/1',
+              },
+            )
+          : workflowResponse([_row()]);
       final c = ProviderContainer(overrides: [
         sessionBoundaryProvider.overrideWithValue(workflowActorA),
         supabaseClientProvider.overrideWithValue(backend.client),
@@ -182,6 +249,7 @@ void main() {
       expect(c.read(notificationRepositoryProvider),
           isA<SupabaseNotificationRepository>());
       expect((await c.read(myNotificationsProvider.future)).single.id, _noticeId);
+      await c.read(unreadCountFromServerProvider.future);
       expect(c.read(unreadNotificationCountProvider), 1);
     });
 
