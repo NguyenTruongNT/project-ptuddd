@@ -10,6 +10,7 @@ import '../features/handovers/presentation/qr_scanner_page.dart';
 import '../features/handovers/presentation/receiver_ack_page.dart';
 import '../features/home/mock_data_preview_page.dart';
 import '../features/home/tab_content.dart';
+import '../features/materials/presentation/material_qr_panel.dart';
 import '../features/issues/presentation/create_issue_page.dart';
 import '../features/issues/presentation/issue_details_page.dart';
 import '../features/issues/presentation/issues_list_page.dart';
@@ -194,6 +195,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           returnSavedResult:
               state.uri.queryParameters['completion'] == 'return',
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.materialQrPattern,
+        builder: (_, state) =>
+            MaterialQrPage(materialId: state.pathParameters['materialId']!),
       ),
       GoRoute(
         path: AppRoutes.materialDetailsPattern,

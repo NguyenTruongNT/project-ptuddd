@@ -948,4 +948,43 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get matCached =>
       'Đang xem dữ liệu lưu trên thiết bị. Kết nối mạng để tải dữ liệu mới và chỉnh sửa.';
+
+  @override
+  String get qrTitle => 'QR tài liệu';
+
+  @override
+  String get qrShow => 'Xem QR tài liệu';
+
+  @override
+  String get qrRetry => 'Tải lại QR';
+
+  @override
+  String get qrEnlarge => 'Mở QR lớn';
+
+  @override
+  String get qrNotice =>
+      'Mã định danh bản vật lý; giữ nguyên khi đăng lại. Quét đúng mã chưa xác nhận đã giao hoặc nhận sách.';
+
+  @override
+  String get qrDemoNotice =>
+      'QR mô phỏng, không dùng để xác nhận bàn giao thật.';
+
+  @override
+  String get qrOffline =>
+      'Cần kết nối và kiểm tra quyền hiện tại để mở QR. Ứng dụng không lưu QR để dùng offline.';
+
+  @override
+  String get qrUnavailable =>
+      'Không thể truy cập QR tài liệu này. Hãy tải lại thông tin tài liệu hoặc đăng nhập lại.';
+
+  @override
+  String get qrBackendUnavailable =>
+      'QR tạm chưa sẵn sàng. Vui lòng thử lại sau.';
+
+  @override
+  String get qrUnknown =>
+      'Chưa rõ máy chủ đã phát hành mã hay chưa. Thử lại sẽ kiểm tra cùng yêu cầu và giữ nguyên mã.';
+
+  @override
+  String get qrFailed => 'Không tải được QR. Vui lòng thử lại.';
 }

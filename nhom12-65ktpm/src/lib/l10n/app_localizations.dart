@@ -1825,6 +1825,72 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Đang xem dữ liệu lưu trên thiết bị. Kết nối mạng để tải dữ liệu mới và chỉnh sửa.'**
   String get matCached;
+
+  /// No description provided for @qrTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'QR tài liệu'**
+  String get qrTitle;
+
+  /// No description provided for @qrShow.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xem QR tài liệu'**
+  String get qrShow;
+
+  /// No description provided for @qrRetry.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tải lại QR'**
+  String get qrRetry;
+
+  /// No description provided for @qrEnlarge.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mở QR lớn'**
+  String get qrEnlarge;
+
+  /// No description provided for @qrNotice.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mã định danh bản vật lý; giữ nguyên khi đăng lại. Quét đúng mã chưa xác nhận đã giao hoặc nhận sách.'**
+  String get qrNotice;
+
+  /// No description provided for @qrDemoNotice.
+  ///
+  /// In vi, this message translates to:
+  /// **'QR mô phỏng, không dùng để xác nhận bàn giao thật.'**
+  String get qrDemoNotice;
+
+  /// No description provided for @qrOffline.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cần kết nối và kiểm tra quyền hiện tại để mở QR. Ứng dụng không lưu QR để dùng offline.'**
+  String get qrOffline;
+
+  /// No description provided for @qrUnavailable.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không thể truy cập QR tài liệu này. Hãy tải lại thông tin tài liệu hoặc đăng nhập lại.'**
+  String get qrUnavailable;
+
+  /// No description provided for @qrBackendUnavailable.
+  ///
+  /// In vi, this message translates to:
+  /// **'QR tạm chưa sẵn sàng. Vui lòng thử lại sau.'**
+  String get qrBackendUnavailable;
+
+  /// No description provided for @qrUnknown.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa rõ máy chủ đã phát hành mã hay chưa. Thử lại sẽ kiểm tra cùng yêu cầu và giữ nguyên mã.'**
+  String get qrUnknown;
+
+  /// No description provided for @qrFailed.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được QR. Vui lòng thử lại.'**
+  String get qrFailed;
 }
 
 class _AppLocalizationsDelegate

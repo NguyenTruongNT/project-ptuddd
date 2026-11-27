@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:studyshare/core/auth/auth_session_providers.dart';
 import 'package:studyshare/core/contracts/command_inputs.dart';
 import 'package:studyshare/core/contracts/command_result.dart';
 import 'package:studyshare/core/contracts/domain_enums.dart';
@@ -22,6 +23,45 @@ void main() {
   });
 
   group('Handover Repository & Business Invariants Tests', () {
+    test(
+      'Mở lại repository/đổi key không vượt được mismatch; QR đúng mới gỡ cờ',
+      () async {
+        final repo = MockHandoverRepository(
+          actorId: MockFixtures.userA,
+          store: store,
+        );
+        await repo.verifyMaterialCode(
+          'handover-borrow-01',
+          'wrong',
+          idempotencyKey: 'wrong',
+        );
+        final reopened = MockHandoverRepository(
+          actorId: MockFixtures.userA,
+          store: store,
+        );
+        expect(
+          (await reopened.getHandover('handover-borrow-01'))!.qrMismatchBlocked,
+          isTrue,
+        );
+        expect(
+          (await reopened.verifyWithFallback(
+            'handover-borrow-01',
+            'Mã rách',
+            idempotencyKey: 'new-key',
+          ) as CommandError).code,
+          DomainErrorCode.qrMismatch,
+        );
+        await reopened.verifyMaterialCode(
+          'handover-borrow-01',
+          'mat-borrow-01',
+          idempotencyKey: 'rescan',
+        );
+        expect(
+          (await reopened.getHandover('handover-borrow-01'))!.qrMismatchBlocked,
+          isFalse,
+        );
+      },
+    );
     test('INV-05: Quét sai mã QR trả về lỗi QR_MISMATCH và hard block', () async {
       final repo = MockHandoverRepository(actorId: MockFixtures.userA, store: store);
 
@@ -149,6 +189,7 @@ void main() {
 
   group('Handover UI Widget Tests', () {
     Widget wrapWithRouter(Widget child) => ProviderScope(
+          overrides: [sessionBoundaryProvider.overrideWithValue('demo')],
           child: MaterialApp.router(
             routerConfig: GoRouter(
               routes: [

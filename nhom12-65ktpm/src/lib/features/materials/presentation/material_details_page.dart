@@ -10,6 +10,7 @@ import '../../../design_system/widgets/study_feedback.dart';
 import '../../../l10n/app_localizations.dart';
 import '../providers/material_providers.dart';
 import 'material_widgets.dart';
+import 'material_qr_panel.dart';
 import '../../listings/presentation/publish_page.dart';
 
 class MaterialDetailsPage extends ConsumerWidget {
@@ -199,6 +200,9 @@ class _DetailsBody extends StatelessWidget {
                 const SizedBox(height: 16),
                 if (!details.canEdit)
                   MaterialNotice(materialBlock(details.editBlockedReason, t)),
+                // Quyền xem QR tách khỏi canEdit/canPublish: owner vẫn có thể
+                // xem mã khi sách đang mượn; dữ liệu cache không được cấp QR.
+                MaterialQrPanel(materialId: m.id, enabled: !details.isCached),
                 if (details.canEdit && details.images.isEmpty)
                   MaterialNotice(t.matNoImageHint),
                 if (details.canEdit) ...[

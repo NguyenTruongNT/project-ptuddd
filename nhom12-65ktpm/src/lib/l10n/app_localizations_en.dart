@@ -944,4 +944,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get matCached => 'Showing a device copy. Connect to refresh and edit.';
+
+  @override
+  String get qrTitle => 'Material QR';
+
+  @override
+  String get qrShow => 'Show material QR';
+
+  @override
+  String get qrRetry => 'Reload QR';
+
+  @override
+  String get qrEnlarge => 'Enlarge QR';
+
+  @override
+  String get qrNotice =>
+      'Identifies this physical copy and stays unchanged when relisted. Scanning does not confirm delivery or receipt.';
+
+  @override
+  String get qrDemoNotice => 'Demo QR. Not valid for real handovers.';
+
+  @override
+  String get qrOffline =>
+      'Connect to verify current access. QR payloads are not stored for offline use.';
+
+  @override
+  String get qrUnavailable =>
+      'This material QR is unavailable. Refresh material details or sign in again.';
+
+  @override
+  String get qrBackendUnavailable =>
+      'QR is temporarily unavailable. Please try again later.';
+
+  @override
+  String get qrUnknown =>
+      'The issuing result is unknown. Retry checks the same request and preserves the QR.';
+
+  @override
+  String get qrFailed => 'Could not load the QR. Please retry.';
 }
