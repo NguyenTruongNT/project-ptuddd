@@ -427,7 +427,7 @@ Số liệu đọc trực tiếp lúc **26/11/2026 22:30:53 +07:00**, không ghi
 
 Trên dữ liệu khác, backfill có thể bỏ qua tin chưa đủ điều kiện. Migration `20261126000500_listing_review_contracts.sql` bổ sung hàm private chỉ đọc `listing_snapshot_audit()`: READY/SNAPSHOT_READY, ELIGIBLE/BACKFILL_ELIGIBLE hoặc SKIPPED với lý do OWNER_CHANGED, MISSING_IMAGES, TOO_MANY_IMAGES, IMAGE_NOT_ATTACHED, STORAGE_OBJECT_MISSING, STORAGE_METADATA_MISMATCH, REFERENCES_WITHOUT_SNAPSHOT. Không cấp execute cho anon/authenticated. File `src/supabase/audits/listing_snapshots.sql` thống kê và liệt kê ID cần xử lý bằng kết nối quản trị; không tự sửa hoặc cấp quyền ảnh rộng hơn.
 
-Đợt sửa review giữ nguyên bốn migration cloud đã chạy; migration 005 cần triển khai riêng sau review và kiểm thử. Chỉ chạy báo cáo private sau khi database đã có migration này. Với cloud chưa có 005, kiểm kê tổng/PUBLISHED thiếu snapshot bằng truy vấn đọc trên `listings`; không chạy lại SQL cũ hoặc reset cloud.
+Đợt sửa review giữ nguyên bốn migration cloud đã chạy; migration 005 đã triển khai Cloud ngày 27/11/2026 cùng các bước ngày 4 (xem §16). Chỉ chạy báo cáo private sau khi database đã có migration này. Với cloud chưa có 005, kiểm kê tổng/PUBLISHED thiếu snapshot bằng truy vấn đọc trên `listings`; không chạy lại SQL cũ hoặc reset cloud.
 
 ### 15.4. Chạy kiểm tra phần sửa review
 
@@ -436,4 +436,63 @@ Trên dữ liệu khác, backfill có thể bỏ qua tin chưa đủ điều ki�
 - Harness chỉ nhận account fixture `n3-a/b-...@example.test`; kiểm tra PENDING/ACCEPTED dưới JWT, thứ tự sai/rollback, snapshot, Request đua với hide và RPC hủy/archive thật của Sơn đua với show. Fixture và harness phải được dọn sau lần chạy.
 - Flutter: `flutter analyze --no-pub`, `flutter test --no-pub --reporter expanded`. UI test phải chặn HIDDEN SELL thiếu giá trước confirm/RPC và vẫn cho lưu local.
 
-Kết quả đợt sửa review: analyze không có issue; Flutter đạt **293 test**, 6 test tích hợp opt-in bỏ qua trong lệnh chung; pgTAP local **156/156** (7 file); DB lint local không có error/warning. `test_listing_local.ps1 -IncludeSharedContracts` chạy riêng đạt với JWT Auth A/B, ảnh Storage/Edge thật, rollback sai thứ tự duyệt, bảo toàn snapshot/khóa ngoài namespace, Request đua hide và RPC hủy của Sơn đua show; retry hủy không làm tăng revision lần nữa. Kiểm tra sau chạy còn **0 RPC harness và 0 account fixture n3-a/b**. Migration 005 mới áp dụng local; chưa triển khai cloud. Các kết quả này không thay thế review của Sơn/Khanh hoặc nghiệm thu RPC Request sản phẩm.
+Kết quả đợt sửa review: analyze không có issue; Flutter đạt **293 test**, 6 test tích hợp opt-in bỏ qua trong lệnh chung; pgTAP local **156/156** (7 file); DB lint local không có error/warning. `test_listing_local.ps1 -IncludeSharedContracts` chạy riêng đạt với JWT Auth A/B, ảnh Storage/Edge thật, rollback sai thứ tự duyệt, bảo toàn snapshot/khóa ngoài namespace, Request đua hide và RPC hủy của Sơn đua show; retry hủy không làm tăng revision lần nữa. Kiểm tra sau chạy còn **0 RPC harness và 0 account fixture n3-a/b**. Tại thời điểm kiểm thử đợt review, migration 005 mới áp dụng local; đã triển khai Cloud ngày 27/11/2026, xem §16. Các kết quả này không thay thế review của Sơn/Khanh hoặc nghiệm thu RPC Request sản phẩm.
+
+
+## 16. QR Material và Home ngày 4
+
+Đặc tả triển khai: [DAC_TA_TRIEN_KHAI_QR_HOME.md](DAC_TA_TRIEN_KHAI_QR_HOME.md).
+Migration bổ sung `20261127000200_material_qr_home.sql` sau migration Delivery/Handover
+`20261127000100`. Đã triển khai lên Cloud development `dacrjfgleursgtnzeoix` ngày 27/11/2026, sau dry-run và kiểm thử local.
+
+| RPC / repository | Contract |
+|---|---|
+| `ensure_material_qr(p_material_id text, p_idempotency_key text)` | Owner hiện tại, kể cả khác holder/đang có Transaction; phát hành lazy, ổn định qua tái đăng/đổi owner. Thành công `{ok,command_id,server_revision,data}`; lỗi SQL P0001 theo DomainErrorCode |
+| `MaterialQrRepository.ensureQr(id, idempotencyKey:)` | DTO riêng tư `MaterialQr(materialId,title,payload,version,issuedAt,isDemo)`; không thêm QR vào Material/ListingDetails/Home/cache |
+| Payload thật | `studyshare:material:1:<uuid>:<64-hex-hmac>`; app không tự sinh mã thật. UUID/ISBN/Handover ID không thay token |
+| `verify_material_code` | Giữ chữ ký 5 tham số của Đăng; đối chiếu credential Material thuộc Transaction và giver của đúng chặng; QR đúng vẫn cần ảnh/receiver ACK |
+| `get_handover_details` | Thêm `qr_mismatch_blocked` boolean. Mismatch lưu trên server; fallback/đổi key/replay ACK cũ không vượt được. Quét lại đúng mã bằng ý định mới gỡ cờ |
+| `get_home_overview()` / `HomeRepository.getOverview()` | Authenticated; JSON `material_count,published_count,draft_count,hidden_count,active_transaction_count,server_at`; COUNT đầy đủ theo actor, không suy từ trang 20 item |
+| Home recent / drafts | `ListingWorkspaceRepository.searchPage(limit:6)` / `searchMine(status:'DRAFT',limit:3)`; trạng thái lỗi/rỗng và retry riêng |
+
+QR chỉ được hiển thị khi server xác nhận quyền. Ra nền/đổi phiên xóa QR trong state;
+kết quả HTTP phiên cũ không được hiện. Route lớn `/materials/:materialId/qr` chỉ chứa ID,
+có Back kể cả URL trực tiếp. `/materials` ra ngoài shell, có header Back về nguồn hoặc Home.
+Form thêm từ Home đóng sau ACK rồi mới mở detail, tránh Back vào form đã lưu.
+
+Input UUID/key được kiểm tra ở Dart và SQL; key 1–128 ký tự, không khoảng trắng đầu/cuối
+hoặc ký tự điều khiển. Fallback cần lý do 1–1000 ký tự và mã quét rỗng; payload scan tối đa
+512 ký tự. Credential format 0/không phục hồi được trả BACKEND_UNAVAILABLE, không ghi đè.
+Khóa HMAC nằm ở bảng private, sinh tại DB; phải sao lưu cùng dữ liệu. Receipt phát hành
+không chứa payload; owner được kiểm tra trước replay receipt để chặn chủ cũ.
+
+Policy ảnh handover được chuyển qua helper boolean SECURITY DEFINER theo JWT;
+không cấp quyền đọc trực tiếp bảng domain. Handover provider chỉ dùng mock ở demo tường
+minh; refresh không reset store làm mất cờ mismatch. Scanner giữ random idempotency key,
+không đưa mã QR vào key hoặc thông báo thành công.
+
+Từ `src/`: `flutter analyze`, `flutter test --reporter expanded`,
+`npx.cmd supabase@3.3.0 test db`, `npx.cmd supabase@3.3.0 db lint --local`,
+`./tool/test_qr_home_local.ps1`, `flutter build web`, `flutter build apk --debug`.
+Script local chỉ nhận localhost; `./tool/test_qr_home_cloud.ps1` opt-in riêng cho đúng
+project development đã link. Cả hai chạy `test/integration/qr_home_supabase_test.dart`,
+admin key chỉ nằm trong môi trường host, tạo/dọn đúng fixture mới. Cloud QA dùng CLI
+quản trị để kiểm kê/chuẩn bị/dọn bảng workflow và credential theo UUID/hậu tố của lần chạy;
+không nới quyền service_role, không mở endpoint test. Không cần Edge verify ảnh để chạy test QR/Home. Audit quản trị chỉ đọc:
+`supabase/audits/material_qr.sql`, không in token/hash/khóa.
+
+Điểm còn phụ thuộc: camera QR Android/chuỗi bàn giao thuộc Đăng; SCR-05/06/Request sản phẩm
+thuộc Khanh; Notification của Sơn chưa lấy từ PR #30 chưa merge. Home không thêm unread giả
+hoặc tìm kiếm không hoạt động. Không diễn giải test QR nhập payload là camera scan thật hoặc
+nghiệm thu toàn hệ thống/Cloud. Xem đặc tả triển khai để đối chiếu các ca và trách nhiệm.
+
+
+Kết quả triển khai Cloud 27/11/2026: áp dụng `20261126000500`, `20261127000100`,
+`20261127000200`; đủ 14 phiên bản khớp local, dry-run không còn pending, DB lint sạch.
+JWT Cloud và local chạy riêng đạt; gồm phát hành đồng thời/retry/đổi owner/QR sai,
+Home đếm đủ và đọc 6 tin công khai/URL ảnh. REST anon ở hai RPC mới trả 401.
+Kiểm kê 19:03:29 +07:00 giữ nguyên 222 Material, 176 Listing, 152 Transaction,
+148 Handover, 238 receipt, 363 Storage object và fingerprint dữ liệu gốc; 0 account QA,
+0 credential fixture, 0 PUBLISHED thiếu snapshot. Không nới quyền service_role hoặc
+đưa credential vào ứng dụng. Flutter vẫn 328 test đạt/7 opt-in bỏ qua, analyze sạch.
+Xem đặc tả triển khai §8 để đối chiếu phạm vi và kết quả; bàn giao 4 commit qua PR vào integration, chờ review trước khi merge.
