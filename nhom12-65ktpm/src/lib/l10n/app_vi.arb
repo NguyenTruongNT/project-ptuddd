@@ -211,6 +211,8 @@
   "profileTransactionsHint": "Theo dõi mua, tặng và mượn",
   "profileDeliveriesHint": "Các lượt giao tài liệu",
   "profileIssuesHint": "Theo dõi vấn đề cần giải quyết",
+  "profileNotifications": "Thông báo",
+  "profileNotificationsHint": "Cập nhật về giao dịch, thanh toán và sự cố",
   "@authCreateConfirmBody": {
     "placeholders": {
       "name": {
