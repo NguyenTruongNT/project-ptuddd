@@ -10,7 +10,7 @@ import 'package:studyshare/core/providers/mock_query_providers.dart';
 
 void main() {
   test('Danh sách tin đăng mock có thể đọc công khai', () async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(overrides: [workflowRpcProvider.overrideWithValue(null)]);
     addTearDown(container.dispose);
     final listings = await container.read(publishedListingsProvider.future);
     expect(listings, isNotEmpty);

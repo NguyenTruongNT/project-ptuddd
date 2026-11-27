@@ -90,6 +90,23 @@ Một người dùng có thể là A ở giao dịch này, B ở giao dịch kh�
 - Sửa dùng revision để chặn ghi đè đồng thời; retry cùng key/payload trả cùng kết quả. Client confirm trước tạo/sửa, gỡ ảnh và bỏ thay đổi. Local draft không phải ACK server.
 - Chủ mới quản lý ảnh theo Material, không phụ thuộc người upload. Ảnh lịch sử còn được snapshot tham chiếu phải được giữ khi gỡ khỏi gallery.
 
+### 3.1.2. Quy tắc Listing
+
+Các mã N3-D01–N3-D08 được giữ để tra cứu các luồng/test cũ. Quy tắc nghiệp vụ nằm tại mục này; luồng UI, RPC và kiểm thử xem [đặc tả triển khai Listing](DAC_TA_TRIEN_KHAI_LISTING.md) và [CONTRACTS §15](CONTRACTS.md#15-listing-ngày-3).
+
+| Mã | Quy tắc |
+|---|---|
+| N3-D01 | Nháp local có thể chưa hoàn chỉnh. Nháp server cần Material thật và đúng một hình thức. Chỉ DRAFT SELL được để giá null; giá đã nhập phải nguyên VND dương. HIDDEN/PUBLISHED SELL luôn cần giá hợp lệ, kể cả khi thao tác có tên “lưu nháp”. BORROW/DONATE không có giá. |
+| N3-D02 | Sửa nội dung tin PUBLISHED phải ẩn trước. Chỉ sửa DRAFT/HIDDEN khi chủ đang giữ sách, không có Transaction active hoặc Request PENDING. |
+| N3-D03 | Ẩn tin giữ nguyên yêu cầu PENDING. Người mượn vẫn rút, chủ vẫn từ chối; tin HIDDEN không được nhận/duyệt yêu cầu. Còn PENDING thì chỉ hiện lại nguyên thỏa thuận hoặc xử lý hết yêu cầu trước khi sửa. |
+| N3-D04 | Chủ được ẩn/hiện tin có Transaction active để quản lý hiển thị; điều khoản, nghĩa vụ và quyền sở hữu/giữ sách không đổi. Tin hiện lại vẫn RESERVED và không nhận yêu cầu mới. |
+| N3-D05 | Mô tả lượt đăng tùy chọn tối đa 2.000 ký tự; khu vực hẹn chung tùy chọn tối đa 200 ký tự. Điểm giao cụ thể/GPS và thông tin ngân hàng không thuộc nội dung Listing công khai. |
+| N3-D06 | Nội dung công bố và ảnh được chụp snapshot. Transaction mới giữ thỏa thuận đã được chấp thuận, không đổi theo Material/Listing hiện tại; ảnh lịch sử còn được tham chiếu phải được giữ. |
+| N3-D07 | Người đã đăng nhập đọc thông tin an toàn và ảnh của PUBLISHED, kể cả RESERVED. DRAFT/HIDDEN/ARCHIVED không đọc qua Khám phá. URL ảnh đã cấp có thể còn hiệu lực tối đa 5 phút; người tham gia giao dịch đọc lịch sử bằng quyền giao dịch. |
+| N3-D08 | Mỗi Material có tối đa một tin DRAFT/PUBLISHED/HIDDEN. Ẩn không giải phóng suất; tiếp tục nháp/tin ẩn trên cùng ID. Không xóa cứng, tự archive hay đổi Material của tin. Tái đăng sau ARCHIVED tạo Listing mới cho cùng Material/QR. |
+
+Quyền gửi yêu cầu theo người xem: chủ tin, người có PENDING tại chính tin đó, hoặc người xem tin RESERVED/Material không khả dụng không được gửi yêu cầu mới. RPC kiểm tra lại quyền và trạng thái tại thời điểm ghi.
+
 ### 3.2. Request và phê duyệt
 
 - B không thể gửi Request cho Material của mình, không tạo nhiều Request `PENDING` trùng cùng Listing; Request chỉ được tạo nếu Listing `PUBLISHED` và Material còn khả dụng.

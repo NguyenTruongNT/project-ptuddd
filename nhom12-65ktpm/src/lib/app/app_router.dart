@@ -5,12 +5,22 @@ import 'package:go_router/go_router.dart';
 import '../core/auth/auth_session_providers.dart';
 import '../features/auth/presentation/auth_form_page.dart';
 import '../features/auth/presentation/splash_page.dart';
+import '../features/deliveries/presentation/create_delivery_page.dart';
+import '../features/deliveries/presentation/delivery_details_page.dart';
+import '../features/deliveries/presentation/delivery_list_page.dart';
 import '../features/explore/presentation/explore_page.dart';
+import '../features/handovers/presentation/prepare_handover_page.dart';
+import '../features/handovers/presentation/qr_scanner_page.dart';
+import '../features/handovers/presentation/receiver_ack_page.dart';
 import '../features/home/mock_data_preview_page.dart';
 import '../features/home/tab_content.dart';
 import '../features/issues/presentation/create_issue_page.dart';
 import '../features/issues/presentation/issue_details_page.dart';
 import '../features/issues/presentation/issues_list_page.dart';
+import '../features/listings/presentation/listing_details_page.dart';
+import '../features/listings/presentation/listing_form_page.dart';
+import '../features/listings/presentation/listing_material_picker_page.dart';
+import '../features/listings/presentation/publish_page.dart';
 import '../features/materials/presentation/material_details_page.dart';
 import '../features/materials/presentation/material_form_page.dart';
 import '../features/materials/presentation/my_materials_page.dart';
@@ -94,12 +104,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
 
+          // Tab đăng tin và tài liệu của tôi.
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.publishTab,
                 builder: (context, state) {
-                  return const TabContent(section: TabSection.publish);
+                  return const PublishPage();
                 },
               ),
               GoRoute(
@@ -111,9 +122,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
 
+          // SCR-13: module Transaction của Sơn.
           StatefulShellBranch(
             routes: [
-              // SCR-13: module Transaction của Sơn.
               GoRoute(
                 path: AppRoutes.transactions,
                 builder: (context, state) {
@@ -190,17 +201,45 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const SplashPage(),
       ),
 
-      _placeholder(AppRoutes.listingForm, 'SCR-10', 'Tạo/sửa tin đăng'),
-      _placeholder(
-        AppRoutes.listingDetailsPattern,
-        'SCR-06',
-        'Chi tiết tin đăng',
+      // SCR-10: Tạo hoặc sửa Listing.
+      GoRoute(
+        path: AppRoutes.listingForm,
+        builder: (_, state) {
+          return ListingFormPage(
+            materialId: state.uri.queryParameters['materialId'],
+            listingId: state.uri.queryParameters['listingId'],
+            returnPublishedResult:
+                state.uri.queryParameters['completion'] == 'return',
+          );
+        },
+      ),
+
+      // Đặt route tĩnh trước /listings/:listingId
+      // để không nhầm tên bước thành ID.
+      GoRoute(
+        path: AppRoutes.listingMaterialPicker,
+        builder: (_, _) {
+          return const ListingMaterialPickerPage();
+        },
+      ),
+
+      // SCR-06: Chi tiết Listing công khai.
+      GoRoute(
+        path: AppRoutes.listingDetailsPattern,
+        builder: (_, state) {
+          return ListingDetailsPage(
+            listingId: state.pathParameters['listingId']!,
+          );
+        },
       ),
 
       GoRoute(
         path: AppRoutes.materialForm,
-        builder: (_, _) {
-          return const MaterialFormPage();
+        builder: (_, state) {
+          return MaterialFormPage(
+            returnSavedResult:
+                state.uri.queryParameters['completion'] == 'return',
+          );
         },
       ),
       GoRoute(
@@ -208,6 +247,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, state) {
           return MaterialFormPage(
             materialId: state.pathParameters['materialId']!,
+            returnSavedResult:
+                state.uri.queryParameters['completion'] == 'return',
           );
         },
       ),
@@ -220,6 +261,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+      // SCR-11 và SCR-12 chưa triển khai.
       _placeholder(AppRoutes.createRequestPattern, 'SCR-11', 'Gửi yêu cầu'),
       _placeholder(AppRoutes.requestCenter, 'SCR-12', 'Trung tâm yêu cầu'),
 
@@ -233,23 +275,59 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      _placeholder(AppRoutes.deliveries, 'SCR-15', 'Danh sách giao hộ'),
-      _placeholder(AppRoutes.createDelivery, 'SCR-16', 'Tạo nhiệm vụ giao hộ'),
-      _placeholder(
-        AppRoutes.deliveryDetailsPattern,
-        'SCR-17',
-        'Chi tiết giao hộ',
+      // SCR-15: Danh sách giao hộ.
+      GoRoute(
+        path: AppRoutes.deliveries,
+        builder: (context, state) {
+          return const DeliveryListPage();
+        },
       ),
-      _placeholder(
-        AppRoutes.prepareHandoverPattern,
-        'SCR-18',
-        'Chuẩn bị bàn giao',
+
+      // SCR-16: Tạo nhiệm vụ giao hộ.
+      GoRoute(
+        path: AppRoutes.createDelivery,
+        builder: (context, state) {
+          return CreateDeliveryPage(
+            transactionId:
+                state.uri.queryParameters['transactionId'] ?? 'txn-delivery-01',
+          );
+        },
       ),
-      _placeholder(AppRoutes.scanQrPattern, 'SCR-19', 'Quét QR'),
-      _placeholder(
-        AppRoutes.receiverAckPattern,
-        'SCR-20',
-        'Xác nhận nhận / từ chối',
+
+      // SCR-17: Chi tiết giao hộ.
+      GoRoute(
+        path: AppRoutes.deliveryDetailsPattern,
+        builder: (context, state) {
+          return DeliveryDetailsPage(taskId: state.pathParameters['taskId']!);
+        },
+      ),
+
+      // SCR-18: Chuẩn bị bàn giao.
+      GoRoute(
+        path: AppRoutes.prepareHandoverPattern,
+        builder: (context, state) {
+          return PrepareHandoverPage(
+            handoverId: state.pathParameters['handoverId']!,
+          );
+        },
+      ),
+
+      // SCR-19: Quét QR.
+      GoRoute(
+        path: AppRoutes.scanQrPattern,
+        builder: (context, state) {
+          return QrScannerPage(handoverId: state.pathParameters['handoverId']!);
+        },
+      ),
+
+      // SCR-20: Xác nhận nhận hoặc từ chối.
+      GoRoute(
+        path: AppRoutes.receiverAckPattern,
+        builder: (context, state) {
+          return ReceiverAckPage(
+            handoverId: state.pathParameters['handoverId']!,
+          );
+        },
       ),
 
       // SCR-21/22/23: module Issue của Sơn.
@@ -276,6 +354,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+      // SCR-24 chưa được tích hợp.
       _placeholder(AppRoutes.notifications, 'SCR-24', 'Thông báo'),
 
       GoRoute(
