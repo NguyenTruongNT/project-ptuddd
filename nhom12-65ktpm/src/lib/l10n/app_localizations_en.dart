@@ -946,6 +946,59 @@ class AppLocalizationsEn extends AppLocalizations {
   String get matCached => 'Showing a device copy. Connect to refresh and edit.';
 
   @override
+  String homeHello(String name) {
+    return 'Hello, $name!';
+  }
+
+  @override
+  String get homeFallbackName => 'there';
+
+  @override
+  String get homeIntro =>
+      'Manage your materials and continue where you left off.';
+
+  @override
+  String get homeAddMaterial => 'Add material';
+
+  @override
+  String get homeMyMaterials => 'My materials';
+
+  @override
+  String get homeManageListings => 'Manage listings';
+
+  @override
+  String get homeOverviewTitle => 'Your overview';
+
+  @override
+  String get homeOwnedCount => 'Materials owned';
+
+  @override
+  String get homePublishedCount => 'Published listings';
+
+  @override
+  String get homeDraftCount => 'Server drafts';
+
+  @override
+  String get homeActiveCount => 'Active transactions';
+
+  @override
+  String get homeContinueDraft => 'Continue listing drafts';
+
+  @override
+  String get homeNoDrafts =>
+      'No server drafts. Device drafts are available in Publish.';
+
+  @override
+  String get homeRecentTitle => 'Recently shared materials';
+
+  @override
+  String get homeNoListings =>
+      'No published listings yet. Add a material to create your first listing.';
+
+  @override
+  String get homeRetry => 'Retry';
+
+  @override
   String get qrTitle => 'Material QR';
 
   @override

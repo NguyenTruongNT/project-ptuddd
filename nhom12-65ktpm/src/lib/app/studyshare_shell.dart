@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/auth/auth_session_providers.dart';
+import '../features/home/providers/home_providers.dart';
 
 import '../l10n/app_localizations.dart';
 import 'app_routes.dart';
@@ -36,7 +37,11 @@ class StudyShareShell extends ConsumerWidget {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (index) => navigationShell.goBranch(index),
+        onDestinationSelected: (index) {
+          // Sau khi thao tác ở tab khác, Trang chủ phải đếm lại dữ liệu server.
+          if (index == 0) refreshHome(ref);
+          navigationShell.goBranch(index);
+        },
         destinations: [
           NavigationDestination(
             icon: const Icon(Icons.home_outlined),

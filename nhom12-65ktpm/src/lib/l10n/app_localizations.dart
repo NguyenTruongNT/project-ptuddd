@@ -1826,6 +1826,102 @@ abstract class AppLocalizations {
   /// **'Đang xem dữ liệu lưu trên thiết bị. Kết nối mạng để tải dữ liệu mới và chỉnh sửa.'**
   String get matCached;
 
+  /// No description provided for @homeHello.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chào {name}!'**
+  String homeHello(String name);
+
+  /// No description provided for @homeFallbackName.
+  ///
+  /// In vi, this message translates to:
+  /// **'bạn'**
+  String get homeFallbackName;
+
+  /// No description provided for @homeIntro.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quản lý tài liệu và tiếp tục việc bạn đang làm.'**
+  String get homeIntro;
+
+  /// No description provided for @homeAddMaterial.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thêm tài liệu'**
+  String get homeAddMaterial;
+
+  /// No description provided for @homeMyMaterials.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài liệu của tôi'**
+  String get homeMyMaterials;
+
+  /// No description provided for @homeManageListings.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quản lý tin đăng'**
+  String get homeManageListings;
+
+  /// No description provided for @homeOverviewTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tổng quan của bạn'**
+  String get homeOverviewTitle;
+
+  /// No description provided for @homeOwnedCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài liệu đang sở hữu'**
+  String get homeOwnedCount;
+
+  /// No description provided for @homePublishedCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tin đang công bố'**
+  String get homePublishedCount;
+
+  /// No description provided for @homeDraftCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nháp trên máy chủ'**
+  String get homeDraftCount;
+
+  /// No description provided for @homeActiveCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'Giao dịch đang diễn ra'**
+  String get homeActiveCount;
+
+  /// No description provided for @homeContinueDraft.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếp tục nháp đăng tin'**
+  String get homeContinueDraft;
+
+  /// No description provided for @homeNoDrafts.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bạn chưa có nháp đăng tin trên máy chủ. Nháp trên thiết bị nằm trong mục Đăng tin.'**
+  String get homeNoDrafts;
+
+  /// No description provided for @homeRecentTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài liệu mới chia sẻ'**
+  String get homeRecentTitle;
+
+  /// No description provided for @homeNoListings.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có tin công khai. Bạn có thể thêm tài liệu và tạo tin đầu tiên.'**
+  String get homeNoListings;
+
+  /// No description provided for @homeRetry.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thử lại'**
+  String get homeRetry;
+
   /// No description provided for @qrTitle.
   ///
   /// In vi, this message translates to:

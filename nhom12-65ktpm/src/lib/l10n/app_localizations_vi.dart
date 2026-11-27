@@ -950,6 +950,58 @@ class AppLocalizationsVi extends AppLocalizations {
       'Đang xem dữ liệu lưu trên thiết bị. Kết nối mạng để tải dữ liệu mới và chỉnh sửa.';
 
   @override
+  String homeHello(String name) {
+    return 'Chào $name!';
+  }
+
+  @override
+  String get homeFallbackName => 'bạn';
+
+  @override
+  String get homeIntro => 'Quản lý tài liệu và tiếp tục việc bạn đang làm.';
+
+  @override
+  String get homeAddMaterial => 'Thêm tài liệu';
+
+  @override
+  String get homeMyMaterials => 'Tài liệu của tôi';
+
+  @override
+  String get homeManageListings => 'Quản lý tin đăng';
+
+  @override
+  String get homeOverviewTitle => 'Tổng quan của bạn';
+
+  @override
+  String get homeOwnedCount => 'Tài liệu đang sở hữu';
+
+  @override
+  String get homePublishedCount => 'Tin đang công bố';
+
+  @override
+  String get homeDraftCount => 'Nháp trên máy chủ';
+
+  @override
+  String get homeActiveCount => 'Giao dịch đang diễn ra';
+
+  @override
+  String get homeContinueDraft => 'Tiếp tục nháp đăng tin';
+
+  @override
+  String get homeNoDrafts =>
+      'Bạn chưa có nháp đăng tin trên máy chủ. Nháp trên thiết bị nằm trong mục Đăng tin.';
+
+  @override
+  String get homeRecentTitle => 'Tài liệu mới chia sẻ';
+
+  @override
+  String get homeNoListings =>
+      'Chưa có tin công khai. Bạn có thể thêm tài liệu và tạo tin đầu tiên.';
+
+  @override
+  String get homeRetry => 'Thử lại';
+
+  @override
   String get qrTitle => 'QR tài liệu';
 
   @override

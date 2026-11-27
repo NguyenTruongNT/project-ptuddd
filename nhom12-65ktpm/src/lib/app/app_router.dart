@@ -10,6 +10,7 @@ import '../features/handovers/presentation/qr_scanner_page.dart';
 import '../features/handovers/presentation/receiver_ack_page.dart';
 import '../features/home/mock_data_preview_page.dart';
 import '../features/home/tab_content.dart';
+import '../features/home/presentation/home_page.dart';
 import '../features/materials/presentation/material_qr_panel.dart';
 import '../features/issues/presentation/create_issue_page.dart';
 import '../features/issues/presentation/issue_details_page.dart';
@@ -76,8 +77,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.home,
-                builder: (context, state) =>
-                    const TabContent(section: TabSection.home),
+                builder: (context, state) => const HomePage(),
               ),
             ],
           ),
@@ -95,10 +95,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.publishTab,
                 builder: (context, state) => const PublishPage(),
-              ),
-              GoRoute(
-                path: AppRoutes.myMaterials,
-                builder: (_, _) => const MyMaterialsPage(),
               ),
             ],
           ),
@@ -122,6 +118,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
       // Các màn hình con nằm NGOÀI shell -> không có bottom navigation.
+      GoRoute(
+        path: AppRoutes.myMaterials,
+        builder: (_, _) => const MyMaterialsPage(),
+      ),
       GoRoute(path: AppRoutes.splash, builder: (_, _) => const SplashPage()),
       GoRoute(
         path: AppRoutes.signIn,
@@ -224,14 +224,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.createDelivery,
         builder: (context, state) => CreateDeliveryPage(
-          transactionId: state.uri.queryParameters['transactionId'] ?? 'txn-delivery-01',
+          transactionId:
+              state.uri.queryParameters['transactionId'] ?? 'txn-delivery-01',
         ),
       ),
       GoRoute(
         path: AppRoutes.deliveryDetailsPattern,
-        builder: (context, state) => DeliveryDetailsPage(
-          taskId: state.pathParameters['taskId']!,
-        ),
+        builder: (context, state) =>
+            DeliveryDetailsPage(taskId: state.pathParameters['taskId']!),
       ),
       GoRoute(
         path: AppRoutes.prepareHandoverPattern,
@@ -241,15 +241,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.scanQrPattern,
-        builder: (context, state) => QrScannerPage(
-          handoverId: state.pathParameters['handoverId']!,
-        ),
+        builder: (context, state) =>
+            QrScannerPage(handoverId: state.pathParameters['handoverId']!),
       ),
       GoRoute(
         path: AppRoutes.receiverAckPattern,
-        builder: (context, state) => ReceiverAckPage(
-          handoverId: state.pathParameters['handoverId']!,
-        ),
+        builder: (context, state) =>
+            ReceiverAckPage(handoverId: state.pathParameters['handoverId']!),
       ),
       // SCR-21/22/23 – module Issue (Sơn). Giữ createIssue trước issueDetailsPattern.
       GoRoute(

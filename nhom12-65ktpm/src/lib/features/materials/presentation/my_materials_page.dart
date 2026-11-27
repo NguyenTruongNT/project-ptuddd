@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_routes.dart';
+import '../../../design_system/widgets/feature_scaffold.dart';
 import '../../../core/auth/auth_session_providers.dart';
 import '../../../core/contracts/models/material.dart';
 import '../../../l10n/app_localizations.dart';
@@ -77,7 +78,11 @@ class _MyMaterialsPageState extends ConsumerState<MyMaterialsPage> {
     final t = AppLocalizations.of(context)!;
     final s = Theme.of(context).colorScheme;
     ref.listen(sessionBoundaryProvider, (_, _) => _load());
-    return Scaffold(
+    // Danh sách là màn con của Home/Cá nhân; luôn có Back và dùng chung
+    // khung điều hướng, kể cả khi mở URL trực tiếp hoặc tải dữ liệu lỗi.
+    return FeatureScaffold(
+      title: t.matTitle,
+      fallbackLocation: AppRoutes.home,
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -111,19 +116,7 @@ class _MyMaterialsPageState extends ConsumerState<MyMaterialsPage> {
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        t.matTitle,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .headlineSmall
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(t.matSubtitle),
-                                    ],
+                                    children: [Text(t.matSubtitle)],
                                   ),
                                 ),
                                 const SizedBox(width: 12),

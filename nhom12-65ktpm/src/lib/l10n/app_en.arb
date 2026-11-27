@@ -336,6 +336,22 @@
   "matPhotoPermission": "Could not open the camera or library. Check permissions and try again.",
   "matSnapshotChanged": "The latest version is loaded. You can edit this version.",
   "matCached": "Showing a device copy. Connect to refresh and edit.",
+  "homeHello": "Hello, {name}!",
+  "homeFallbackName": "there",
+  "homeIntro": "Manage your materials and continue where you left off.",
+  "homeAddMaterial": "Add material",
+  "homeMyMaterials": "My materials",
+  "homeManageListings": "Manage listings",
+  "homeOverviewTitle": "Your overview",
+  "homeOwnedCount": "Materials owned",
+  "homePublishedCount": "Published listings",
+  "homeDraftCount": "Server drafts",
+  "homeActiveCount": "Active transactions",
+  "homeContinueDraft": "Continue listing drafts",
+  "homeNoDrafts": "No server drafts. Device drafts are available in Publish.",
+  "homeRecentTitle": "Recently shared materials",
+  "homeNoListings": "No published listings yet. Add a material to create your first listing.",
+  "homeRetry": "Retry",
   "qrTitle": "Material QR",
   "qrShow": "Show material QR",
   "qrRetry": "Reload QR",
@@ -346,5 +362,12 @@
   "qrUnavailable": "This material QR is unavailable. Refresh material details or sign in again.",
   "qrBackendUnavailable": "QR is temporarily unavailable. Please try again later.",
   "qrUnknown": "The issuing result is unknown. Retry checks the same request and preserves the QR.",
-  "qrFailed": "Could not load the QR. Please retry."
+  "qrFailed": "Could not load the QR. Please retry.",
+  "@homeHello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }
