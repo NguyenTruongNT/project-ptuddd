@@ -7,6 +7,7 @@ import '../../../../core/contracts/command_result.dart';
 import '../../../../core/contracts/domain_enums.dart';
 import '../../../../core/contracts/models/transaction.dart';
 import '../../../../core/errors/app_error.dart';
+import '../../../borrow/presentation/request_return_button.dart';
 import '../../domain/idempotency_key.dart';
 import '../../domain/transaction_labels.dart';
 import '../../providers/transaction_providers.dart';
@@ -226,6 +227,9 @@ class _TransactionActionsCardState extends ConsumerState<TransactionActionsCard>
           icon: const Icon(Icons.price_check),
           label: const Text('Tôi đã nhận lại tiền'),
         ),
+      // Nghiệp vụ mượn/trả của Khanh: B đang mượn gửi ý định trả.
+      if (details.can(TransactionAction.requestReturn))
+        RequestReturnButton(transactionId: details.id),
       if (details.can(TransactionAction.startHandover))
         FilledButton.icon(
           onPressed: _busy

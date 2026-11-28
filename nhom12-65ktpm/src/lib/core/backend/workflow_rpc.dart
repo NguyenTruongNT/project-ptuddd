@@ -154,6 +154,12 @@ class WorkflowRpc {
   ) async {
     try {
       final raw = await _call(name, params);
+      // Receipt command cũng trả lỗi nghiệp vụ dạng {ok:false, code}; ánh xạ
+      // như command(), không đẩy message SQL thô lên UI.
+      if (raw is Map<String, dynamic> && raw['ok'] == false) {
+        final code = DomainErrorCode.fromWire(raw['code'] as String? ?? '');
+        return CommandError(code, workflowErrorMessage(code));
+      }
       if (raw is! Map<String, dynamic> ||
           raw['ok'] != true ||
           raw['command_id'] is! String ||

@@ -9,7 +9,6 @@ import '../features/handovers/presentation/prepare_handover_page.dart';
 import '../features/handovers/presentation/qr_scanner_page.dart';
 import '../features/handovers/presentation/receiver_ack_page.dart';
 import '../features/home/mock_data_preview_page.dart';
-import '../features/home/tab_content.dart';
 import '../features/home/presentation/home_page.dart';
 import '../features/materials/presentation/material_qr_panel.dart';
 import '../features/issues/presentation/create_issue_page.dart';
@@ -21,7 +20,6 @@ import '../features/transactions/presentation/my_transactions_page.dart';
 import '../features/transactions/presentation/transaction_details_page.dart';
 import 'app_routes.dart';
 import 'route_catalog_page.dart';
-import 'shared_screen_placeholder.dart';
 import 'studyshare_shell.dart';
 import '../core/auth/auth_session_providers.dart';
 import '../features/auth/presentation/auth_form_page.dart';
@@ -35,22 +33,13 @@ import '../features/listings/presentation/publish_page.dart';
 import '../features/listings/presentation/listing_form_page.dart';
 import '../features/listings/presentation/listing_details_page.dart';
 import '../features/listings/presentation/listing_material_picker_page.dart';
+import '../features/explore/presentation/explore_page.dart';
+import '../features/requests/presentation/create_request_page.dart';
+import '../features/requests/presentation/request_center_page.dart';
 
 class _AuthRouterRefresh extends ChangeNotifier {
   void refresh() => notifyListeners();
 }
-
-// Mọi màn hình chưa có module riêng sẽ sử dụng placeholder.
-GoRoute _placeholder(String path, String code, String title) => GoRoute(
-  path: path,
-  builder: (context, state) => SharedScreenPlaceholder(
-    code: code,
-    title: title,
-    recordId: state.pathParameters.isEmpty
-        ? null
-        : state.pathParameters.values.first,
-  ),
-);
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refresh = _AuthRouterRefresh();
@@ -86,8 +75,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.explore,
-                builder: (context, state) =>
-                    const TabContent(section: TabSection.explore),
+                // SCR-05 – module Khám phá (Khanh).
+                builder: (context, state) => const ExplorePage(),
               ),
             ],
           ),
@@ -208,8 +197,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           materialId: state.pathParameters['materialId']!,
         ),
       ),
-      _placeholder(AppRoutes.createRequestPattern, 'SCR-11', 'Gửi yêu cầu'),
-      _placeholder(AppRoutes.requestCenter, 'SCR-12', 'Trung tâm yêu cầu'),
+      // SCR-11/12 – module Request (Khanh).
+      GoRoute(
+        path: AppRoutes.createRequestPattern,
+        builder: (_, state) =>
+            CreateRequestPage(listingId: state.pathParameters['listingId']!),
+      ),
+      GoRoute(
+        path: AppRoutes.requestCenter,
+        builder: (_, _) => const RequestCenterPage(),
+      ),
       // SCR-14 – module Transaction (Sơn).
       GoRoute(
         path: AppRoutes.transactionDetailsPattern,
