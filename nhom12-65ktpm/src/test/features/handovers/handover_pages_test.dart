@@ -10,10 +10,12 @@ import 'package:studyshare/core/contracts/domain_enums.dart';
 import 'package:studyshare/core/errors/app_error.dart';
 import 'package:studyshare/core/mock/mock_fixtures.dart';
 import 'package:studyshare/core/mock/mock_transaction_store.dart';
+import 'package:studyshare/features/handovers/data/handover_evidence_storage.dart';
 import 'package:studyshare/features/handovers/data/mock_handover_repository.dart';
 import 'package:studyshare/features/handovers/presentation/prepare_handover_page.dart';
 import 'package:studyshare/features/handovers/presentation/qr_scanner_page.dart';
 import 'package:studyshare/features/handovers/presentation/receiver_ack_page.dart';
+import 'package:studyshare/features/handovers/providers/handover_providers.dart';
 
 void main() {
   late MockTransactionStore store;
@@ -240,4 +242,253 @@ void main() {
       expect(find.text('Ảnh minh chứng người giao'), findsOneWidget);
     });
   });
+
+  group('Handover Evidence Signed URL Lifecycle & Error Tests', () {
+    test('Phân biệt lỗi Storage deny/offline với chế độ demo', () async {
+      final repo = _FakePathsHandoverRepo(
+        actorId: MockFixtures.userA,
+        store: store,
+        paths: ['u/h1/1.jpg', 'u/h1/2.jpg'],
+      );
+      final failingStorage = _FakeEvidenceStorage(
+        onSign: (_) async => throw Exception('Storage 403 Forbidden'),
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          handoverRepositoryProvider.overrideWithValue(repo),
+          handoverEvidenceStorageProvider.overrideWithValue(failingStorage),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await expectLater(
+        container.read(handoverEvidenceSignedUrlsProvider('handover-borrow-01').future),
+        throwsException,
+      );
+    });
+
+    test('Lỗi một phần ảnh vẫn trả về ảnh hợp lệ và ghi nhận failedCount', () async {
+      final repo = _FakePathsHandoverRepo(
+        actorId: MockFixtures.userA,
+        store: store,
+        paths: ['u/h1/ok.jpg', 'u/h1/missing.jpg'],
+      );
+      final partialStorage = _FakeEvidenceStorage(
+        onSign: (path) async {
+          if (path.contains('missing')) throw Exception('Object not found');
+          return 'https://example.com/$path?token=1';
+        },
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          handoverRepositoryProvider.overrideWithValue(repo),
+          handoverEvidenceStorageProvider.overrideWithValue(partialStorage),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final result = await container
+          .read(handoverEvidenceSignedUrlsProvider('handover-borrow-01').future);
+
+      expect(result.isDemoMode, isFalse);
+      expect(result.urls, equals(['https://example.com/u/h1/ok.jpg?token=1']));
+      expect(result.failedCount, equals(1));
+      expect(result.hasPartialFailure, isTrue);
+    });
+
+    test('Mở lại sau khi đóng màn hoặc sau 5+ phút sẽ cấp lại Signed URL mới', () async {
+      var callCount = 0;
+      var currentTime = DateTime(2026, 11, 28, 10, 0, 0);
+      final repo = _FakePathsHandoverRepo(
+        actorId: MockFixtures.userA,
+        store: store,
+        paths: ['u/h1/1.jpg'],
+      );
+      final storage = _FakeEvidenceStorage(
+        onSign: (path) async {
+          callCount++;
+          return 'https://example.com/$path?seq=$callCount';
+        },
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          handoverRepositoryProvider.overrideWithValue(repo),
+          handoverEvidenceStorageProvider.overrideWithValue(storage),
+          evidenceClockProvider.overrideWithValue(() => currentTime),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      // Lần mở 1 (lấy URL với TTL 300s)
+      final sub1 = container.listen(
+        handoverEvidenceSignedUrlsProvider('handover-borrow-01'),
+        (_, _) {},
+      );
+      final first = await container
+          .read(handoverEvidenceSignedUrlsProvider('handover-borrow-01').future);
+      expect(first.urls.single, endsWith('seq=1'));
+      expect(first.isExpiredAt(currentTime), isFalse);
+      expect(
+        first.isExpiredAt(currentTime.add(const Duration(minutes: 5, seconds: 1))),
+        isTrue,
+      );
+
+      // Đóng màn hình (hủy subscription -> autoDispose chạy)
+      sub1.close();
+      await Future<void>.delayed(Duration.zero);
+
+      // Mở lại trong cùng phiên -> phải gọi Storage lần 2
+      currentTime = currentTime.add(const Duration(minutes: 6));
+      final sub2 = container.listen(
+        handoverEvidenceSignedUrlsProvider('handover-borrow-01'),
+        (_, _) {},
+      );
+      final second = await container
+          .read(handoverEvidenceSignedUrlsProvider('handover-borrow-01').future);
+      expect(callCount, equals(2));
+      expect(second.urls.single, endsWith('seq=2'));
+      sub2.close();
+    });
+
+    testWidgets(
+      'SCR-20 không hiện ô Minh chứng dấu xanh khi Storage lỗi và có nút Thử lại',
+      (tester) async {
+        var failStorage = true;
+        var signCalls = 0;
+        final repo = _FakePathsHandoverRepo(
+          actorId: MockFixtures.userA,
+          store: store,
+          paths: ['u/h1/1.jpg'],
+        );
+        final storage = _FakeEvidenceStorage(
+          onSign: (path) async {
+            signCalls++;
+            if (failStorage) throw Exception('Storage denied');
+            return 'https://example.com/$path?seq=$signCalls';
+          },
+        );
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              sessionBoundaryProvider.overrideWithValue('demo'),
+              handoverRepositoryProvider.overrideWithValue(repo),
+              handoverEvidenceStorageProvider.overrideWithValue(storage),
+            ],
+            child: MaterialApp.router(
+              routerConfig: GoRouter(
+                routes: [
+                  GoRoute(
+                    path: '/',
+                    builder: (_, _) => const ReceiverAckPage(handoverId: 'handover-borrow-01'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        expect(find.text('Minh chứng 1'), findsNothing);
+        expect(find.byIcon(Icons.verified), findsNothing);
+        expect(
+          find.text('Không tải được ảnh minh chứng từ Storage. Vui lòng thử lại.'),
+          findsOneWidget,
+        );
+        expect(find.text('Thử lại'), findsOneWidget);
+
+        // Bấm Thử lại sau khi Storage khôi phục -> gọi lại createSignedUrl
+        failStorage = false;
+        await tester.tap(find.text('Thử lại'));
+        await tester.pumpAndSettle();
+
+        expect(signCalls, greaterThanOrEqualTo(2));
+      },
+    );
+
+    testWidgets(
+      'SCR-20 hiển thị cảnh báo thiếu một phần ảnh và tự làm mới khi resume sau 5+ phút',
+      (tester) async {
+        var currentTime = DateTime(2026, 11, 28, 12, 0, 0);
+        var signCalls = 0;
+        final repo = _FakePathsHandoverRepo(
+          actorId: MockFixtures.userA,
+          store: store,
+          paths: ['u/h1/ok.jpg', 'u/h1/missing.jpg'],
+        );
+        final storage = _FakeEvidenceStorage(
+          onSign: (path) async {
+            signCalls++;
+            if (path.contains('missing')) throw Exception('Missing');
+            return 'https://example.com/$path?seq=$signCalls';
+          },
+        );
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              sessionBoundaryProvider.overrideWithValue('demo'),
+              handoverRepositoryProvider.overrideWithValue(repo),
+              handoverEvidenceStorageProvider.overrideWithValue(storage),
+              evidenceClockProvider.overrideWithValue(() => currentTime),
+            ],
+            child: MaterialApp.router(
+              routerConfig: GoRouter(
+                routes: [
+                  GoRoute(
+                    path: '/',
+                    builder: (_, _) => const ReceiverAckPage(handoverId: 'handover-borrow-01'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('Không tải được 1 ảnh minh chứng. Vui lòng thử lại.'),
+          findsOneWidget,
+        );
+        final callsBeforeResume = signCalls;
+
+        // Giả lập qua 5+ phút rồi app resume -> tự làm mới Signed URL
+        currentTime = currentTime.add(const Duration(minutes: 6));
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+        await tester.pumpAndSettle();
+
+        expect(signCalls, greaterThan(callsBeforeResume));
+      },
+    );
+  });
+}
+
+class _FakePathsHandoverRepo extends MockHandoverRepository {
+  _FakePathsHandoverRepo({
+    required super.actorId,
+    required super.store,
+    required this.paths,
+  });
+
+  final List<String> paths;
+
+  @override
+  Future<List<String>> getEvidencePaths(String handoverId) async => paths;
+}
+
+class _FakeEvidenceStorage extends HandoverEvidenceStorage {
+  _FakeEvidenceStorage({required this.onSign}) : super(null);
+
+  final Future<String> Function(String privatePath) onSign;
+
+  @override
+  bool get isCloudEnabled => true;
+
+  @override
+  Future<String> createSignedUrl(String privatePath) => onSign(privatePath);
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_routes.dart';
+import '../../../core/auth/auth_session_providers.dart';
 import '../../../core/contracts/command_result.dart';
 import '../../../core/mock/mock_fixtures.dart';
 import '../../../design_system/widgets/feature_scaffold.dart';
@@ -55,7 +56,7 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
     });
   }
 
-  String _resolveCounterpartyId() {
+  String? _resolveCounterpartyId() {
     final txnAsync = ref.read(transactionDetailsProvider(widget.transactionId));
     final details = txnAsync.asData?.value;
     if (details != null) {
@@ -65,17 +66,25 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
           ? txn.receiverId
           : txn.ownerAtAcceptance;
     }
-    return MockFixtures.userB;
+    final isDemo = ref.read(sessionBoundaryProvider) == 'demo';
+    return isDemo ? MockFixtures.userB : null;
   }
 
   Future<void> _handleStartDirectHandover() async {
+    final toUserId = _resolveCounterpartyId();
+    if (toUserId == null) {
+      setState(() {
+        _errorMessage = 'Đang tải thông tin giao dịch từ máy chủ, vui lòng thử lại.';
+      });
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;
     });
 
     final handoverRepo = ref.read(handoverRepositoryProvider);
-    final toUserId = _resolveCounterpartyId();
     final idempotencyKey =
         'direct-handover-${widget.transactionId}-${DateTime.now().millisecondsSinceEpoch}';
 
@@ -99,6 +108,14 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final receiverId = _resolveCounterpartyId();
+    if (receiverId == null) {
+      setState(() {
+        _errorMessage = 'Đang tải thông tin giao dịch từ máy chủ, vui lòng đợi giây lát.';
+      });
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;
@@ -114,7 +131,7 @@ class _CreateDeliveryPageState extends ConsumerState<CreateDeliveryPage> {
 
     final result = await repo.createTaskWithDescriptions(
       transactionId: widget.transactionId,
-      finalReceiverId: _resolveCounterpartyId(),
+      finalReceiverId: receiverId,
       pickupDescription: pickupText,
       dropoffDescription: _dropoffController.text.trim(),
       idempotencyKey: idempotencyKey,

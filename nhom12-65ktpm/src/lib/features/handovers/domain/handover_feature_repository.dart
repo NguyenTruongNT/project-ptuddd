@@ -16,4 +16,7 @@ abstract interface class HandoverFeatureRepository implements HandoverRepository
     String reason, {
     required String idempotencyKey,
   });
+
+  /// Lấy danh sách đường dẫn ảnh minh chứng private (chỉ actor có quyền mới đọc được).
+  Future<List<String>> getEvidencePaths(String handoverId);
 }

@@ -30,9 +30,70 @@ class ReceiverAckPage extends ConsumerStatefulWidget {
   ConsumerState<ReceiverAckPage> createState() => _ReceiverAckPageState();
 }
 
-class _ReceiverAckPageState extends ConsumerState<ReceiverAckPage> {
+class _ReceiverAckPageState extends ConsumerState<ReceiverAckPage>
+    with WidgetsBindingObserver {
   bool _isActionInProgress = false;
   String? _errorMessage;
+  DateTime? _scheduledRefreshForExpiry;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !mounted) return;
+    final current = ref
+        .read(handoverEvidenceSignedUrlsProvider(widget.handoverId))
+        .asData
+        ?.value;
+    final now = ref.read(evidenceClockProvider)();
+    if (current != null && !current.isDemoMode && current.isExpiredAt(now)) {
+      _refreshSignedUrls();
+    }
+  }
+
+  void _refreshSignedUrls() {
+    _scheduledRefreshForExpiry = null;
+    ref.invalidate(handoverEvidenceSignedUrlsProvider(widget.handoverId));
+  }
+
+  Widget _buildEvidenceErrorBox(String message) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.red, fontSize: 13),
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton.icon(
+            onPressed: _refreshSignedUrls,
+            icon: const Icon(Icons.refresh, size: 18),
+            label: const Text('Thử lại'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _handleConfirmReceipt(Handover handover) async {
     final confirm = await showDialog<bool>(
@@ -172,6 +233,20 @@ class _ReceiverAckPageState extends ConsumerState<ReceiverAckPage> {
     final theme = Theme.of(context);
     final currentUserId = ref.watch(demoViewerIdProvider);
     final handoverAsync = ref.watch(handoverDetailsProvider(widget.handoverId));
+    final signedUrlsAsync =
+        ref.watch(handoverEvidenceSignedUrlsProvider(widget.handoverId));
+    final currentEvidence = signedUrlsAsync.asData?.value;
+    final now = ref.watch(evidenceClockProvider)();
+    if (currentEvidence != null &&
+        !currentEvidence.isDemoMode &&
+        currentEvidence.isExpiredAt(now) &&
+        !signedUrlsAsync.isLoading &&
+        _scheduledRefreshForExpiry != currentEvidence.expiresAt) {
+      _scheduledRefreshForExpiry = currentEvidence.expiresAt;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _refreshSignedUrls();
+      });
+    }
 
     return FeatureScaffold(
       title: 'Xác nhận nhận tài liệu',
@@ -291,29 +366,136 @@ class _ReceiverAckPageState extends ConsumerState<ReceiverAckPage> {
                         ),
                         const SizedBox(height: 12),
                         if (hasEvidence) ...[
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              for (var i = 1; i <= handover.evidencePhotoCount; i++)
-                                Container(
-                                  width: 90,
-                                  height: 90,
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.shade50,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.green.shade300),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                          signedUrlsAsync.when(
+                            loading: () => const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                            error: (_, _) => _buildEvidenceErrorBox(
+                              'Không tải được ảnh minh chứng từ Storage. Vui lòng thử lại.',
+                            ),
+                            data: (evidence) {
+                              if (evidence.isDemoMode) {
+                                return Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    for (var i = 1; i <= handover.evidencePhotoCount; i++)
+                                      Container(
+                                        width: 90,
+                                        height: 90,
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.shade50,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.green.shade300),
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(Icons.verified, color: Colors.green, size: 32),
+                                            const SizedBox(height: 4),
+                                            Text('Minh chứng $i', style: const TextStyle(fontSize: 11)),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              }
+                              if (evidence.urls.isEmpty) {
+                                return _buildEvidenceErrorBox(
+                                  'Không thể tải liên kết ảnh minh chứng. Vui lòng thử lại.',
+                                );
+                              }
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
                                     children: [
-                                      const Icon(Icons.verified, color: Colors.green, size: 32),
-                                      const SizedBox(height: 4),
-                                      Text('Minh chứng $i', style: const TextStyle(fontSize: 11)),
+                                      for (final url in evidence.urls)
+                                        GestureDetector(
+                                          onTap: () => showDialog(
+                                            context: context,
+                                            builder: (ctx) => Dialog(
+                                              child: InteractiveViewer(
+                                                child: Image.network(
+                                                  url,
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder: (_, _, _) => Padding(
+                                                    padding: const EdgeInsets.all(24),
+                                                    child: Column(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.broken_image_outlined,
+                                                          color: Colors.red,
+                                                          size: 40,
+                                                        ),
+                                                        const SizedBox(height: 8),
+                                                        const Text(
+                                                          'Không tải được ảnh. Liên kết có thể đã hết hạn.',
+                                                          textAlign: TextAlign.center,
+                                                        ),
+                                                        const SizedBox(height: 12),
+                                                        TextButton.icon(
+                                                          onPressed: () {
+                                                            Navigator.pop(ctx);
+                                                            _refreshSignedUrls();
+                                                          },
+                                                          icon: const Icon(Icons.refresh),
+                                                          label: const Text('Thử lại'),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          child: Container(
+                                            width: 96,
+                                            height: 96,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: Colors.green.shade300),
+                                            ),
+                                            clipBehavior: Clip.antiAlias,
+                                            child: Image.network(
+                                              url,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, _, _) => InkWell(
+                                                onTap: _refreshSignedUrls,
+                                                child: Container(
+                                                  color: Colors.red.shade50,
+                                                  padding: const EdgeInsets.all(6),
+                                                  child: const Column(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: [
+                                                      Icon(Icons.broken_image_outlined, color: Colors.red, size: 24),
+                                                      SizedBox(height: 4),
+                                                      Text(
+                                                        'Thử lại',
+                                                        style: TextStyle(color: Colors.red, fontSize: 11),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
                                     ],
                                   ),
-                                ),
-                            ],
+                                  if (evidence.hasPartialFailure) ...[
+                                    const SizedBox(height: 10),
+                                    _buildEvidenceErrorBox(
+                                      'Không tải được ${evidence.failedCount} ảnh minh chứng. Vui lòng thử lại.',
+                                    ),
+                                  ],
+                                ],
+                              );
+                            },
                           ),
                         ] else ...[
                           Container(

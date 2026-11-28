@@ -6,6 +6,7 @@ import '../../../app/app_routes.dart';
 import '../../../core/contracts/domain_enums.dart';
 import '../../../core/contracts/models/delivery.dart';
 import '../../../core/errors/app_error.dart';
+import '../../../core/providers/mock_query_providers.dart';
 import '../../../design_system/widgets/study_empty.dart';
 import '../../../design_system/widgets/study_error.dart';
 import '../../../design_system/widgets/study_loading.dart';
@@ -21,6 +22,7 @@ class DeliveryListPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final currentUserId = ref.watch(demoViewerIdProvider);
     final myTasksAsync = ref.watch(myDeliveryTasksProvider);
     final availableTasksAsync = ref.watch(availableDeliveryTasksProvider);
 
@@ -109,7 +111,12 @@ class DeliveryListPage extends ConsumerWidget {
                 onRetry: () => ref.invalidate(myDeliveryTasksProvider),
               ),
               data: (allTasks) {
-                final appliedTasks = allTasks.where((t) => t.status == DeliveryTaskStatus.open).toList();
+                final appliedTasks = allTasks
+                    .where((t) =>
+                        t.status == DeliveryTaskStatus.open &&
+                        t.senderId != currentUserId &&
+                        t.finalReceiverId != currentUserId)
+                    .toList();
                 if (appliedTasks.isEmpty) {
                   return const StudyEmpty(
                     message: 'Bạn chưa nộp đơn ứng tuyển nhiệm vụ nào.',

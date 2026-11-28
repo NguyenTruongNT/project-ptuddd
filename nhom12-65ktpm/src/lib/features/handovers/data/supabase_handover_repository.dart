@@ -37,6 +37,15 @@ class SupabaseHandoverRepository implements HandoverFeatureRepository {
       );
 
   @override
+  Future<List<String>> getEvidencePaths(String handoverId) => rpc.read(
+        'get_handover_evidence_paths',
+        {'p_handover_id': handoverId},
+        (raw) => List.unmodifiable(
+          WorkflowJson.list(raw).map(WorkflowJson.text),
+        ),
+      );
+
+  @override
   Future<CommandResult<Handover>> createHandover({
     required String transactionId,
     required String toUserId,

@@ -80,6 +80,8 @@ class SupabaseDeliveryRepository implements DeliveryFeatureRepository {
             pickupDescription: WorkflowJson.optionalText(taskMap['pickup_description']),
             dropoffDescription: WorkflowJson.optionalText(taskMap['dropoff_description']),
             returnHandoverId: WorkflowJson.optionalText(taskMap['return_handover_id']),
+            leg1HandoverId: WorkflowJson.optionalText(map['leg1_handover_id']),
+            leg2HandoverId: WorkflowJson.optionalText(map['leg2_handover_id']),
           );
         },
       );

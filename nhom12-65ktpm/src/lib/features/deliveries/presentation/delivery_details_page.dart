@@ -464,8 +464,12 @@ class _DeliveryDetailsPageState extends ConsumerState<DeliveryDetailsPage> {
                             transactionId: task.transactionId,
                             toUserId: task.assignedCourierId!,
                           ),
-                          canReceive: isCourier && task.status == DeliveryTaskStatus.assigned,
-                          onReceive: () => context.push(AppRoutes.receiverAck('handover-delivery-h1')),
+                          canReceive: isCourier &&
+                              task.status == DeliveryTaskStatus.assigned &&
+                              bundle.leg1HandoverId != null,
+                          onReceive: () => context.push(
+                            AppRoutes.receiverAck(bundle.leg1HandoverId!),
+                          ),
                         ),
                         const Divider(),
                         _buildLegTile(
@@ -480,8 +484,11 @@ class _DeliveryDetailsPageState extends ConsumerState<DeliveryDetailsPage> {
                             toUserId: task.finalReceiverId,
                           ),
                           canReceive: isReceiver &&
-                              task.status == DeliveryTaskStatus.deliveryPendingConfirmation,
-                          onReceive: () => context.push(AppRoutes.receiverAck('handover-delivery-h2')),
+                              task.status == DeliveryTaskStatus.deliveryPendingConfirmation &&
+                              bundle.leg2HandoverId != null,
+                          onReceive: () => context.push(
+                            AppRoutes.receiverAck(bundle.leg2HandoverId!),
+                          ),
                         ),
                         if (task.status == DeliveryTaskStatus.failed &&
                             bundle.returnHandoverId != null) ...[
