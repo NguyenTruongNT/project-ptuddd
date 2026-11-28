@@ -19,6 +19,7 @@ Handover _handoverFromJson(Object? raw) {
     status: HandoverStatus.fromWire(WorkflowJson.text(map['status'])),
     deliveryTaskId: WorkflowJson.optionalText(map['delivery_task_id']),
     evidencePhotoCount: WorkflowJson.integer(map['evidence_photo_count']),
+    qrMismatchBlocked: map['qr_mismatch_blocked'] == true,
   );
 }
 

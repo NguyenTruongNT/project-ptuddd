@@ -9,7 +9,13 @@
   "listingMaterialSearch": "Tìm tài liệu",
   "listingFilterTitle": "Lọc theo trạng thái",
   "listingFilterLabel": "Trạng thái: {status} ▾",
-  "@listingFilterLabel": {"placeholders": {"status": {"type": "String"}}},
+  "@listingFilterLabel": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
   "listingLocalSection": "Nháp trên thiết bị",
   "listingNoResults": "Không có kết quả phù hợp.",
   "listingNoMaterials": "Bạn chưa có tài liệu. Thêm tài liệu để bắt đầu đăng tin.",
@@ -60,7 +66,16 @@
   "listingRequest": "Gửi yêu cầu",
   "listingOwnRequest": "Xem yêu cầu",
   "listingBorrowPolicy": "Mượn từ {minDays}–{maxDays} ngày, người mượn đề xuất và chủ sách chấp thuận đúng số ngày hoặc từ chối.",
-  "@listingBorrowPolicy": {"placeholders": {"minDays": {"type": "int"}, "maxDays": {"type": "int"}}},
+  "@listingBorrowPolicy": {
+    "placeholders": {
+      "minDays": {
+        "type": "int"
+      },
+      "maxDays": {
+        "type": "int"
+      }
+    }
+  },
   "listingRestore": "Khôi phục nháp trên thiết bị? Quyền và phiên bản dữ liệu vẫn cần kiểm tra lại.",
   "listingMaterialChanged": "Dữ liệu đã thay đổi. Hãy tải lại và kiểm tra trước khi gửi.",
   "listingDemo": "Chế độ mô phỏng chỉ đọc; kết nối Supabase để đăng tin.",
@@ -211,6 +226,8 @@
   "profileTransactionsHint": "Theo dõi mua, tặng và mượn",
   "profileDeliveriesHint": "Các lượt giao tài liệu",
   "profileIssuesHint": "Theo dõi vấn đề cần giải quyết",
+  "profileNotifications": "Thông báo",
+  "profileNotificationsHint": "Cập nhật về giao dịch, thanh toán và sự cố",
   "@authCreateConfirmBody": {
     "placeholders": {
       "name": {
@@ -320,5 +337,39 @@
   "matFormHint": "Lưu thông tin bản sách bạn sở hữu. Bạn có thể đăng tin sau.",
   "matPhotoPermission": "Không mở được camera hoặc thư viện. Kiểm tra quyền truy cập và thử lại.",
   "matSnapshotChanged": "Nội dung mới nhất đã được tải. Bạn có thể tiếp tục chỉnh sửa từ bản này.",
-  "matCached": "Đang xem dữ liệu lưu trên thiết bị. Kết nối mạng để tải dữ liệu mới và chỉnh sửa."
+  "matCached": "Đang xem dữ liệu lưu trên thiết bị. Kết nối mạng để tải dữ liệu mới và chỉnh sửa.",
+  "homeHello": "Chào {name}!",
+  "homeFallbackName": "bạn",
+  "homeIntro": "Quản lý tài liệu và tiếp tục việc bạn đang làm.",
+  "homeAddMaterial": "Thêm tài liệu",
+  "homeMyMaterials": "Tài liệu của tôi",
+  "homeManageListings": "Quản lý tin đăng",
+  "homeOverviewTitle": "Tổng quan của bạn",
+  "homeOwnedCount": "Tài liệu đang sở hữu",
+  "homePublishedCount": "Tin đang công bố",
+  "homeDraftCount": "Nháp trên máy chủ",
+  "homeActiveCount": "Giao dịch đang diễn ra",
+  "homeContinueDraft": "Tiếp tục nháp đăng tin",
+  "homeNoDrafts": "Bạn chưa có nháp đăng tin trên máy chủ. Nháp trên thiết bị nằm trong mục Đăng tin.",
+  "homeRecentTitle": "Tài liệu mới chia sẻ",
+  "homeNoListings": "Chưa có tin công khai. Bạn có thể thêm tài liệu và tạo tin đầu tiên.",
+  "homeRetry": "Thử lại",
+  "qrTitle": "QR tài liệu",
+  "qrShow": "Xem QR tài liệu",
+  "qrRetry": "Tải lại QR",
+  "qrEnlarge": "Mở QR lớn",
+  "qrNotice": "Mã định danh bản vật lý; giữ nguyên khi đăng lại. Quét đúng mã chưa xác nhận đã giao hoặc nhận sách.",
+  "qrDemoNotice": "QR mô phỏng, không dùng để xác nhận bàn giao thật.",
+  "qrOffline": "Cần kết nối và kiểm tra quyền hiện tại để mở QR. Ứng dụng không lưu QR để dùng offline.",
+  "qrUnavailable": "Không thể truy cập QR tài liệu này. Hãy tải lại thông tin tài liệu hoặc đăng nhập lại.",
+  "qrBackendUnavailable": "QR tạm chưa sẵn sàng. Vui lòng thử lại sau.",
+  "qrUnknown": "Chưa rõ máy chủ đã phát hành mã hay chưa. Thử lại sẽ kiểm tra cùng yêu cầu và giữ nguyên mã.",
+  "qrFailed": "Không tải được QR. Vui lòng thử lại.",
+  "@homeHello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

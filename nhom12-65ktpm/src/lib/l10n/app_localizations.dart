@@ -1310,6 +1310,18 @@ abstract class AppLocalizations {
   /// **'Theo dõi vấn đề cần giải quyết'**
   String get profileIssuesHint;
 
+  /// No description provided for @profileNotifications.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thông báo'**
+  String get profileNotifications;
+
+  /// No description provided for @profileNotificationsHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cập nhật về giao dịch, thanh toán và sự cố'**
+  String get profileNotificationsHint;
+
   /// No description provided for @matTitle.
   ///
   /// In vi, this message translates to:
@@ -1825,6 +1837,168 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Đang xem dữ liệu lưu trên thiết bị. Kết nối mạng để tải dữ liệu mới và chỉnh sửa.'**
   String get matCached;
+
+  /// No description provided for @homeHello.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chào {name}!'**
+  String homeHello(String name);
+
+  /// No description provided for @homeFallbackName.
+  ///
+  /// In vi, this message translates to:
+  /// **'bạn'**
+  String get homeFallbackName;
+
+  /// No description provided for @homeIntro.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quản lý tài liệu và tiếp tục việc bạn đang làm.'**
+  String get homeIntro;
+
+  /// No description provided for @homeAddMaterial.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thêm tài liệu'**
+  String get homeAddMaterial;
+
+  /// No description provided for @homeMyMaterials.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài liệu của tôi'**
+  String get homeMyMaterials;
+
+  /// No description provided for @homeManageListings.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quản lý tin đăng'**
+  String get homeManageListings;
+
+  /// No description provided for @homeOverviewTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tổng quan của bạn'**
+  String get homeOverviewTitle;
+
+  /// No description provided for @homeOwnedCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài liệu đang sở hữu'**
+  String get homeOwnedCount;
+
+  /// No description provided for @homePublishedCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tin đang công bố'**
+  String get homePublishedCount;
+
+  /// No description provided for @homeDraftCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nháp trên máy chủ'**
+  String get homeDraftCount;
+
+  /// No description provided for @homeActiveCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'Giao dịch đang diễn ra'**
+  String get homeActiveCount;
+
+  /// No description provided for @homeContinueDraft.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếp tục nháp đăng tin'**
+  String get homeContinueDraft;
+
+  /// No description provided for @homeNoDrafts.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bạn chưa có nháp đăng tin trên máy chủ. Nháp trên thiết bị nằm trong mục Đăng tin.'**
+  String get homeNoDrafts;
+
+  /// No description provided for @homeRecentTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài liệu mới chia sẻ'**
+  String get homeRecentTitle;
+
+  /// No description provided for @homeNoListings.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có tin công khai. Bạn có thể thêm tài liệu và tạo tin đầu tiên.'**
+  String get homeNoListings;
+
+  /// No description provided for @homeRetry.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thử lại'**
+  String get homeRetry;
+
+  /// No description provided for @qrTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'QR tài liệu'**
+  String get qrTitle;
+
+  /// No description provided for @qrShow.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xem QR tài liệu'**
+  String get qrShow;
+
+  /// No description provided for @qrRetry.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tải lại QR'**
+  String get qrRetry;
+
+  /// No description provided for @qrEnlarge.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mở QR lớn'**
+  String get qrEnlarge;
+
+  /// No description provided for @qrNotice.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mã định danh bản vật lý; giữ nguyên khi đăng lại. Quét đúng mã chưa xác nhận đã giao hoặc nhận sách.'**
+  String get qrNotice;
+
+  /// No description provided for @qrDemoNotice.
+  ///
+  /// In vi, this message translates to:
+  /// **'QR mô phỏng, không dùng để xác nhận bàn giao thật.'**
+  String get qrDemoNotice;
+
+  /// No description provided for @qrOffline.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cần kết nối và kiểm tra quyền hiện tại để mở QR. Ứng dụng không lưu QR để dùng offline.'**
+  String get qrOffline;
+
+  /// No description provided for @qrUnavailable.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không thể truy cập QR tài liệu này. Hãy tải lại thông tin tài liệu hoặc đăng nhập lại.'**
+  String get qrUnavailable;
+
+  /// No description provided for @qrBackendUnavailable.
+  ///
+  /// In vi, this message translates to:
+  /// **'QR tạm chưa sẵn sàng. Vui lòng thử lại sau.'**
+  String get qrBackendUnavailable;
+
+  /// No description provided for @qrUnknown.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa rõ máy chủ đã phát hành mã hay chưa. Thử lại sẽ kiểm tra cùng yêu cầu và giữ nguyên mã.'**
+  String get qrUnknown;
+
+  /// No description provided for @qrFailed.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được QR. Vui lòng thử lại.'**
+  String get qrFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -162,9 +162,21 @@ class MockFixtures {
       status: HandoverStatus.confirmed, evidencePhotoCount: 1),
   ];
 
+  // Thông báo khớp với sự kiện mẫu ở trên (người nhận là bên KHÔNG thực hiện).
   static List<AppNotification> get notifications => [
     AppNotification(id: 'notice-b-01', recipientId: userB,
-      safePreview: 'Yêu cầu mượn đã được duyệt.',
+      type: 'REQUEST_ACCEPTED',
+      entityType: NotificationEntityType.transaction,
+      entityId: 'txn-borrow-01',
+      safePreview: 'Giáo trình Giải tích: A đã duyệt yêu cầu mượn.',
+      createdAt: DateTime.utc(2026, 11, 20, 8),
+      readAt: DateTime.utc(2026, 11, 20, 9)),
+    AppNotification(id: 'notice-a-01', recipientId: userA,
+      type: 'PAYMENT_REPORTED',
+      entityType: NotificationEntityType.transaction,
+      entityId: 'txn-sell-01',
+      safePreview: 'Nhập môn Python: B báo đã chuyển khoản. '
+          'Chờ A kiểm tra và xác nhận.',
       createdAt: DateTime.utc(2026, 11, 21)),
   ];
 }

@@ -9,6 +9,7 @@ class Handover {
     required this.status,
     this.deliveryTaskId,
     this.evidencePhotoCount = 0,
+    this.qrMismatchBlocked = false,
   });
 
   final String id;
@@ -18,5 +19,7 @@ class Handover {
   final String? deliveryTaskId;
   final HandoverStatus status;
   final int evidencePhotoCount;
+  // Cờ server; không chứa mã đã quét. Fallback không được gỡ cờ này.
+  final bool qrMismatchBlocked;
   // Không đặt đường dẫn private evidence hoặc QR token vào DTO công khai.
 }

@@ -7,6 +7,8 @@ import 'mock_fixtures.dart';
 // - Chỉ các mock command repository (giả lập RPC server) được gọi hàm ghi.
 // - Mất khi khởi động lại app; không phải nguồn sự thật.
 class MockTransactionStore {
+  // Trạng thái mismatch theo phiên demo; refresh không được xóa cờ này.
+  final Set<String> qrMismatchHandovers = {};
   MockTransactionStore.fromFixtures({
     DateTime Function()? clock,
     List<Issue>? seedIssues,
@@ -27,7 +29,8 @@ class MockTransactionStore {
           for (final payment in MockFixtures.payments)
             payment.transactionId: payment,
         },
-        _events = [...MockFixtures.transactionEvents];
+        _events = [...MockFixtures.transactionEvents],
+        _notifications = [...MockFixtures.notifications];
 
   // Đồng hồ "server" của mock; test truyền vào để có thời gian cố định.
   final DateTime Function() clock;
@@ -43,7 +46,10 @@ class MockTransactionStore {
   final Map<String, Handover> _handovers;
   final Map<String, MockIssueProposal> _issueProposals = {};
   final List<IssueEventItem> _issueEvents = [];
+  // Hộp thư thông báo (bảng notifications); ghi kèm Event trong cùng lệnh.
+  final List<AppNotification> _notifications;
   int _eventCounter = 0;
+  int _notificationCounter = 0;
   int _issueCounter = 0;
   int _issueEventCounter = 0;
 
@@ -119,6 +125,36 @@ class MockTransactionStore {
             task.status != DeliveryTaskStatus.failed &&
             task.status != DeliveryTaskStatus.cancelled,
       );
+
+  // Mới nhất trước, giống ORDER BY created_at DESC của server.
+  List<AppNotification> notificationsFor(String recipientId) {
+    final mine = [
+      for (var i = 0; i < _notifications.length; i++)
+        if (_notifications[i].recipientId == recipientId) (i, _notifications[i]),
+    ]..sort((a, b) {
+        final byTime = b.$2.createdAt.compareTo(a.$2.createdAt);
+        // Cùng thời điểm: bản ghi sau (ghi muộn hơn) lên trước.
+        return byTime != 0 ? byTime : b.$1.compareTo(a.$1);
+      });
+    return List.unmodifiable(mine.map((entry) => entry.$2));
+  }
+
+  AppNotification? notification(String id) {
+    for (final item in _notifications) {
+      if (item.id == id) return item;
+    }
+    return null;
+  }
+
+  // Mốc độ dài nhật ký sự kiện; lệnh mock dùng để biết Event nào vừa được ghi.
+  MockEventMark get eventMark =>
+      MockEventMark(_events.length, _issueEvents.length);
+
+  List<TransactionEventItem> transactionEventsSince(MockEventMark mark) =>
+      List.unmodifiable(_events.skip(mark.transactionEvents));
+
+  List<IssueEventItem> issueEventsSince(MockEventMark mark) =>
+      List.unmodifiable(_issueEvents.skip(mark.issueEvents));
 
   MockCommandReceipt? receipt(String actorId, String command, String key) =>
       _receipts[_receiptKey(actorId, command, key)];
@@ -204,6 +240,46 @@ class MockTransactionStore {
     return id;
   }
 
+  /// Ghi một thông báo mới cho người nhận, trả về bản ghi.
+  AppNotification appendNotification({
+    required String recipientId,
+    required String type,
+    required NotificationEntityType entityType,
+    required String entityId,
+    required String safePreview,
+  }) {
+    final item = AppNotification(
+      id: 'notice-mock-${++_notificationCounter}',
+      recipientId: recipientId,
+      type: type,
+      entityType: entityType,
+      entityId: entityId,
+      safePreview: safePreview,
+      createdAt: clock(),
+    );
+    _notifications.add(item);
+    return item;
+  }
+
+  /// Ghi `read_at` bằng đồng hồ server; đã đọc thì giữ nguyên mốc cũ.
+  AppNotification markNotificationRead(String id) {
+    final index = _notifications.indexWhere((item) => item.id == id);
+    final current = _notifications[index];
+    if (current.isRead) return current;
+    final updated = AppNotification(
+      id: current.id,
+      recipientId: current.recipientId,
+      type: current.type,
+      entityType: current.entityType,
+      entityId: current.entityId,
+      safePreview: current.safePreview,
+      createdAt: current.createdAt,
+      readAt: clock(),
+    );
+    _notifications[index] = updated;
+    return updated;
+  }
+
   void saveReceipt(String actorId, String command, String key,
       MockCommandReceipt receipt) {
     _receipts[_receiptKey(actorId, command, key)] = receipt;
@@ -211,6 +287,13 @@ class MockTransactionStore {
 
   static String _receiptKey(String actorId, String command, String key) =>
       '$actorId|$command|$key';
+}
+
+// Vị trí cuối của hai nhật ký sự kiện tại một thời điểm.
+class MockEventMark {
+  const MockEventMark(this.transactionEvents, this.issueEvents);
+  final int transactionEvents;
+  final int issueEvents;
 }
 
 // Tương ứng bảng command_receipts: retry cùng key + payload trả lại kết quả cũ.

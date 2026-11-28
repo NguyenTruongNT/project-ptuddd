@@ -25,9 +25,11 @@ insert into public.materials(id, owner_id, holder_id, title, subject, condition)
   ('e3300000-0000-4000-8000-000000000002', 'd3300000-0000-4000-8000-000000000001',
    'd3300000-0000-4000-8000-000000000001', 'Sach Sell', 'Toan', 'Moi');
 
-insert into public.material_qr_credentials(material_id, qr_secret) values
-  ('e3300000-0000-4000-8000-000000000001', 'qr-secret-borrow-01'),
-  ('e3300000-0000-4000-8000-000000000002', 'qr-secret-sell-01');
+-- Fixture dùng cùng định dạng/hash như QR server ngày 4, không có qr_secret.
+insert into public.material_qr_credentials(material_id,token_hash,format_version)
+select id,encode(extensions.digest(studyshare_private.material_qr_payload(id,1),'sha256'),'hex'),1
+from (values ('e3300000-0000-4000-8000-000000000001'::uuid),
+             ('e3300000-0000-4000-8000-000000000002'::uuid)) q(id);
 
 insert into public.listings(id, material_id, offer_type, status, asking_price_vnd) values
   ('f3300000-0000-4000-8000-000000000001', 'e3300000-0000-4000-8000-000000000001', 'BORROW', 'PUBLISHED', null),
@@ -54,6 +56,8 @@ insert into public.payment_confirmations(transaction_id, amount_vnd) values
 
 create temp table del_ctx(k text primary key, v jsonb);
 grant all on del_ctx to authenticated, service_role;
+-- Tạo fixture dưới postgres; app không được gọi helper sinh token riêng tư.
+insert into del_ctx values ('qr',to_jsonb(studyshare_private.material_qr_payload('e3300000-0000-4000-8000-000000000001',1)));
 
 -- 2. Kiểm tra chặn truy cập trực tiếp bảng.
 set local role authenticated;
@@ -156,7 +160,7 @@ select extensions.is(
 -- QR đúng -> thành công.
 select extensions.is(
   public.verify_material_code((select v->'data'->>'id' from del_ctx where k='h1'),
-    'qr-secret-borrow-01', 'QR', null, 'qr-ok')->>'ok',
+    (select v #>> '{}' from del_ctx where k='qr'), 'QR', null, 'qr-ok')->>'ok',
   'true',
   'QR dung duoc chap nhan'
 );

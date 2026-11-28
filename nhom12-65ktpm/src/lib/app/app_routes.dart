@@ -20,6 +20,8 @@ class AppRoutes {
   static const materialForm = '/materials/new';
   static const materialDetailsPattern = '/materials/:materialId';
   static const materialEditPattern = '/materials/:materialId/edit';
+  // Màn phụ của SCR-09; URL chỉ chứa Material ID, không chứa payload QR.
+  static const materialQrPattern = '/materials/:materialId/qr';
   static const listingForm = '/listings/new';
   // Màn phụ của luồng SCR-10, không tăng số mã màn hình nghiệp vụ.
   static const listingMaterialPicker = '/listings/select-material';
@@ -50,6 +52,8 @@ class AppRoutes {
       '/materials/${Uri.encodeComponent(id)}';
   static String materialEdit(String id) =>
       '/materials/${Uri.encodeComponent(id)}/edit';
+  static String materialQr(String id) =>
+      '/materials/${Uri.encodeComponent(id)}/qr';
   static String transactionDetails(String id) =>
       '/transactions/${Uri.encodeComponent(id)}';
   static String deliveryDetails(String id) =>

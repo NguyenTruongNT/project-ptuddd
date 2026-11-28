@@ -5,6 +5,7 @@ import 'package:studyshare/app/app_router.dart';
 import 'package:studyshare/app/app_routes.dart';
 import 'package:studyshare/app/studyshare_app.dart';
 import 'package:studyshare/core/auth/auth_session_providers.dart';
+import 'package:studyshare/core/backend/workflow_rpc.dart';
 import 'package:studyshare/core/contracts/command_result.dart';
 import 'package:studyshare/core/contracts/domain_enums.dart';
 import 'package:studyshare/core/contracts/listing_workspace.dart';
@@ -20,6 +21,9 @@ import 'package:studyshare/features/listings/presentation/listing_material_picke
 import 'package:studyshare/features/listings/providers/listing_providers.dart';
 import 'package:studyshare/features/materials/data/material_draft_store.dart';
 import 'package:studyshare/features/materials/data/mock_material_workspace.dart';
+import 'package:studyshare/features/materials/data/material_qr_repository.dart';
+import 'package:studyshare/features/materials/presentation/material_qr_panel.dart';
+import 'package:studyshare/features/home/presentation/home_page.dart';
 import 'package:studyshare/features/materials/presentation/material_form_page.dart';
 import 'package:studyshare/features/materials/providers/material_providers.dart';
 
@@ -141,10 +145,16 @@ Future<ProviderContainer> _mount(
   final container = ProviderContainer(
     overrides: [
       demoModeProvider.overrideWith(() => DemoModeController(initial: true)),
+      // Router khởi tạo Home trước khi mở đích test; toàn bộ scope này là demo.
+      workflowRpcProvider.overrideWithValue(null),
       sessionBoundaryProvider.overrideWithValue('A'),
       appPreferencesProvider.overrideWith(_QuietPreferences.new),
       materialWorkspaceProvider.overrideWithValue(
         MockMaterialWorkspace(store, 'A'),
+      ),
+      mockMaterialStoreProvider.overrideWithValue(store),
+      materialQrRepositoryProvider.overrideWithValue(
+        MockMaterialQrRepository(store, 'A'),
       ),
       listingWorkspaceProvider.overrideWithValue(listings),
       materialDraftStoreProvider.overrideWithValue(_Drafts()),
@@ -183,6 +193,44 @@ Future<void> _tap(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
+  testWidgets(
+    'Home → Material → công bố Listing → chi tiết, Back không về form cũ',
+    (tester) async {
+      final listings = _Listings();
+      await _mount(tester, listings, location: AppRoutes.home);
+      await _tap(tester, find.text('Tài liệu của tôi'));
+      await _tap(tester, find.text('Giải tích'));
+      await _tap(tester, find.text('Chọn tài liệu để đăng'));
+      await _tap(tester, find.byKey(const ValueKey('listing-offer-DONATE')));
+      await _tap(tester, find.byKey(const ValueKey('listing-publish')));
+      await _tap(tester, find.byKey(const ValueKey('confirm-action')));
+      expect(find.byType(ListingDetailsPage), findsOneWidget);
+      expect(listings.commands, hasLength(1));
+      await _tap(tester, find.byType(BackButton));
+      expect(find.byType(ListingFormPage), findsNothing);
+      expect(find.byKey(const ValueKey('material-qr-load')), findsOneWidget);
+    },
+  );
+  testWidgets(
+    'Router thật: Home → Material → QR, mỗi màn con Back về đúng nguồn',
+    (tester) async {
+      await _mount(tester, _Listings(), location: AppRoutes.home);
+      await _tap(tester, find.text('Tài liệu của tôi'));
+      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.byType(BackButton), findsOneWidget);
+      await _tap(tester, find.text('Giải tích'));
+      await _tap(tester, find.byKey(const ValueKey('material-qr-load')));
+      await _tap(tester, find.text('Mở QR lớn'));
+      expect(find.byType(MaterialQrPage), findsOneWidget);
+      await _tap(tester, find.byType(BackButton));
+      expect(find.byType(MaterialQrPage), findsNothing);
+      await _tap(tester, find.byType(BackButton));
+      expect(find.text('Tài liệu của tôi'), findsOneWidget);
+      await _tap(tester, find.byType(BackButton));
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(find.byType(NavigationBar), findsOneWidget);
+    },
+  );
   testWidgets(
     'Sửa Material từ SCR-10 lưu xong về form nguồn, không chồng trang chi tiết',
     (tester) async {

@@ -40,6 +40,10 @@ String safeAuthDestination(String? raw) {
   final handover = RegExp(r'^/handovers/[a-zA-Z0-9_-]+/(prepare|scan|ack)$');
   final request = RegExp(r'^/requests/new/[a-zA-Z0-9_-]+$');
   final materialEdit = RegExp(r'^/materials/[a-zA-Z0-9_-]+/edit$');
+  // Chỉ giữ UUID cho màn QR riêng tư; mọi query/token vẫn bị loại bỏ.
+  final materialQr = RegExp(
+    r'^/materials/[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}/qr$',
+  );
   if (path == AppRoutes.listingForm) {
     // SCR-10 dùng query cho ID: bỏ toàn bộ sẽ mất tài liệu/tin khi đăng nhập lại.
     // Chỉ giữ UUID đơn của hai trường này; không mang token hay cờ điều hướng qua Auth.
@@ -64,7 +68,8 @@ String safeAuthDestination(String? raw) {
           details.hasMatch(path) ||
           handover.hasMatch(path) ||
           request.hasMatch(path) ||
-          materialEdit.hasMatch(path)
+          materialEdit.hasMatch(path) ||
+          materialQr.hasMatch(path)
       ? path
       : AppRoutes.home;
 }
