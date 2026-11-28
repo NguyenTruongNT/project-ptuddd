@@ -128,7 +128,12 @@ class WorkflowTestBackend {
           });
         }
         if (request.url.path.endsWith('/logout')) return workflowResponse({});
-        if (!request.url.path.startsWith('/rest/v1/rpc/')) {
+        final path = request.url.path;
+        final table = path.startsWith('/rest/v1/')
+            ? path.substring('/rest/v1/'.length)
+            : null;
+        if (!path.startsWith('/rest/v1/rpc/') &&
+            !allowedTables.contains(table)) {
           throw StateError('Unexpected non-RPC data access');
         }
         requests.add(request);
@@ -145,6 +150,9 @@ class WorkflowTestBackend {
 
   late final SupabaseClient client;
   final requests = <http.Request>[];
+  // Bảng được phép truy cập thẳng (RLS đã mở, chưa có RPC), vd. notifications.
+  // Mặc định rỗng: mọi truy cập dữ liệu khác RPC vẫn bị coi là lỗi.
+  final allowedTables = <String>{};
   FutureOr<http.Response> Function(http.Request) onRpc = (_) =>
       workflowResponse([]);
 

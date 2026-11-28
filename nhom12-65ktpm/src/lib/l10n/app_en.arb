@@ -226,6 +226,8 @@
   "profileTransactionsHint": "Track purchases, gifts and loans",
   "profileDeliveriesHint": "Your material deliveries",
   "profileIssuesHint": "Keep track of reported problems",
+  "profileNotifications": "Notifications",
+  "profileNotificationsHint": "Updates on transactions, payments and issues",
   "@authCreateConfirmBody": {
     "placeholders": {
       "name": {

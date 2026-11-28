@@ -482,8 +482,9 @@ không nới quyền service_role, không mở endpoint test. Không cần Edge 
 `supabase/audits/material_qr.sql`, không in token/hash/khóa.
 
 Điểm còn phụ thuộc: camera QR Android/chuỗi bàn giao thuộc Đăng; SCR-05/06/Request sản phẩm
-thuộc Khanh; Notification của Sơn chưa lấy từ PR #30 chưa merge. Home không thêm unread giả
-hoặc tìm kiếm không hoạt động. Không diễn giải test QR nhập payload là camera scan thật hoặc
+thuộc Khanh. Chuông đã dùng module Thông báo của Sơn từ PR #30; backend sinh thông báo/RPC
+vẫn là phần triển khai riêng. Home không thêm unread giả hoặc tìm kiếm không hoạt động.
+Không diễn giải test QR nhập payload là camera scan thật hoặc
 nghiệm thu toàn hệ thống/Cloud. Xem đặc tả triển khai để đối chiếu các ca và trách nhiệm.
 
 
@@ -495,4 +496,11 @@ Kiểm kê 19:03:29 +07:00 giữ nguyên 222 Material, 176 Listing, 152 Transact
 148 Handover, 238 receipt, 363 Storage object và fingerprint dữ liệu gốc; 0 account QA,
 0 credential fixture, 0 PUBLISHED thiếu snapshot. Không nới quyền service_role hoặc
 đưa credential vào ứng dụng. Flutter vẫn 328 test đạt/7 opt-in bỏ qua, analyze sạch.
-Xem đặc tả triển khai §8 để đối chiếu phạm vi và kết quả; bàn giao 4 commit qua PR vào integration, chờ review trước khi merge.
+Xem đặc tả triển khai §8 để đối chiếu phạm vi và kết quả; bàn giao qua PR vào integration, giữ nguyên lịch sử commit và chờ review trước khi merge.
+
+Đồng bộ integration ngày 28/11/2026 sau PR #30: giải quyết conflict shell, giữ
+refresh Home và chuông Thông báo; router giữ cả Home/QR/SCR-24. Analyze sạch,
+Flutter **368 test đạt**, 7 integration opt-in bỏ qua. Giữ nguyên migration
+QR/Home `20261127000200`; migration Request `20261127000400` thuộc PR #32.
+Không chạy lại JWT/pgTAP local do Docker daemon chưa chạy và không triển khai
+lại Cloud trong đợt này. Chi tiết ở đặc tả QR/Home §9.

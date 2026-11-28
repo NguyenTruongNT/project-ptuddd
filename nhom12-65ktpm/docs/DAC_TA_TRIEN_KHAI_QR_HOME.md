@@ -123,14 +123,15 @@ lại read model theo quyền hiện thời; lỗi ảnh có placeholder.
   chuỗi A→C→B/hoàn trả, ảnh và receiver ACK trên môi trường chung.
 - **Khanh:** SCR-06 tiếp tục dùng ListingDetails; Home không dùng Material owner
   query để dựng chi tiết công khai. Request/Khám phá sản phẩm cần nghiệm thu khi merge.
-- **Sơn:** Home dùng read RPC đếm giao dịch A/B. Không thay mapping gateway chung,
-  không triển khai backend Notification hoặc lấy code từ PR #30 chưa merge.
+- **Sơn:** Home dùng read RPC đếm giao dịch A/B. Chuông dùng module Thông báo
+  đã tích hợp qua PR #30, lấy tổng chưa đọc độc lập. Backend sinh thông báo/RPC
+  vẫn là phần triển khai riêng theo `DE_XUAT_BACKEND_THONG_BAO.md`.
 
 Migration bổ sung: `20261127000200_material_qr_home.sql`, chạy sau migration
 Delivery/Handover `20261127000100`. Giữ nguyên lịch sử migration đã chia sẻ.
 **Đã triển khai Cloud development ngày 27/11/2026** theo yêu cầu triển khai của
 nhóm trưởng, gồm 3 migration còn thiếu `20261126000500`, `20261127000100`, `20261127000200`.
-Ứng dụng dùng cấu hình mặc định đã gọi được RPC QR/Home Cloud. Bàn giao bằng 4 commit trên nhánh `feature/nhom12/truong-qr-home`; merge sau review.
+Ứng dụng dùng cấu hình mặc định đã gọi được RPC QR/Home Cloud. Bàn giao trên nhánh `feature/nhom12/truong-qr-home`, giữ nguyên lịch sử commit và merge sau review.
 
 Kiểm thử và lệnh chạy được ghi tại `CONTRACTS.md` §16 và `src/README.md`.
 Kết quả tự động không thay thế review contract chung và nghiệm thu camera/Cloud.
@@ -188,4 +189,22 @@ Chạy Cloud bằng `flutter run -d chrome` với cấu hình mặc định, ho�
 Dừng phiên app có local defines trước khi chạy lại. Script chủ động:
 `tool/test_qr_home_cloud.ps1`; không tự triển khai DB khi chạy script này.
 Camera đọc QR thực tế và chuỗi bàn giao đầy đủ vẫn cần phối hợp Đăng;
-không diễn giải test nhập payload thành nghiệm thu camera thật. Bàn giao PR vào `integration/nhom12-65ktpm`, giữ 4 commit và chờ thành viên khác review.
+không diễn giải test nhập payload thành nghiệm thu camera thật. Bàn giao PR vào `integration/nhom12-65ktpm`, giữ nguyên lịch sử commit và chờ thành viên khác review.
+
+## 9. Đồng bộ nhánh tích hợp ngày 28/11/2026
+
+- Review của Khanh trên PR #31 xác nhận giao điểm Request không có vấn đề khác;
+  #32 đã đổi migration Request sang `20261127000400` tại `c7cb3a7`.
+  #31 giữ nguyên migration QR/Home `20261127000200` đã triển khai Cloud.
+- Đồng bộ `integration/nhom12-65ktpm` sau PR #30 (`f74ceeb`). Xử lý conflict
+  `studyshare_shell.dart`, giữ cả tải lại Home khi chọn tab và chuông Thông báo.
+  Router giữ Home thật, QR Material, màn Material ngoài shell và SCR-24 của Sơn.
+  Router của #32 vẫn được Khanh đồng bộ trên nhánh #32 theo review, không lấy
+  code hoặc migration Request chưa merge vào #31.
+- Kiểm tra sau ghép: `flutter analyze --no-pub` không có issue;
+  `flutter test --no-pub --reporter expanded` đạt **368 test**, 7 integration
+  opt-in bỏ qua. Đã sinh lại l10n, kiểm tra 14 phiên bản migration không trùng
+  và nội dung migration QR/Home giữ nguyên. Không còn conflict marker.
+- Không chạy lại JWT/pgTAP local trong đợt đồng bộ vì Docker daemon chưa chạy;
+  không thay đổi migration hoặc triển khai lại Cloud. Kết quả local/Cloud ngày
+  27/11 ở §7–8 là kết quả của đợt trước, không gộp vào số test vừa chạy.

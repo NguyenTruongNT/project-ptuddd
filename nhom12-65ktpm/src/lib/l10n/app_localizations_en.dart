@@ -670,6 +670,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileIssuesHint => 'Keep track of reported problems';
 
   @override
+  String get profileNotifications => 'Notifications';
+
+  @override
+  String get profileNotificationsHint =>
+      'Updates on transactions, payments and issues';
+
+  @override
   String get matTitle => 'My materials';
 
   @override

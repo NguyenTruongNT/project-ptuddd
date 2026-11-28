@@ -46,7 +46,18 @@ class WorkflowRpc {
     }
   }
 
-  Future<Object?> _call(String name, Map<String, dynamic> params) async {
+  Future<Object?> _call(String name, Map<String, dynamic> params) => _send(
+    name,
+    (token) => client
+        .rpc(name, params: params)
+        .setHeader('Authorization', 'Bearer $token'),
+  );
+
+  // Gửi một request PostgREST bằng JWT của actor đã tạo repository.
+  Future<Object?> _send(
+    String name,
+    Future<Object?> Function(String token) request,
+  ) async {
     _session();
     if (client.auth.currentSession!.isExpired) {
       await client.auth.refreshSession().timeout(timeout);
@@ -56,10 +67,7 @@ class WorkflowRpc {
     // đang chờ; không để request bị gửi bằng JWT của tài khoản vừa đăng nhập.
     final token = client.auth.currentSession!.accessToken;
     try {
-      final result = await client
-          .rpc(name, params: params)
-          .setHeader('Authorization', 'Bearer $token')
-          .timeout(timeout);
+      final result = await request(token).timeout(timeout);
       _session();
       return result;
     } on PostgrestException catch (error) {
@@ -81,6 +89,24 @@ class WorkflowRpc {
     } catch (error) {
       _session();
       throw _error(error, command: false);
+    }
+  }
+
+  /// Truy cập trực tiếp bảng mà RLS đã mở cho người dùng (vd. notifications)
+  /// khi server chưa có RPC tương ứng. `request` nhận client và JWT đã ghim,
+  /// phải tự gắn header `Authorization: Bearer <token>`. Lỗi được ánh xạ như
+  /// RPC: `command: true` coi timeout là chưa rõ kết quả (TIMEOUT_UNKNOWN).
+  Future<T> table<T>(
+    String name,
+    Future<Object?> Function(SupabaseClient client, String token) request,
+    T Function(Object?) decode, {
+    bool command = false,
+  }) async {
+    try {
+      return decode(await _send(name, (token) => request(client, token)));
+    } catch (error) {
+      _session();
+      throw _error(error, command: command);
     }
   }
 

@@ -673,6 +673,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get profileIssuesHint => 'Theo dõi vấn đề cần giải quyết';
 
   @override
+  String get profileNotifications => 'Thông báo';
+
+  @override
+  String get profileNotificationsHint =>
+      'Cập nhật về giao dịch, thanh toán và sự cố';
+
+  @override
   String get matTitle => 'Tài liệu của tôi';
 
   @override

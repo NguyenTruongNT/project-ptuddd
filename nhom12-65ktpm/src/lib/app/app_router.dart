@@ -15,6 +15,7 @@ import '../features/materials/presentation/material_qr_panel.dart';
 import '../features/issues/presentation/create_issue_page.dart';
 import '../features/issues/presentation/issue_details_page.dart';
 import '../features/issues/presentation/issues_list_page.dart';
+import '../features/notifications/presentation/notifications_page.dart';
 import '../features/profile_settings/settings_page.dart';
 import '../features/transactions/presentation/my_transactions_page.dart';
 import '../features/transactions/presentation/transaction_details_page.dart';
@@ -266,7 +267,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             IssueDetailsPage(issueId: state.pathParameters['issueId']!),
       ),
-      _placeholder(AppRoutes.notifications, 'SCR-24', 'Thông báo'),
+      // SCR-24 – module Notification (Sơn).
+      GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationsPage(),
+      ),
       GoRoute(
         path: AppRoutes.settings,
         builder: (context, state) => const SettingsPage(),
