@@ -1310,6 +1310,18 @@ abstract class AppLocalizations {
   /// **'Theo dõi vấn đề cần giải quyết'**
   String get profileIssuesHint;
 
+  /// No description provided for @profileNotifications.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thông báo'**
+  String get profileNotifications;
+
+  /// No description provided for @profileNotificationsHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cập nhật về giao dịch, thanh toán và sự cố'**
+  String get profileNotificationsHint;
+
   /// No description provided for @matTitle.
   ///
   /// In vi, this message translates to:

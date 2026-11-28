@@ -26,10 +26,15 @@ void main() {
   });
 
   test('Mỗi người chỉ thấy thông báo dành cho mình', () async {
-    final b = MockNotificationQueryRepository(demoViewerId: MockFixtures.userB);
-    final a = MockNotificationQueryRepository(demoViewerId: MockFixtures.userA);
-    expect((await b.getMyNotifications()).length, 1);
-    expect(await a.getMyNotifications(), isEmpty);
+    final store = MockTransactionStore.fromFixtures();
+    MockNotificationQueryRepository of(String viewer) =>
+        MockNotificationQueryRepository(demoViewerId: viewer, store: store);
+    final b = await of(MockFixtures.userB).getMyNotifications();
+    final a = await of(MockFixtures.userA).getMyNotifications();
+    expect(b.map((n) => n.id), ['notice-b-01']);
+    expect(a.map((n) => n.id), ['notice-a-01']);
+    expect(await of(MockFixtures.userC).getMyNotifications(), isEmpty);
+    expect(await of(MockFixtures.outsider).getMyNotifications(), isEmpty);
   });
 
   test('Chỉ owner lấy được tài liệu qua mock cá nhân', () async {

@@ -2,6 +2,7 @@ import '../../../core/contracts/command_result.dart';
 import '../../../core/contracts/models/transaction.dart';
 import '../../../core/errors/app_error.dart';
 import '../../../core/mock/mock_fixtures.dart';
+import '../../../core/mock/mock_notification_fanout.dart';
 import '../../../core/mock/mock_transaction_query_repository.dart';
 import '../../../core/mock/mock_transaction_store.dart';
 
@@ -74,11 +75,14 @@ class MockCommandRunner {
     final role = txn.ownerAtAcceptance == actorId
         ? TransactionViewerRole.owner
         : TransactionViewerRole.receiver;
+    final mark = store.eventMark;
     final outcome = body(txn, role);
     switch (outcome) {
       case MockMutationFail(:final code, :final safeMessage):
         return CommandError(code, safeMessage);
       case MockMutationOk(:final eventId):
+        // Cùng "giao dịch DB" với Event: báo cho bên còn lại.
+        fanOutNotifications(store, mark, actorId);
         store.saveReceipt(actorId, command, idempotencyKey,
             MockCommandReceipt(payloadHash: payloadHash, eventId: eventId));
         return CommandOk(await _details(transactionId), eventId);

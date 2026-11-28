@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/auth/auth_session_providers.dart';
+import '../features/notifications/presentation/widgets/notification_bell.dart';
 
 import '../l10n/app_localizations.dart';
 import 'app_routes.dart';
@@ -21,7 +22,10 @@ class StudyShareShell extends ConsumerWidget {
           navigationShell.currentIndex == 4 ||
               GoRouterState.of(context).uri.path == AppRoutes.publishTab
           ? null
-          : AppBar(title: const Text('StudyShare')),
+          : AppBar(
+              title: const Text('StudyShare'),
+              actions: const [NotificationBell()],
+            ),
       body: Column(
         children: [
           if (ref.watch(demoModeProvider))
