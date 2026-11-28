@@ -12,6 +12,7 @@ class HandoverEvidenceStorage {
   const HandoverEvidenceStorage(this.client);
 
   static const bucketId = 'studyshare-handover-evidence';
+  static const signedUrlTtl = Duration(seconds: 300);
   static const _uuid = Uuid();
 
   final SupabaseClient? client;
@@ -50,14 +51,15 @@ class HandoverEvidenceStorage {
   }
 
   /// Tạo Signed URL ngắn hạn (5 phút) cho một đường dẫn ảnh private.
-  Future<String?> createSignedUrl(String privatePath) async {
+  /// Ném lỗi nếu chưa đăng nhập hoặc Storage từ chối truy cập.
+  Future<String> createSignedUrl(String privatePath) async {
     final sb = client;
-    if (sb == null || sb.auth.currentUser == null) return null;
-    try {
-      return await sb.storage.from(bucketId).createSignedUrl(privatePath, 300);
-    } catch (_) {
-      return null;
+    if (sb == null || sb.auth.currentUser == null) {
+      throw StateError('Chưa đăng nhập để tạo liên kết ảnh minh chứng.');
     }
+    return sb.storage
+        .from(bucketId)
+        .createSignedUrl(privatePath, signedUrlTtl.inSeconds);
   }
 }
 

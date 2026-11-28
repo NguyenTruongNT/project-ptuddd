@@ -31,19 +31,93 @@ final handoverDetailsProvider = FutureProvider.family<Handover?, String>((
   return repo.getHandover(handoverId);
 });
 
+/// Đồng hồ chuẩn để kiểm tra TTL của Signed URL (có thể override trong test).
+final evidenceClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
+
+/// Kết quả tải Signed URL ảnh minh chứng, phân biệt rõ chế độ demo với lỗi Storage.
+class HandoverEvidenceUrls {
+  const HandoverEvidenceUrls({
+    required this.urls,
+    this.failedCount = 0,
+    this.isDemoMode = false,
+    this.expiresAt,
+  });
+
+  final List<String> urls;
+  final int failedCount;
+  final bool isDemoMode;
+  final DateTime? expiresAt;
+
+  bool get hasPartialFailure => urls.isNotEmpty && failedCount > 0;
+
+  bool isExpiredAt(DateTime now) {
+    final exp = expiresAt;
+    if (exp == null) return false;
+    return !now.isBefore(exp);
+  }
+}
+
 /// Danh sách Signed URL ngắn hạn cho ảnh minh chứng thật (từ bucket private).
-final handoverEvidenceSignedUrlsProvider =
-    FutureProvider.family<List<String>, String>((ref, handoverId) async {
+/// Tự hủy khi rời màn hình để lần mở lại sau luôn cấp URL mới.
+final handoverEvidenceSignedUrlsProvider = FutureProvider.autoDispose
+    .family<HandoverEvidenceUrls, String>((ref, handoverId) async {
   final repo = ref.watch(handoverRepositoryProvider);
   final storage = ref.watch(handoverEvidenceStorageProvider);
-  final paths = await repo.getEvidencePaths(handoverId);
-  if (paths.isEmpty || !storage.isCloudEnabled) return const [];
-  final urls = <String>[];
-  for (final path in paths) {
-    final url = await storage.createSignedUrl(path);
-    if (url != null) urls.add(url);
+  final now = ref.watch(evidenceClockProvider);
+
+  // Chỉ chế độ demo tường minh (không có Supabase client) mới hiển thị ô mô phỏng.
+  if (storage.client == null && !storage.isCloudEnabled) {
+    return const HandoverEvidenceUrls(
+      urls: [],
+      isDemoMode: true,
+    );
   }
-  return List.unmodifiable(urls);
+
+  if (!storage.isCloudEnabled) {
+    throw StateError('Chưa đăng nhập để tải ảnh minh chứng.');
+  }
+
+  final paths = await repo.getEvidencePaths(handoverId);
+  if (paths.isEmpty) {
+    return const HandoverEvidenceUrls(
+      urls: [],
+      isDemoMode: false,
+    );
+  }
+
+  final urls = <String>[];
+  var failedCount = 0;
+  Object? lastError;
+  StackTrace? lastStack;
+
+  for (final path in paths) {
+    try {
+      final url = await storage.createSignedUrl(path);
+      if (url.isNotEmpty) {
+        urls.add(url);
+      } else {
+        failedCount++;
+      }
+    } catch (e, st) {
+      failedCount++;
+      lastError = e;
+      lastStack = st;
+    }
+  }
+
+  if (urls.isEmpty && failedCount > 0) {
+    if (lastError != null && lastStack != null) {
+      Error.throwWithStackTrace(lastError, lastStack);
+    }
+    throw StateError('Không thể tạo liên kết ảnh minh chứng.');
+  }
+
+  return HandoverEvidenceUrls(
+    urls: List.unmodifiable(urls),
+    failedCount: failedCount,
+    isDemoMode: false,
+    expiresAt: now().add(HandoverEvidenceStorage.signedUrlTtl),
+  );
 });
 
 /// Làm mới dữ liệu bàn giao sau khi chụp ảnh / xác nhận
