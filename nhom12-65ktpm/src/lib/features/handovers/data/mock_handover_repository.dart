@@ -341,4 +341,9 @@ class MockHandoverRepository implements HandoverFeatureRepository {
     }
     return CommandOk(true, 'evt-fallback-verified-$handoverId');
   }
+
+  @override
+  Future<List<String>> getEvidencePaths(String handoverId) async {
+    return const [];
+  }
 }

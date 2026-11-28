@@ -8,16 +8,13 @@ import '../data/mock_delivery_repository.dart';
 import '../data/supabase_delivery_repository.dart';
 import '../domain/delivery_feature_repository.dart';
 
-/// Provider cung cấp Repository giao hộ: dùng Supabase RPC thật khi đã đăng nhập,
-/// chỉ dùng Mock khi đang ở chế độ Demo không có Supabase client.
+/// Provider cung cấp Repository giao hộ: dùng Supabase RPC thật khi đã cấu hình,
+/// chỉ dùng Mock khi chưa khởi tạo Supabase client (demo/widget test).
 final deliveryRepositoryProvider = Provider<DeliveryFeatureRepository>((ref) {
   final client = ref.watch(supabaseClientProvider);
-  final boundary = ref.watch(sessionBoundaryProvider);
-  if (client != null && boundary.isNotEmpty && boundary != 'demo') {
+  if (client != null) {
     final rpc = ref.watch(workflowRpcProvider);
-    if (rpc != null) {
-      return SupabaseDeliveryRepository(rpc);
-    }
+    if (rpc != null) return SupabaseDeliveryRepository(rpc);
   }
   final actorId = ref.watch(demoViewerIdProvider);
   return MockDeliveryRepository(actorId: actorId);

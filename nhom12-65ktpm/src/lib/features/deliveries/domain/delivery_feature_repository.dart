@@ -10,6 +10,8 @@ class DeliveryTaskBundle {
     this.pickupDescription,
     this.dropoffDescription,
     this.returnHandoverId,
+    this.leg1HandoverId,
+    this.leg2HandoverId,
   });
 
   final DeliveryTask task;
@@ -17,6 +19,8 @@ class DeliveryTaskBundle {
   final String? pickupDescription;
   final String? dropoffDescription;
   final String? returnHandoverId;
+  final String? leg1HandoverId;
+  final String? leg2HandoverId;
 }
 
 /// Hợp đồng mở rộng cho phân hệ Delivery để cả Mock và Supabase đều đáp ứng

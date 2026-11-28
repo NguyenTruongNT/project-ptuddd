@@ -94,6 +94,8 @@ class MockDeliveryRepository implements DeliveryFeatureRepository {
       pickupDescription: canSee ? desc?.$1 : null,
       dropoffDescription: canSee ? desc?.$2 : null,
       returnHandoverId: _returnHandovers[taskId],
+      leg1HandoverId: taskId == 'task-donate-01' ? 'handover-delivery-h1' : null,
+      leg2HandoverId: taskId == 'task-donate-01' ? 'handover-delivery-h2' : null,
     );
   }
 

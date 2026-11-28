@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/backend/workflow_rpc.dart';
 import '../../../core/contracts/models/handover.dart';
 import '../../../core/providers/mock_query_providers.dart';
+import '../data/handover_evidence_storage.dart';
 import '../data/mock_handover_repository.dart';
 import '../data/supabase_handover_repository.dart';
 import '../domain/handover_feature_repository.dart';
@@ -30,6 +31,21 @@ final handoverDetailsProvider = FutureProvider.family<Handover?, String>((
   return repo.getHandover(handoverId);
 });
 
+/// Danh sách Signed URL ngắn hạn cho ảnh minh chứng thật (từ bucket private).
+final handoverEvidenceSignedUrlsProvider =
+    FutureProvider.family<List<String>, String>((ref, handoverId) async {
+  final repo = ref.watch(handoverRepositoryProvider);
+  final storage = ref.watch(handoverEvidenceStorageProvider);
+  final paths = await repo.getEvidencePaths(handoverId);
+  if (paths.isEmpty || !storage.isCloudEnabled) return const [];
+  final urls = <String>[];
+  for (final path in paths) {
+    final url = await storage.createSignedUrl(path);
+    if (url != null) urls.add(url);
+  }
+  return List.unmodifiable(urls);
+});
+
 /// Làm mới dữ liệu bàn giao sau khi chụp ảnh / xác nhận
 void refreshHandover(WidgetRef ref, String handoverId) {
   final transactionId = ref
@@ -38,6 +54,7 @@ void refreshHandover(WidgetRef ref, String handoverId) {
       ?.value
       ?.transactionId;
   ref.invalidate(handoverDetailsProvider(handoverId));
+  ref.invalidate(handoverEvidenceSignedUrlsProvider(handoverId));
   // Giữ store demo hiện tại, nhất là cờ QR sai; refresh không được xóa trạng
   // thái nghiệp vụ rồi cho phép fallback. Chỉ tải lại các read model liên quan.
   if (transactionId != null) refreshTransaction(ref, transactionId);
