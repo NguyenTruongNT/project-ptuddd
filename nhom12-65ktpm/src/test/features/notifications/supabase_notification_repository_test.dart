@@ -14,6 +14,7 @@ import 'package:studyshare/features/notifications/data/supabase_notification_rep
 import 'package:studyshare/features/notifications/providers/notification_providers.dart';
 
 import '../../support/workflow_rpc_fixture.dart';
+import 'notification_db_fixture.dart';
 
 const _noticeId = '0b9a2f3e-1111-4c2d-9e8f-000000000001';
 
@@ -205,9 +206,100 @@ void main() {
     expect((first as CommandError<int>).code, DomainErrorCode.timeoutUnknown);
 
     final retry = await repo.markAllRead(idempotencyKey: 'k-retry');
-    expect(retry, isA<CommandOk<int>>());
-    // Retry không gọi lại GET lấy tập unread mới, chỉ PATCH đúng tập ID ban đầu.
-    expect(backend.requests.map((r) => r.method), ['GET', 'PATCH', 'PATCH']);
+    // PATCH lần retry trả [] nhưng đối soát xác nhận 2 thông báo của ý định đã đọc.
+    expect((retry as CommandOk<int>).data, 2);
+    // Retry không lấy lại tập unread mới: chỉ PATCH đúng tập cũ rồi đối soát.
+    expect(backend.requests.map((r) => r.method),
+        ['GET', 'PATCH', 'PATCH', 'GET']);
+    expect(backend.requests.last.url.queryParameters['read_at'], 'not.is.null');
+    expect(backend.requests.last.url.queryParameters['id'], isNot(contains(id3New)));
+  });
+
+  group('Đánh dấu tất cả: đối soát sau mất ACK (DB có trạng thái)', () {
+    Future<(NotificationDbFixture, SupabaseNotificationRepository,
+        WorkflowTestBackend)> world() async {
+      final (backend, rpc) = await _backend();
+      final db = NotificationDbFixture();
+      backend.onRpc = db.handle;
+      return (db, SupabaseNotificationRepository(rpc), backend);
+    }
+
+    test('DB đã ghi nhưng mất ACK, có thông báo mới: retry trả đúng 2, '
+        'thông báo mới vẫn chưa đọc', () async {
+      final (db, repo, _) = await world();
+      final first2 = [db.add(), db.add()];
+      db.add(recipient: workflowActorB); // Của người khác, không được chạm.
+      db.onAfterWrite = (_, number) {
+        if (number == 1) throw http.ClientException('lost ack');
+      };
+
+      final lost = await repo.markAllRead(idempotencyKey: 'k1');
+      expect((lost as CommandError<int>).code, DomainErrorCode.timeoutUnknown);
+      // Server thật đã ghi dù client không nhận được ACK.
+      expect(first2.every(db.isRead), isTrue);
+
+      final newcomer = db.add();
+      final retry = await repo.markAllRead(idempotencyKey: 'k1');
+
+      expect((retry as CommandOk<int>).data, 2);
+      expect(db.isRead(newcomer), isFalse);
+      expect(db.unreadIds, containsAll([newcomer]));
+      // Cùng key gọi lại lần nữa: trả kết quả đã chốt, không gửi request.
+      final requestsBefore = db.patches;
+      expect(
+          ((await repo.markAllRead(idempotencyKey: 'k1')) as CommandOk<int>)
+              .data,
+          2);
+      expect(db.patches, requestsBefore);
+    });
+
+    test('Mất ACK ở chunk giữa: retry không PATCH lại chunk đã xong, '
+        'đếm đủ cả chunk đã ghi', () async {
+      final (db, repo, _) = await world();
+      final ids = [for (var i = 0; i < 450; i++) db.add()];
+      // 450 dòng = 3 chunk (200, 200, 50); chunk 2 ghi xong rồi mất ACK.
+      db.onAfterWrite = (_, number) {
+        if (number == 2) throw http.ClientException('lost ack');
+      };
+
+      final lost = await repo.markAllRead(idempotencyKey: 'k1');
+      expect((lost as CommandError<int>).code, DomainErrorCode.timeoutUnknown);
+      expect(db.patches, 2);
+      expect(ids.where(db.isRead).length, 400);
+
+      db.onAfterWrite = null;
+      final retry = await repo.markAllRead(idempotencyKey: 'k1');
+
+      expect((retry as CommandOk<int>).data, 450);
+      expect(ids.every(db.isRead), isTrue);
+      // Chunk 1 đã có ACK nên không gửi lại; chunk 2 (đối soát) và chunk 3.
+      expect(db.patches, 4);
+    });
+
+    test('Request ở chunk giữa không tới server: retry ghi nốt, đếm đủ', () async {
+      final (db, repo, _) = await world();
+      final ids = [for (var i = 0; i < 450; i++) db.add()];
+      db.onBeforeWrite = (_, number) {
+        if (number == 2) throw http.ClientException('offline');
+      };
+
+      final lost = await repo.markAllRead(idempotencyKey: 'k1');
+      expect(lost, isA<CommandError<int>>());
+      expect(ids.where(db.isRead).length, 200);
+
+      db.onBeforeWrite = null;
+      final retry = await repo.markAllRead(idempotencyKey: 'k1');
+      expect((retry as CommandOk<int>).data, 450);
+      expect(ids.every(db.isRead), isTrue);
+    });
+
+    test('Không có gì chưa đọc: trả 0, không PATCH', () async {
+      final (db, repo, _) = await world();
+      db.add(read: true);
+      final result = await repo.markAllRead(idempotencyKey: 'k1');
+      expect((result as CommandOk<int>).data, 0);
+      expect(db.patches, 0);
+    });
   });
 
   group('Provider chọn nguồn dữ liệu', () {

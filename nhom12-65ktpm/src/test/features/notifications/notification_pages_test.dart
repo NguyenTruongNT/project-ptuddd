@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -9,6 +11,7 @@ import 'package:studyshare/core/contracts/models/notification_item.dart';
 import 'package:studyshare/core/contracts/repositories/notification_repository.dart';
 import 'package:studyshare/core/errors/app_error.dart';
 import 'package:studyshare/core/mock/mock_fixtures.dart';
+import 'package:studyshare/core/mock/mock_notification_query_repository.dart';
 import 'package:studyshare/core/mock/mock_transaction_store.dart';
 import 'package:studyshare/core/providers/mock_query_providers.dart';
 import 'package:studyshare/features/notifications/presentation/notifications_page.dart';
@@ -28,6 +31,7 @@ Widget _app({
   String viewer = a,
   String initial = '/notifications',
   List<Override> overrides = const [],
+  Override? viewerOverride,
 }) {
   final router = GoRouter(
     initialLocation: initial,
@@ -59,7 +63,7 @@ Widget _app({
     key: UniqueKey(),
     overrides: [
       workflowRpcProvider.overrideWithValue(null),
-      demoViewerIdProvider.overrideWith((ref) => viewer),
+      viewerOverride ?? demoViewerIdProvider.overrideWith((ref) => viewer),
       mockTransactionStoreProvider.overrideWith((ref) => store),
       ...overrides,
     ],
@@ -303,6 +307,181 @@ void main() {
     expect(find.text('Chưa đọc (1)'), findsOneWidget);
     expect(find.text('Người mua báo đã chuyển khoản'), findsOneWidget);
   });
+
+  group('Đổi phiên khi hộp thư đang mở', _sessionTests);
+}
+
+// Người xem có thể đổi khi màn đang mở (đăng xuất A rồi đăng nhập B).
+class _Viewer extends Notifier<String> {
+  @override
+  String build() => a;
+  void change(String next) => state = next;
+}
+
+final _viewerProvider = NotifierProvider<_Viewer, String>(_Viewer.new);
+
+// Hộp thư A quá 100 thông báo (preview riêng của A), B có một thông báo.
+MockTransactionStore _twoInboxes() {
+  var tick = DateTime.utc(2026, 11, 24);
+  final store = MockTransactionStore.fromFixtures(clock: () => tick);
+  for (var i = 0; i < 120; i++) {
+    tick = DateTime.utc(2026, 11, 24).add(Duration(minutes: i));
+    store.appendNotification(
+      recipientId: a,
+      type: 'PAYMENT_REPORTED',
+      entityType: NotificationEntityType.transaction,
+      entityId: 'txn-sell-01',
+      safePreview: 'Riêng của A #$i',
+    );
+  }
+  tick = DateTime.utc(2026, 11, 26);
+  store.appendNotification(
+    recipientId: MockFixtures.userB,
+    type: 'SELLER_PAYMENT_CONFIRMED',
+    entityType: NotificationEntityType.transaction,
+    entityId: 'txn-sell-01',
+    safePreview: 'Riêng của B',
+  );
+  return store;
+}
+
+// Bọc mock thật; trang sau (offset > 0) và trang đầu (khi delayFirstPage)
+// chờ Completer để chủ động cho kết quả về muộn.
+class _GatedQuery implements NotificationQueryRepository {
+  _GatedQuery(this.inner, this.gates, {this.delayFirstPage = false});
+  final NotificationQueryRepository inner;
+  final _Gates gates;
+  final bool delayFirstPage;
+
+  @override
+  Future<List<AppNotification>> getMyNotifications({
+    int offset = 0,
+    int limit = 100,
+  }) async {
+    final result = await inner.getMyNotifications(offset: offset, limit: limit);
+    if (offset > 0) await gates.nextPage.future;
+    if (offset == 0 && delayFirstPage) await gates.firstPage.future;
+    return result;
+  }
+
+  @override
+  Future<int> getUnreadCount() => inner.getUnreadCount();
+}
+
+class _Gates {
+  final nextPage = Completer<void>();
+  final firstPage = Completer<void>();
+}
+
+void _sessionTests() {
+  Iterable<Text> aPreviews(WidgetTester tester) => tester
+      .widgetList<Text>(find.byType(Text))
+      .where((t) => (t.data ?? '').startsWith('Riêng của A'));
+
+  testWidgets('A tải trang 2 rồi đổi sang B khi màn đang mở: không còn dữ liệu A',
+      (tester) async {
+    final store = _twoInboxes();
+    await tester.pumpWidget(_app(
+      store: store,
+      viewerOverride:
+          demoViewerIdProvider.overrideWith((ref) => ref.watch(_viewerProvider)),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(find.text('Tải thêm thông báo'), 400);
+    await tester.tap(find.text('Tải thêm thông báo'));
+    await tester.pumpAndSettle();
+    // Trang 2 của A đã được ghép (thông báo cũ nhất của A).
+    await tester.scrollUntilVisible(find.text('Riêng của A #0'), 400);
+
+    final container = ProviderScope.containerOf(
+        tester.element(find.byType(NotificationsPage)));
+    container.read(_viewerProvider.notifier).change(MockFixtures.userB);
+    await tester.pumpAndSettle();
+
+    expect(aPreviews(tester), isEmpty);
+    expect(find.text('Riêng của B'), findsOneWidget);
+    expect(find.text('Tải thêm thông báo'), findsNothing);
+  });
+
+  testWidgets('Đổi phiên lúc đang tải thêm: trang của A về muộn bị bỏ, '
+      'không hiện A trong lúc B đang tải', (tester) async {
+    final store = _twoInboxes();
+    final gates = _Gates();
+    await tester.pumpWidget(_app(
+      store: store,
+      viewerOverride:
+          demoViewerIdProvider.overrideWith((ref) => ref.watch(_viewerProvider)),
+      overrides: [
+        notificationQueryRepositoryProvider.overrideWith((ref) {
+          final viewer = ref.watch(demoViewerIdProvider);
+          return _GatedQuery(
+            MockNotificationQueryRepository(demoViewerId: viewer, store: store),
+            gates,
+            delayFirstPage: viewer == MockFixtures.userB,
+          );
+        }),
+      ],
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(find.text('Tải thêm thông báo'), 400);
+    await tester.tap(find.text('Tải thêm thông báo'));
+    await tester.pump(); // Đang chờ trang 2 của A.
+
+    final container = ProviderScope.containerOf(
+        tester.element(find.byType(NotificationsPage)));
+    container.read(_viewerProvider.notifier).change(MockFixtures.userB);
+    await tester.pump();
+    await tester.pump();
+
+    // B đang tải: hiện loading, không giữ danh sách của A.
+    expect(aPreviews(tester), isEmpty);
+
+    // Trang 2 của A về muộn, rồi B tải xong.
+    gates.nextPage.complete();
+    await tester.pump();
+    gates.firstPage.complete();
+    await tester.pumpAndSettle();
+
+    expect(aPreviews(tester), isEmpty);
+    expect(find.text('Riêng của B'), findsOneWidget);
+    expect(find.text('Tải thêm thông báo'), findsNothing);
+  });
+
+  testWidgets('Đánh dấu tất cả: không kết luận hết chưa đọc từ count = 0',
+      (tester) async {
+    final store = _store();
+    await tester.pumpWidget(_app(
+      store: store,
+      overrides: [
+        // Retry ý định cũ trả 0 nhưng hộp thư vẫn còn thông báo chưa đọc.
+        notificationRepositoryProvider.overrideWithValue(_ZeroMarkAll()),
+      ],
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Đánh dấu tất cả đã đọc'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Không còn thông báo chưa đọc'), findsNothing);
+    expect(
+      find.text('Không có thông báo nào cần đánh dấu thêm. '
+          'Vẫn còn 1 thông báo chưa đọc mới đến.'),
+      findsOneWidget,
+    );
+  });
+}
+
+class _ZeroMarkAll implements NotificationRepository {
+  @override
+  Future<CommandResult<AppNotification>> markRead(String notificationId,
+          {required String idempotencyKey}) async =>
+      const CommandError(DomainErrorCode.unexpectedError, 'x');
+
+  @override
+  Future<CommandResult<int>> markAllRead({required String idempotencyKey}) async =>
+      const CommandOk(0, null);
 }
 
 class _TimeoutCommands implements NotificationRepository {

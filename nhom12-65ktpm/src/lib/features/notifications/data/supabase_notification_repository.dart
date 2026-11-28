@@ -85,16 +85,25 @@ class SupabaseNotificationQueryRepository
   );
 }
 
+// Một ý định "đánh dấu tất cả" theo (actor, idempotency key).
+// - targetIds: tập chưa đọc chốt ở lần thử đầu; retry không lấy lại tập mới để
+//   không đánh dấu nhầm thông báo đến sau.
+// - confirmedIds: các ID trong targetIds đã được server xác nhận là đã đọc,
+//   tích lũy qua mọi lần thử (kể cả chunk đã ghi nhưng mất ACK).
+// Kết quả trả về = confirmedIds.length, cùng nghĩa với mock: số thông báo chưa
+// đọc lúc bắt đầu ý định nay đã ở trạng thái đã đọc. Không phải "hộp thư hết
+// thông báo chưa đọc".
 class _MarkAllIntent {
   _MarkAllIntent(this.targetIds);
   final List<String> targetIds;
-  int? acknowledgedCount;
+  final Set<String> confirmedIds = {};
+  bool completed = false;
 }
 
 // ACK của hai lệnh dưới đây là các dòng server trả về sau UPDATE (read_at do
 // server ghi), không có TransactionEvent vì đọc thông báo không đổi nghiệp vụ.
-// `markAllRead` cố định tập ID chưa đọc của lần thử đầu theo (actor, key)
-// để khi mất ACK và retry sẽ không đánh dấu nhầm thông báo mới vừa đến.
+// `markAllRead` cố định tập ID chưa đọc của lần thử đầu theo (actor, key) và
+// đối soát kết quả qua các lần retry (xem _MarkAllIntent).
 class SupabaseNotificationRepository implements NotificationRepository {
   SupabaseNotificationRepository(this.rpc);
   final WorkflowRpc rpc;
@@ -161,8 +170,8 @@ class SupabaseNotificationRepository implements NotificationRepository {
     final intentKey = '${rpc.actor}|$idempotencyKey';
     try {
       var intent = _markAllIntents[intentKey];
-      if (intent?.acknowledgedCount != null) {
-        return CommandOk(intent!.acknowledgedCount!, null);
+      if (intent != null && intent.completed) {
+        return CommandOk(intent.confirmedIds.length, null);
       }
       if (intent == null) {
         final ids = <String>[];
@@ -187,30 +196,51 @@ class SupabaseNotificationRepository implements NotificationRepository {
         intent = _MarkAllIntent(List.unmodifiable(ids));
         _markAllIntents[intentKey] = intent;
       }
-      if (intent.targetIds.isEmpty) {
-        intent.acknowledgedCount = 0;
-        return const CommandOk(0, null);
-      }
-      var updatedCount = 0;
       for (var i = 0; i < intent.targetIds.length; i += _markAllChunkSize) {
         final end = (i + _markAllChunkSize).clamp(0, intent.targetIds.length);
-        final chunk = intent.targetIds.sublist(i, end);
-        updatedCount += await rpc.table(
+        final pending = intent.targetIds
+            .sublist(i, end)
+            .where((id) => !intent!.confirmedIds.contains(id))
+            .toList(growable: false);
+        // Chunk đã xác nhận ở lần thử trước: bỏ qua, chỉ làm tiếp phần dở.
+        if (pending.isEmpty) continue;
+        final changed = await rpc.table(
           'notifications.mark_all_read',
           (client, token) => client
               .from(_table)
               .update({'read_at': 'now'})
-              .inFilter('id', chunk)
+              .inFilter('id', pending)
               .eq('recipient_id', rpc.actor)
               .isFilter('read_at', null)
               .select('id')
               .setHeader('Authorization', 'Bearer $token'),
-          (raw) => WorkflowJson.list(raw).length,
+          _idList,
           command: true,
         );
+        intent.confirmedIds.addAll(changed.where(pending.contains));
+        final unresolved = pending
+            .where((id) => !intent!.confirmedIds.contains(id))
+            .toList(growable: false);
+        if (unresolved.isEmpty) continue;
+        // PATCH không trả các dòng đã đọc sẵn (vd. lần thử trước đã ghi nhưng
+        // mất ACK). Đối soát trạng thái thật thay vì coi là chưa làm gì.
+        final alreadyRead = await rpc.table(
+          'notifications.mark_all_reconcile',
+          (client, token) => client
+              .from(_table)
+              .select('id')
+              .inFilter('id', unresolved)
+              .eq('recipient_id', rpc.actor)
+              .not('read_at', 'is', null)
+              .setHeader('Authorization', 'Bearer $token'),
+          _idList,
+          command: true,
+        );
+        // Dòng không còn hiển thị (bị xóa/không còn quyền) không được tính.
+        intent.confirmedIds.addAll(alreadyRead.where(unresolved.contains));
       }
-      intent.acknowledgedCount = updatedCount;
-      return CommandOk(updatedCount, null);
+      intent.completed = true;
+      return CommandOk(intent.confirmedIds.length, null);
     } on AppError catch (error) {
       return CommandError(error.code, error.safeMessage);
     }

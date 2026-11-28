@@ -37,6 +37,11 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   bool _markingAll = false;
   bool _loadingMore = false;
   bool? _hasMore;
+  // Chủ hộp thư mà state cục bộ ở trên thuộc về.
+  String? _owner;
+  // Tăng mỗi khi bỏ snapshot cũ (tải lại hoặc đổi phiên); kết quả async của
+  // thế hệ cũ trả về muộn sẽ bị bỏ qua.
+  int _generation = 0;
 
   @override
   void initState() {
@@ -48,15 +53,35 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   }
 
   void _reload() {
-    setState(() {
-      _extraItems.clear();
-      _hasMore = null;
-    });
+    setState(_discardPages);
     refreshNotifications(ref);
   }
 
+  void _discardPages() {
+    _generation++;
+    _extraItems.clear();
+    _hasMore = null;
+    _loadingMore = false;
+  }
+
+  // Đổi phiên khi màn còn mở: bỏ hết state của chủ cũ, kể cả key đang chờ
+  // (key gắn với actor; dùng lại cho actor khác là sai ý định).
+  void _bindOwner(String owner) {
+    if (_owner == owner) return;
+    _owner = owner;
+    _discardPages();
+    _pendingKeys.clear();
+    _busyId = null;
+    _markingAll = false;
+  }
+
+  // Kết quả async chỉ còn hiệu lực khi vẫn cùng thế hệ snapshot/phiên.
+  bool _stale(int generation) => !mounted || generation != _generation;
+  bool _otherOwner(String? owner) => !mounted || owner != _owner;
+
   Future<void> _loadMore(List<AppNotification> current) async {
     if (_loadingMore) return;
+    final generation = _generation;
     setState(() => _loadingMore = true);
     try {
       final next = await ref
@@ -65,7 +90,8 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
             offset: current.length,
             limit: notificationFetchLimit,
           );
-      if (!mounted) return;
+      // Trang của snapshot/phiên cũ trả về muộn: bỏ, không ghép vào hộp thư mới.
+      if (_stale(generation)) return;
       final existingIds = current.map((n) => n.id).toSet();
       setState(() {
         _extraItems.addAll(next.where((n) => !existingIds.contains(n.id)));
@@ -73,7 +99,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
         _loadingMore = false;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (_stale(generation)) return;
       setState(() => _loadingMore = false);
       _toast(
         error is AppError
@@ -103,6 +129,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
 
   Future<void> _open(AppNotification notice) async {
     if (_busyId != null || _markingAll) return;
+    final owner = _owner;
     String? readError;
     if (!notice.isRead) {
       final operation = 'read|${notice.id}';
@@ -117,7 +144,8 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
         result = const CommandError(DomainErrorCode.timeoutUnknown,
             'Chưa rõ máy chủ đã ghi nhận hay chưa.');
       }
-      if (!mounted) return;
+      // Đổi phiên trong lúc chờ: kết quả thuộc người trước, không hiện/điều hướng.
+      if (_otherOwner(owner)) return;
       setState(() => _busyId = null);
       _settleKey(operation, result);
       if (result case CommandError(:final safeMessage)) readError = safeMessage;
@@ -132,13 +160,15 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       return;
     }
     if (readError != null) _toast(readError);
+    if (!mounted) return;
     await context.push(target);
     // Quay lại hộp thư: tải lại vì có thể đã phát sinh thông báo mới.
-    if (mounted) _reload();
+    if (!_otherOwner(owner)) _reload();
   }
 
   Future<void> _markAll() async {
     if (_busyId != null || _markingAll) return;
+    final owner = _owner;
     const operation = 'read-all';
     final key = _pendingKeys.putIfAbsent(operation, newIdempotencyKey);
     setState(() => _markingAll = true);
@@ -151,20 +181,36 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       result = const CommandError(DomainErrorCode.timeoutUnknown,
           'Chưa rõ máy chủ đã ghi nhận hay chưa.');
     }
-    if (!mounted) return;
+    if (_otherOwner(owner)) return;
     setState(() => _markingAll = false);
     _settleKey(operation, result);
-    _toast(switch (result) {
-      CommandOk(:final data) when data > 0 =>
-        'Đã đánh dấu $data thông báo là đã đọc.',
-      CommandOk() => 'Không còn thông báo chưa đọc.',
-      CommandError(:final safeMessage) => safeMessage,
-    });
     _reload();
+    if (result case CommandError(:final safeMessage)) {
+      _toast(safeMessage);
+      return;
+    }
+    final changed = (result as CommandOk<int>).data;
+    // Số trả về chỉ nói về tập chưa đọc lúc bắt đầu thao tác; còn hay hết
+    // thông báo chưa đọc phải hỏi lại server (có thể vừa có thông báo mới).
+    int? remaining;
+    try {
+      remaining = await ref.read(unreadCountFromServerProvider.future);
+    } catch (_) {
+      remaining = null;
+    }
+    if (_otherOwner(owner)) return;
+    final done = changed > 0
+        ? 'Đã đánh dấu $changed thông báo là đã đọc.'
+        : 'Không có thông báo nào cần đánh dấu thêm.';
+    _toast(remaining != null && remaining > 0
+        ? '$done Vẫn còn $remaining thông báo chưa đọc mới đến.'
+        : done);
   }
 
   @override
   Widget build(BuildContext context) {
+    // Gắn state cục bộ với chủ hộp thư trước khi ghép dữ liệu.
+    _bindOwner(ref.watch(notificationInboxOwnerProvider));
     final notices = ref.watch(myNotificationsProvider);
     final unread = ref.watch(unreadNotificationCountProvider) ?? 0;
 
@@ -187,9 +233,11 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
         ),
       ],
       body: notices.when(
-        // Giữ danh sách cũ khi đang tải lại để không nháy màn hình.
+        // Tải lại cùng chủ (kéo để tải lại, sau lệnh): giữ danh sách cũ cho
+        // khỏi nháy. Đổi phiên là "reload" vì phụ thuộc đổi: KHÔNG giữ dữ liệu
+        // của người trước trong lúc hộp thư mới đang tải.
         skipLoadingOnRefresh: true,
-        skipLoadingOnReload: true,
+        skipLoadingOnReload: false,
         loading: () => const StudyLoading(),
         error: (error, stackTrace) => Center(
           child: StudyError(
@@ -208,12 +256,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
           final hasMore = _hasMore ?? (items.length >= notificationFetchLimit);
           return RefreshIndicator(
             onRefresh: () async {
-              if (mounted) {
-                setState(() {
-                  _extraItems.clear();
-                  _hasMore = null;
-                });
-              }
+              if (mounted) setState(_discardPages);
               ref.invalidate(unreadCountFromServerProvider);
               ref.invalidate(myNotificationsProvider);
               await Future.wait([

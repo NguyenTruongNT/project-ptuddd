@@ -72,6 +72,8 @@ Theo phong bì hiện có `{ok, data, event_id}` / `{ok:false, code, message}`. 
   - lưu `command_receipts`.
 - `mark_all_notifications_read(p_idempotency_key text)`:
   - lưu `command_receipts` theo `(actor, command, idempotency_key)` để khi mất ACK và retry sẽ trả lại đúng `data = {count}` của lần ghi đầu, không đánh dấu nhầm thông báo mới phát sinh sau thời điểm lệnh đầu.
+  - `count` = số thông báo chưa đọc lúc bắt đầu ý định nay đã ở trạng thái đã đọc. Đây cũng là nghĩa client đang dùng. `count = 0` không có nghĩa là hộp thư hết thông báo chưa đọc: client hỏi lại tổng chưa đọc sau lệnh.
+  - Trong lúc chưa có RPC, client tự đối soát. Tập ID được chốt ở lần thử đầu. Mỗi chunk PATCH thiếu dòng sẽ được kiểm lại bằng `read_at IS NOT NULL`, và tiến độ giữ qua các lần retry trong bộ nhớ app. Khởi động lại app thì mất trạng thái này; RPC với `command_receipts` sẽ khắc phục.
 
 Sau khi có RPC, nên **thu hồi** `UPDATE (read_at)` trực tiếp. Hiện client có thể
 đặt `read_at` thành giá trị tùy ý, kể cả `NULL` hoặc một thời điểm tương lai,

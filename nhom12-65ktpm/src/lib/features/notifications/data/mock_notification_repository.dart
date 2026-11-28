@@ -59,6 +59,9 @@ class MockNotificationRepository implements NotificationRepository {
             'Mã thao tác đã được dùng cho nội dung khác.');
       }
       // Retry sau timeout: trả lại số lượng của lần ghi đầu, không đếm lại.
+      // Nghĩa của count (thống nhất với bản Supabase): số thông báo chưa đọc
+      // lúc bắt đầu ý định nay đã ở trạng thái đã đọc; không có nghĩa hộp thư
+      // đã hết thông báo chưa đọc (có thể vừa có thông báo mới).
       return CommandOk(int.parse(previous.entityId!), null);
     }
     final unread = store

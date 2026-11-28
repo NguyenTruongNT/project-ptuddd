@@ -31,6 +31,13 @@ final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
   );
 });
 
+// Chủ hộp thư hiện tại: userId của phiên thật, hoặc viewer demo khi dùng mock.
+// Màn hình buộc mọi state cục bộ (trang tải thêm, key đang chờ) theo giá trị
+// này để đổi tài khoản không lẫn dữ liệu của người trước.
+final notificationInboxOwnerProvider = Provider<String>(
+  (ref) => ref.watch(demoViewerIdProvider),
+);
+
 // ---------- Dữ liệu đọc ----------
 final myNotificationsProvider = FutureProvider<List<AppNotification>>(
   (ref) => ref.watch(notificationQueryRepositoryProvider).getMyNotifications(),
