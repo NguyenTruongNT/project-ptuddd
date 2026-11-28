@@ -172,6 +172,8 @@ class _ReceiverAckPageState extends ConsumerState<ReceiverAckPage> {
     final theme = Theme.of(context);
     final currentUserId = ref.watch(demoViewerIdProvider);
     final handoverAsync = ref.watch(handoverDetailsProvider(widget.handoverId));
+    final signedUrlsAsync =
+        ref.watch(handoverEvidenceSignedUrlsProvider(widget.handoverId));
 
     return FeatureScaffold(
       title: 'Xác nhận nhận tài liệu',
@@ -291,29 +293,70 @@ class _ReceiverAckPageState extends ConsumerState<ReceiverAckPage> {
                         ),
                         const SizedBox(height: 12),
                         if (hasEvidence) ...[
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              for (var i = 1; i <= handover.evidencePhotoCount; i++)
-                                Container(
-                                  width: 90,
-                                  height: 90,
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.shade50,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.green.shade300),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.verified, color: Colors.green, size: 32),
-                                      const SizedBox(height: 4),
-                                      Text('Minh chứng $i', style: const TextStyle(fontSize: 11)),
-                                    ],
-                                  ),
-                                ),
-                            ],
+                          signedUrlsAsync.when(
+                            loading: () => const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                            error: (_, _) => const Text(
+                              'Không tải được ảnh minh chứng từ Storage.',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                            data: (urls) {
+                              if (urls.isNotEmpty) {
+                                return Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    for (final url in urls)
+                                      GestureDetector(
+                                        onTap: () => showDialog(
+                                          context: context,
+                                          builder: (ctx) => Dialog(
+                                            child: InteractiveViewer(
+                                              child: Image.network(url, fit: BoxFit.contain),
+                                            ),
+                                          ),
+                                        ),
+                                        child: Container(
+                                          width: 96,
+                                          height: 96,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: Colors.green.shade300),
+                                          ),
+                                          clipBehavior: Clip.antiAlias,
+                                          child: Image.network(url, fit: BoxFit.cover),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              }
+                              return Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (var i = 1; i <= handover.evidencePhotoCount; i++)
+                                    Container(
+                                      width: 90,
+                                      height: 90,
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.shade50,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.green.shade300),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(Icons.verified, color: Colors.green, size: 32),
+                                          const SizedBox(height: 4),
+                                          Text('Minh chứng $i', style: const TextStyle(fontSize: 11)),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
                           ),
                         ] else ...[
                           Container(
