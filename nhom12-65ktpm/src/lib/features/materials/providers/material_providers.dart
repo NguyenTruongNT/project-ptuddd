@@ -3,10 +3,25 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/auth/auth_session_providers.dart';
 import '../../../core/contracts/material_workspace.dart';
+import '../../../core/contracts/material_qr.dart';
+import '../../../core/backend/workflow_rpc.dart';
 import '../../../core/mock/mock_fixtures.dart';
 import '../data/mock_material_workspace.dart';
 import '../data/material_draft_store.dart';
 import '../data/supabase_material_workspace.dart';
+import '../data/material_qr_repository.dart';
+
+// Provider chứa repository, không cache payload. Mỗi màn giữ QR trong bộ nhớ
+// riêng và hủy nó khi đổi phiên/đưa ứng dụng ra nền.
+final materialQrRepositoryProvider = Provider<MaterialQrRepository>((ref) {
+  final rpc = ref.watch(workflowRpcProvider);
+  return rpc == null
+      ? MockMaterialQrRepository(
+          ref.watch(mockMaterialStoreProvider),
+          MockFixtures.userA,
+        )
+      : SupabaseMaterialQrRepository(rpc);
+});
 
 final mockMaterialStoreProvider = Provider<MockMaterialStore>((ref) {
   ref.watch(sessionBoundaryProvider);

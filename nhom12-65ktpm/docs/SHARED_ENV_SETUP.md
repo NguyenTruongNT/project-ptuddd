@@ -326,3 +326,26 @@ File local có `project_ref` và mảng `accounts` gồm `id`, `email`, `passwor
 Test ghi cần thêm `RUN_WORKFLOW_WRITE_TESTS=true` và biến môi trường `WORKFLOW_WRITE_FIXTURE_FILE`; chỉ chạy khi Trường đã chuẩn bị fixture QA tách biệt (`purpose=workflow-adapter-integration-test`, tài khoản prefix `workflow-qa-`, bản sách prefix `[WORKFLOW QA `). Công cụ chuẩn bị/dọn và thông tin tài khoản chỉ giữ local, không thuộc commit. Không dùng bản ghi demo của nhóm để chạy test ghi tự động.
 
 Phần tích hợp này giữ nguyên UI/confirm hiện có và Shared Contracts. Listing/Request/Delivery/Handover, QR ngân hàng và quyền đọc/upload ảnh chứng cứ cần nghiệm thu riêng theo phân công. Issue hiện trả `evidenceCount=0`, `canViewEvidence=false` cho tới khi backend chứng cứ hoàn thiện; không mở bucket hoặc cấp quyền trực tiếp để lách giới hạn đó.
+
+
+## 15. QR Material và Home — Cloud/local ngày 4
+
+- Xem [CONTRACTS §16](CONTRACTS.md#16-qr-material-và-home-ngày-4) và
+  [đặc tả triển khai](DAC_TA_TRIEN_KHAI_QR_HOME.md).
+- Từ `src/`, sau khi Docker/Supabase local chạy: `npx.cmd supabase@3.3.0 migration up --local --include-all`,
+  `npx.cmd supabase@3.3.0 test db`, `./tool/test_qr_home_local.ps1`.
+- Migration mới cần lịch sử Delivery/Handover trước đó. Không reset DB, sửa lịch sử hoặc deploy Cloud
+  từ script test. Khóa ký QR sinh trong DB; sao lưu bảng private cùng dữ liệu.
+- Chạy app với cặp URL/public key local theo mục cấu hình; không đưa admin/service key vào asset,
+  define, Git hoặc log. Cấu hình mặc định trỏ Cloud development, đã triển khai RPC QR/Home ngày 27/11/2026.
+- QR demo có nhãn riêng. Camera scan của Đăng, Request/Khám phá của Khanh và Notification của Sơn
+  cần nghiệm thu riêng khi tích hợp; test nhập payload không chứng minh camera hoạt động.
+
+- Cloud đã áp dụng 3 migration còn thiếu theo thứ tự: Listing review `20261126000500`,
+  Delivery/Handover `20261127000100`, QR/Home `20261127000200`. Dry-run sau triển khai
+  không còn migration pending; không chạy seed, roles hoặc cập nhật Vault/Auth config.
+- Test Cloud: `./tool/test_qr_home_cloud.ps1`. Tạo account QA dùng một lần, lệnh nghiệp vụ
+  đi qua repository/JWT thật; phần kiểm kê/chuẩn bị/dọn bảng private dùng CLI quản trị
+  ở host theo UUID và hậu tố fixture. Không cấp thêm quyền service_role/app.
+- Chạy ứng dụng Cloud: `flutter run -d chrome` bằng cấu hình mặc định. Camera quét QR
+  thực tế vẫn cần Đăng tích hợp; không coi kiểm thử nhập payload là camera scan.

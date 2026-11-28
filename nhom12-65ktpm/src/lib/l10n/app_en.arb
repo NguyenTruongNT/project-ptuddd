@@ -9,7 +9,13 @@
   "listingMaterialSearch": "Search materials",
   "listingFilterTitle": "Filter by status",
   "listingFilterLabel": "Status: {status} ▾",
-  "@listingFilterLabel": {"placeholders": {"status": {"type": "String"}}},
+  "@listingFilterLabel": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
   "listingLocalSection": "Drafts on this device",
   "listingNoResults": "No matching results.",
   "listingNoMaterials": "You have no materials. Add one to start a listing.",
@@ -60,7 +66,16 @@
   "listingRequest": "Send request",
   "listingOwnRequest": "View request",
   "listingBorrowPolicy": "Borrow for {minDays}–{maxDays} days. The borrower proposes the duration; the owner accepts those exact days or declines.",
-  "@listingBorrowPolicy": {"placeholders": {"minDays": {"type": "int"}, "maxDays": {"type": "int"}}},
+  "@listingBorrowPolicy": {
+    "placeholders": {
+      "minDays": {
+        "type": "int"
+      },
+      "maxDays": {
+        "type": "int"
+      }
+    }
+  },
   "listingRestore": "Restore the device draft? Permissions and revisions must still be checked.",
   "listingMaterialChanged": "Data changed. Reload and review before submitting.",
   "listingDemo": "Read-only demo; connect Supabase to publish.",
@@ -322,5 +337,39 @@
   "matFormHint": "Save a physical book you own. You can publish a listing later.",
   "matPhotoPermission": "Could not open the camera or library. Check permissions and try again.",
   "matSnapshotChanged": "The latest version is loaded. You can edit this version.",
-  "matCached": "Showing a device copy. Connect to refresh and edit."
+  "matCached": "Showing a device copy. Connect to refresh and edit.",
+  "homeHello": "Hello, {name}!",
+  "homeFallbackName": "there",
+  "homeIntro": "Manage your materials and continue where you left off.",
+  "homeAddMaterial": "Add material",
+  "homeMyMaterials": "My materials",
+  "homeManageListings": "Manage listings",
+  "homeOverviewTitle": "Your overview",
+  "homeOwnedCount": "Materials owned",
+  "homePublishedCount": "Published listings",
+  "homeDraftCount": "Server drafts",
+  "homeActiveCount": "Active transactions",
+  "homeContinueDraft": "Continue listing drafts",
+  "homeNoDrafts": "No server drafts. Device drafts are available in Publish.",
+  "homeRecentTitle": "Recently shared materials",
+  "homeNoListings": "No published listings yet. Add a material to create your first listing.",
+  "homeRetry": "Retry",
+  "qrTitle": "Material QR",
+  "qrShow": "Show material QR",
+  "qrRetry": "Reload QR",
+  "qrEnlarge": "Enlarge QR",
+  "qrNotice": "Identifies this physical copy and stays unchanged when relisted. Scanning does not confirm delivery or receipt.",
+  "qrDemoNotice": "Demo QR. Not valid for real handovers.",
+  "qrOffline": "Connect to verify current access. QR payloads are not stored for offline use.",
+  "qrUnavailable": "This material QR is unavailable. Refresh material details or sign in again.",
+  "qrBackendUnavailable": "QR is temporarily unavailable. Please try again later.",
+  "qrUnknown": "The issuing result is unknown. Retry checks the same request and preserves the QR.",
+  "qrFailed": "Could not load the QR. Please retry.",
+  "@homeHello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

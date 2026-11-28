@@ -7,6 +7,8 @@ import 'mock_fixtures.dart';
 // - Chỉ các mock command repository (giả lập RPC server) được gọi hàm ghi.
 // - Mất khi khởi động lại app; không phải nguồn sự thật.
 class MockTransactionStore {
+  // Trạng thái mismatch theo phiên demo; refresh không được xóa cờ này.
+  final Set<String> qrMismatchHandovers = {};
   MockTransactionStore.fromFixtures({
     DateTime Function()? clock,
     List<Issue>? seedIssues,

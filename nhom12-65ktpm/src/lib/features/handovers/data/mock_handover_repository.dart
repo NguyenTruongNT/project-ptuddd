@@ -11,10 +11,7 @@ import '../domain/handover_feature_repository.dart';
 
 /// Triển khai Mock Repository cho Handover và QR.
 class MockHandoverRepository implements HandoverFeatureRepository {
-  MockHandoverRepository({
-    required this.actorId,
-    required this.store,
-  });
+  MockHandoverRepository({required this.actorId, required this.store});
 
   final String actorId;
   final MockTransactionStore store;
@@ -44,7 +41,18 @@ class MockHandoverRepository implements HandoverFeatureRepository {
 
   @override
   Future<Handover?> getHandover(String handoverId) async {
-    return _handovers[handoverId];
+    final h = _handovers[handoverId];
+    if (h == null) return null;
+    return Handover(
+      id: h.id,
+      transactionId: h.transactionId,
+      fromUserId: h.fromUserId,
+      toUserId: h.toUserId,
+      status: h.status,
+      deliveryTaskId: h.deliveryTaskId,
+      evidencePhotoCount: h.evidencePhotoCount,
+      qrMismatchBlocked: store.qrMismatchHandovers.contains(h.id),
+    );
   }
 
   @override
@@ -72,19 +80,23 @@ class MockHandoverRepository implements HandoverFeatureRepository {
     final txn = store.transaction(handover.transactionId);
     final validMaterialId = txn?.materialId ?? 'mat-default';
 
-    final isMatch = code == validMaterialId ||
+    final isMatch =
+        code == validMaterialId ||
+        code == 'studyshare:demo:$validMaterialId' ||
         code == handoverId ||
         code == 'VALID-QR-CODE' ||
         code.startsWith('mat-borrow') ||
         code.startsWith('mat-delivery');
 
     if (!isMatch) {
+      store.qrMismatchHandovers.add(handoverId);
       return CommandError(
         DomainErrorCode.qrMismatch,
         'Mã QR không khớp với tài liệu hoặc chặng bàn giao này. Vui lòng kiểm tra lại tài liệu vật lý.',
       );
     }
 
+    store.qrMismatchHandovers.remove(handoverId);
     return CommandOk(true, 'evt-qr-verified-$handoverId');
   }
 
@@ -93,6 +105,12 @@ class MockHandoverRepository implements HandoverFeatureRepository {
     SubmitHandoverEvidenceInput input, {
     required String idempotencyKey,
   }) async {
+    if (store.qrMismatchHandovers.contains(input.handoverId)) {
+      return const CommandError(
+        DomainErrorCode.qrMismatch,
+        'Cần đối chiếu lại đúng QR tài liệu.',
+      );
+    }
     final handover = _handovers[input.handoverId];
     if (handover == null) {
       return CommandError(
@@ -143,6 +161,12 @@ class MockHandoverRepository implements HandoverFeatureRepository {
     String handoverId, {
     required String idempotencyKey,
   }) async {
+    if (store.qrMismatchHandovers.contains(handoverId)) {
+      return const CommandError(
+        DomainErrorCode.qrMismatch,
+        'Cần đối chiếu lại đúng QR tài liệu.',
+      );
+    }
     final handover = _handovers[handoverId];
     if (handover == null) {
       return CommandError(
@@ -180,7 +204,8 @@ class MockHandoverRepository implements HandoverFeatureRepository {
     if (txn != null) {
       if (txn.type == OfferType.borrow && handover.toUserId == txn.receiverId) {
         store.setStatus(txn.id, TransactionStatus.borrowing);
-      } else if (txn.type == OfferType.donate && handover.toUserId == txn.receiverId) {
+      } else if (txn.type == OfferType.donate &&
+          handover.toUserId == txn.receiverId) {
         store.setStatus(txn.id, TransactionStatus.completed);
       }
 
@@ -192,7 +217,8 @@ class MockHandoverRepository implements HandoverFeatureRepository {
       );
     }
 
-    final finalTxn = store.transaction(handover.transactionId) ??
+    final finalTxn =
+        store.transaction(handover.transactionId) ??
         StudyTransaction(
           id: handover.transactionId,
           listingId: 'list-unknown',
@@ -270,10 +296,16 @@ class MockHandoverRepository implements HandoverFeatureRepository {
     required String idempotencyKey,
   }) async {
     if (transactionId.trim().isEmpty || toUserId.trim().isEmpty) {
-      return CommandError(DomainErrorCode.invalidInput, 'Thiếu thông tin giao dịch hoặc người nhận.');
+      return CommandError(
+        DomainErrorCode.invalidInput,
+        'Thiếu thông tin giao dịch hoặc người nhận.',
+      );
     }
     if (actorId == toUserId) {
-      return CommandError(DomainErrorCode.invalidInput, 'Người giao và người nhận không thể trùng nhau.');
+      return CommandError(
+        DomainErrorCode.invalidInput,
+        'Người giao và người nhận không thể trùng nhau.',
+      );
     }
     final id = 'handover-mock-${_handovers.length + 1}';
     final handover = Handover(
@@ -295,8 +327,17 @@ class MockHandoverRepository implements HandoverFeatureRepository {
     String reason, {
     required String idempotencyKey,
   }) async {
+    if (store.qrMismatchHandovers.contains(handoverId)) {
+      return const CommandError(
+        DomainErrorCode.qrMismatch,
+        'Không dùng thủ công để vượt qua mã đã đọc sai.',
+      );
+    }
     if (reason.trim().isEmpty) {
-      return CommandError(DomainErrorCode.invalidInput, 'Vui lòng nhập lý do đối chiếu thủ công.');
+      return CommandError(
+        DomainErrorCode.invalidInput,
+        'Vui lòng nhập lý do đối chiếu thủ công.',
+      );
     }
     return CommandOk(true, 'evt-fallback-verified-$handoverId');
   }

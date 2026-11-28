@@ -6,6 +6,24 @@ import 'package:studyshare/core/auth/auth_repository.dart';
 void main() {
   const signedIn = AuthSnapshot.signedIn(AuthIdentity(id: 'a'));
   test(
+    'Đường dẫn QR giữ ID an toàn, bỏ payload/query và yêu cầu đăng nhập',
+    () {
+      const path = '/materials/e4400000-0000-4000-8000-000000000001/qr';
+      expect(
+        safeAuthDestination('$path?payload=secret&access_token=secret#secret'),
+        path,
+      );
+      expect(safeAuthDestination('/materials/raw-id/qr'), AppRoutes.home);
+      final login = authRedirect(
+        location: Uri.parse(path),
+        session: const AuthSnapshot.signedOut(),
+        loading: false,
+        demo: false,
+      )!;
+      expect(Uri.parse(login).queryParameters['from'], path);
+    },
+  );
+  test(
     'SCR-10 khôi phục đúng ID sau login, chỉ giữ UUID đơn được cho phép',
     () {
       const material = 'e3300000-0000-4000-8000-000000000001';

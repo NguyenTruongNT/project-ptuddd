@@ -15,7 +15,7 @@ flutter run -d emulator-5554
 
 Nếu mã thiết bị khác `emulator-5554`, lấy mã chính xác bằng `flutter devices` rồi thay thế. Ứng dụng mặc định đọc `assets/config/supabase.public.json` đã có trong Git để kết nối project development của nhóm. Máy mới không cần tạo `.dart_tool/supabase.cloud.json`; `flutter clean` không xóa file cấu hình công khai này. Cần có Internet và mỗi thành viên dùng tài khoản thử nghiệm riêng.
 
-Auth/Profile, Material/ảnh SCR-07/08/09 và Listing ngày 3 dùng Supabase thật. Cloud development đã có bốn migration Listing ngày 26/11/2026. QR Material thuộc ngày 4; các module khác theo tiến độ riêng. Chạy Chrome bằng `flutter run -d chrome` để kiểm tra với backend mặc định; không coi màn preview mock là dữ liệu Cloud.
+Auth/Profile, Material/ảnh SCR-07/08/09 và Listing ngày 3 dùng Supabase thật. Cloud development đã có bốn migration Listing ngày 26/11/2026. QR Material và Home ngày 4 đã triển khai và kiểm thử Supabase Cloud development ngày 27/11/2026; camera scan QR và các module khác theo phân công tích hợp riêng. Chạy Chrome bằng `flutter run -d chrome` để kiểm tra với backend mặc định; không coi màn preview mock là dữ liệu Cloud.
 
 ## Chạy demo không kết nối Supabase
 
@@ -80,3 +80,34 @@ flutter run -d chrome --dart-define=SUPABASE_URL=http://127.0.0.1:54321 "--dart-
 Chrome/Windows dùng `127.0.0.1`; Android Emulator dùng `10.0.2.2`. Cần dừng và chạy lại nếu thay `--dart-define`. `web/index.html` dùng bootstrap chuẩn Flutter để có thể `flutter build web` phục vụ kiểm tra giao diện; không chứa cấu hình Cloud hoặc secret.
 
 Kiểm tra ở 360/440 px và desktop: header mobile xanh đậm với họa tiết sách; mở bàn phím thì header gọn lại; đăng ký có confirm; Cá nhân mặc định chỉ xem, chọn **Sửa tên hiển thị** để mở form, lưu tên cần confirm. **Cài đặt chọn là áp dụng ngay và tự lưu**, không có nút Lưu/Hủy hoặc hỏi bỏ thay đổi khi Back. Nếu ghi lỗi, lựa chọn tự trở về bản lưu thành công gần nhất; toast và việc lưu vẫn hoạt động khi rời trang. Thay đổi liên tiếp gộp thông báo sau 650ms yên lặng; toast hiện góc trên phải 3,5 giây, có nút đóng.
+
+
+## QR Material và Home ngày 4 (Cloud và local)
+
+Xem [bàn giao triển khai](../docs/DAC_TA_TRIEN_KHAI_QR_HOME.md) và
+[CONTRACTS §16](../docs/CONTRACTS.md#16-qr-material-và-home-ngày-4).
+Từ `src/`, mở Docker/Supabase local rồi chạy:
+
+```powershell
+npx.cmd supabase@3.3.0 migration up --local --include-all
+npx.cmd supabase@3.3.0 test db
+./tool/test_qr_home_local.ps1
+flutter analyze
+flutter test --reporter expanded
+```
+
+Chạy Chrome với backend local (biến chỉ dùng trong terminal, không in đối tượng cấu hình):
+
+```powershell
+$qrLocalConfig = (npx.cmd supabase@3.3.0 status -o json 2>$null | Out-String) | ConvertFrom-Json
+flutter run -d chrome --dart-define=SUPABASE_URL=http://127.0.0.1:54321 "--dart-define=SUPABASE_PUBLISHABLE_KEY=$($qrLocalConfig.PUBLISHABLE_KEY)"
+```
+
+Cloud development đã có các migration `20261126000500`, `20261127000100`,
+`20261127000200`. Chạy `flutter run -d chrome` với cấu hình mặc định để dùng Cloud.
+Dừng phiên app đang chạy với local defines trước khi chạy lại bằng cấu hình Cloud.
+Để kiểm thử ghi Cloud bằng tài khoản QA dùng một lần: `./tool/test_qr_home_cloud.ps1`.
+Script chỉ nhận đúng project development đã link, cần CLI quản trị đã đăng nhập,
+và tự dọn fixture; không deploy migration. Test local tiếp tục dùng script ở trên.
+Không dùng admin key trong app. Camera scan QR trên Android cần tích hợp với Đăng;
+QR server/ô nhập payload và kiểm thử tự động không thay cho nghiệm thu camera thật.

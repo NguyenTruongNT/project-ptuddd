@@ -1,8 +1,9 @@
 # QUY TẮC NGHIỆP VỤ STUDYSHARE
 
 > **Mã tài liệu:** SS-BR  
-> **Phiên bản:** 2.0 – Quy tắc nghiệp vụ hợp nhất và quy ước triển khai MVP  
+> **Phiên bản:** 2.1 – Bổ sung quy tắc QR Material, Trang chủ và điều hướng\
 > **Ngày tổng hợp:** 21/11/2026  
+> **Ngày cập nhật:** 27/11/2026\
 > **Đề tài:** StudyShare – Ứng dụng di động hỗ trợ cho mượn, chuyển nhượng tài liệu học tập và xác thực giao nhận giữa sinh viên  
 > **Nhóm:** 12 – 65KTPM, Trường Đại học Thủy lợi  
 > **Đầu mối nghiệp vụ và kiến trúc dùng chung:** Nguyễn Văn Trường  
@@ -58,7 +59,7 @@ Một người dùng có thể là A ở giao dịch này, B ở giao dịch kh�
 | INV-02 | Duyệt Request = **một thao tác nguyên tử**: duyệt 1, từ chối PENDING cạnh tranh, khóa Material, tạo Transaction, snapshot thỏa thuận, ghi Event. |
 | INV-03 | Không có `setOwner`, `setHolder`, `setStatus('COMPLETED')` tổng quát cho Flutter. Chủ/giữ/trạng thái là hệ quả của lệnh nghiệp vụ qua server. |
 | INV-04 | Mỗi Handover có ≥1 ảnh **do người giao chụp/gửi**, đúng mã tài liệu/chặng, người nhận chỉ định tự xác nhận, server ACK; thiếu bất kỳ điều kiện nào không đổi holder. |
-| INV-05 | **QR đã đọc nhưng sai** phải chặn chặng đó; không được chuyển sang manual để bỏ qua. QR thiếu/không đọc được mới được fallback có ghi lý do. |
+| INV-05 | **QR đã đọc nhưng sai** phải chặn chặng đó ở server; đổi lần thử hoặc mở lại màn không gỡ chặn, không được chuyển sang manual để bỏ qua. Quét lại đúng QR mới gỡ chặn. QR thiếu/không đọc được và chặng không còn bị chặn mới được fallback có ghi lý do. |
 | INV-06 | BORROW không đổi owner; `started_at` chỉ bắt đầu khi B nhận cuối hợp lệ; `COMPLETED` chỉ sau A nhận trả cuối hợp lệ. |
 | INV-07 | DONATE đổi owner sang B sau B xác nhận nhận cuối. SELL đổi owner sang B **chỉ** sau A đã xác nhận nhận tiền trước mọi Handover và B xác nhận nhận cuối. |
 | INV-08 | C giao thất bại: holder tiếp tục là C nếu chặng C nhận đã hợp lệ; không tự trả về A/B, không tự giải phóng Material. |
@@ -74,7 +75,7 @@ Một người dùng có thể là A ở giao dịch này, B ở giao dịch kh�
 ### 3.1. Đăng và quản lý bản sách
 
 1. A đăng nhập, tạo `Material` nếu là bản vật lý mới; cung cấp tên, môn/loại và tình trạng. Khi công bố Listing cần **tối thiểu một ảnh** đã ghi nhận và chọn đúng một hình thức; SELL phải có giá nguyên VND >0. Tên/ISBN có thể trùng bản khác.
-2. Server tạo `material_id`/QR định danh riêng; Listing bắt đầu `DRAFT` hoặc `PUBLISHED`. Một Material không có hai Listing hiện hành cạnh tranh.
+2. Server tạo `material_id` riêng; phát hành QR riêng khi owner xem QR lần đầu theo mục 3.1.3. Listing bắt đầu `DRAFT` hoặc `PUBLISHED`. Một Material không có hai Listing hiện hành cạnh tranh.
 3. Chỉ owner hiện tại được sửa/ẩn; khi đã có giao dịch đang hoạt động không được đổi hình thức, giá hoặc điều kiện đã snapshot.
 4. Listing `PUBLISHED` nhưng Material đã `RESERVED` **vẫn hiển thị với nhãn “Đã được đặt”**; vô hiệu nút gửi yêu cầu và server từ chối tạo yêu cầu mới. `ARCHIVED` bị ẩn khỏi khám phá bình thường.
 5. Sau BORROW hoàn tất, owner A vẫn sở hữu Material, holder A, Listing cũ `ARCHIVED`. Muốn tiếp tục cho mượn phải tạo Listing mới; **reuse QR**.
@@ -107,6 +108,17 @@ Các mã N3-D01–N3-D08 được giữ để tra cứu các luồng/test cũ. Q
 
 Quyền gửi yêu cầu theo người xem: chủ tin, người có PENDING tại chính tin đó, hoặc người xem tin RESERVED/Material không khả dụng không được gửi yêu cầu mới. RPC kiểm tra lại quyền và trạng thái tại thời điểm ghi.
 
+### 3.1.3. QR Material và quyền truy cập
+
+- QR nhận diện **một bản vật lý**, do server phát hành khi owner yêu cầu xem lần đầu. Material chưa có ảnh hoặc chưa có Listing vẫn được cấp QR; bấm lại, retry hoặc yêu cầu đồng thời không tạo mã khác cho cùng Material.
+- Chỉ **owner hiện tại đã đăng nhập** được lấy/hiển thị QR. Quyền này độc lập với quyền sửa hoặc đăng tin: Material đang có Transaction hoặc holder khác owner không tự làm mất quyền xem QR của owner.
+- Tái đăng và chuyển chủ hợp lệ sau SELL/DONATE giữ nguyên Material ID/QR. Chủ mới được lấy lại cùng QR; chủ cũ bị từ chối, kể cả khi gửi lại yêu cầu đã thành công trước khi chuyển chủ. Người mượn/người giao hộ chỉ đối chiếu mã trong chặng có quyền, không được lấy QR qua chức năng của owner.
+- QR đã in không tự hết hạn và không có thao tác đổi mã thông thường trong MVP. Nếu không khôi phục được mã đã phát hành, phải báo lỗi để xử lý; không tự cấp mã thay thế làm QR trên sách mất hiệu lực.
+- QR chứa token khó đoán, không dùng ISBN, Material ID hoặc Handover ID thuần thay token. Mã có thể bị sao chép từ bản in nên chỉ là yếu tố đối chiếu, không chứng minh quyền sở hữu hoặc việc đã nhận sách.
+- Không công khai nội dung token trong Listing, Trang chủ, đường dẫn hoặc log; không lưu QR vào nháp/thiết lập thiết bị. Khi ứng dụng ra nền hoặc đổi phiên, xóa QR đang hiển thị; lần xem tiếp theo phải kiểm tra lại quyền với server. Offline không dùng QR đã lưu để thay kết quả server.
+
+Luồng UI, định dạng token, RPC và cách kiểm thử nằm tại [đặc tả QR Material và Trang chủ](DAC_TA_TRIEN_KHAI_QR_HOME.md) và [CONTRACTS §16](CONTRACTS.md#16-qr-material-và-home-ngày-4).
+
 ### 3.2. Request và phê duyệt
 
 - B không thể gửi Request cho Material của mình, không tạo nhiều Request `PENDING` trùng cùng Listing; Request chỉ được tạo nếu Listing `PUBLISHED` và Material còn khả dụng.
@@ -114,6 +126,13 @@ Quyền gửi yêu cầu theo người xem: chủ tin, người có PENDING tạ
 - Mỗi Request ghi `created_at` từ server; danh sách A xem thời điểm gửi, mặc định sắp cũ nhất trước để tiện xem, **không ép FIFO**; A được chọn bất kỳ yêu cầu hợp lệ.
 - Khi A duyệt một Request: server nguyên tử đặt Request này `ACCEPTED`, Request PENDING khác `REJECTED/MATERIAL_UNAVAILABLE`, tạo **một** Transaction, giữ chỗ Material, ghi Event. Client không tự optimistic update là ACCEPTED nếu chưa ACK.
 - B được rút Request khi vẫn `PENDING` → `CANCELLED`; sau `ACCEPTED`, không được sửa Request ngược về PENDING/CANCELLED, phải áp dụng hủy Transaction theo mục 10.
+
+### 3.3. Trang chủ và điều hướng màn con
+
+- Trang chủ dùng dữ liệu theo phiên đăng nhập hiện tại. Tổng Material tính theo owner hiện tại; tổng Listing tính các tin do người dùng tạo và vẫn sở hữu Material, tách PUBLISHED/DRAFT/HIDDEN; tổng Transaction đang hoạt động tính giao dịch người dùng là A/B và chưa COMPLETED/CANCELLED. Tổng phải tính toàn bộ dữ liệu có quyền, không lấy độ dài một trang danh sách.
+- Hiển thị tối đa 3 nháp Listing đã lưu trên server và 6 tin công khai mới nhất. Không trộn nháp thiết bị vào nháp server. Tin RESERVED vẫn theo quy tắc hiển thị/khóa gửi yêu cầu tại mục 3.1.2; thẻ công khai mở bằng Listing ID, không dùng quyền đọc Material riêng của owner.
+- Các khối tổng quan, tiếp tục nháp và tin mới có trạng thái tải/rỗng/lỗi/thử lại riêng. Lỗi không được hiển thị thành số 0 hoặc thay bằng dữ liệu demo. Tải lại dữ liệu khi quay về Trang chủ hoặc ứng dụng hoạt động trở lại; không hiển thị số thông báo hoặc tìm kiếm giả khi chưa tích hợp.
+- Mọi chức năng đi vào màn con phải có header quay lại màn trước. Mở trực tiếp không có lịch sử thì quay về màn cha phù hợp; màn lỗi hoặc thiếu quyền vẫn có đường quay lại. Chỉ báo lưu thành công sau server ACK; sau lưu đóng form trước khi mở chi tiết để Back không quay về form đã hoàn tất.
 
 ---
 
@@ -124,7 +143,7 @@ Các chặng đi, trả, nhận/giao hộ **đều dùng cùng một quy trình*
 | Bước | Ai | Điều kiện/đầu ra |
 |---|---|---|
 | H1 | Server | Tạo Handover có ID ổn định; liên kết Transaction, Material, `from_user_id`, `to_user_id` và chặng liên quan. Không tạo hai Handover đang hoạt động cho cùng chặng. |
-| H2 | Người giao | Quét QR Material, đối chiếu hợp lệ; nếu QR thiếu/không đọc được, dùng QR Handover hoặc manual có lý do ghi vào server. QR **đọc được mà sai** → `QR_MISMATCH`, chặn. |
+| H2 | Người giao | Quét QR Material, đối chiếu hợp lệ. Nếu QR thiếu/không đọc được và chặng không bị chặn do mismatch, cho phép thủ công với lý do 1–1.000 ký tự sau trim, ghi vào server. MVP không dùng QR Handover thay QR Material. QR **đọc được mà sai** → `QR_MISMATCH`, chặn. |
 | H3 | Người giao | Chụp và tải lên ít nhất 1 ảnh bằng camera; Evidence được ghi vào private Storage và server xác thực đúng Handover. |
 | H4 | Server | Chỉ sau H2 hợp lệ và Evidence đã upload/ghi nhận đủ mới chuyển Handover sang `AWAITING_RECEIVER_CONFIRMATION`. |
 | H5 | Người nhận chỉ định | Kiểm tra tài liệu, ảnh, người giao, rồi **Xác nhận đã nhận** hoặc **Từ chối/Báo vấn đề** với lý do. |
@@ -133,7 +152,7 @@ Các chặng đi, trả, nhận/giao hộ **đều dùng cùng một quy trình*
 
 **Quy ước triển khai để không phải hỏi tiếp:** Handover `DISPUTED` được giữ nguyên làm lịch sử; sau khi Issue có phương án giải quyết hợp lệ, nếu cần bàn giao lại thì **tạo Handover ID mới**, không sửa lượt bị từ chối thành CONFIRMED. Các nút Retry mạng phải dùng chính action ID để chống ghi trùng; retry sự kiện nghiệp vụ đã hoàn tất trả về trạng thái server hiện tại.
 
-**QR:** QR Material xác thực `material_id` bằng token không dễ đoán, không dùng ISBN thay ID. QR của chặng gắn với `handover_id` và server kiểm tra quan hệ, trạng thái, actor; **QR/UUID một mình không phải bằng chứng người đã nhận**. Token và phiên bản được phát hành/kiểm tra ở server; TTL chi tiết có thể cấu hình và không làm thay đổi quy tắc ảnh + người nhận + ACK. Màn hình có nhãn rõ: `Chưa gửi`, `Chờ người nhận`, `Đã xác nhận`, `Bị từ chối`.
+**QR:** Áp dụng quy tắc phát hành/quyền xem tại mục 3.1.3. Server chỉ cho người giao đúng chặng đối chiếu nguyên mã Material; kiểm tra giao dịch, chặng và điều kiện thanh toán SELL. Khi sai mã, server lưu chặn và hủy kết quả đối chiếu cũ; đổi lần thử, mở lại màn, gửi lại kết quả thành công cũ hoặc fallback không gỡ chặn. Quét lại đúng mã bằng thao tác mới mới được tiếp tục. QR đúng không tự đổi holder/owner hoặc hoàn tất Transaction; vẫn bắt buộc ảnh, người nhận và ACK. Màn hình có nhãn rõ: `Chưa gửi`, `Chờ người nhận`, `Đã xác nhận`, `Bị từ chối`.
 
 **Offline:** Chỉ lưu file trong vùng riêng tư của app, metadata nháp và action ID; không lưu quyền truy cập ảnh trong public directory, không tự tạo Handover server khi offline. Upload/retry trong lúc app chạy; xóa file nháp chỉ sau ACK thích hợp. Không hứa dịch vụ đồng bộ nền liên tục.
 
@@ -178,7 +197,7 @@ Các chặng đi, trả, nhận/giao hộ **đều dùng cùng một quy trình*
 
 `B gửi Request → A duyệt → B thấy QR/thông tin chuyển khoản → B chuyển tiền ngoài app → A tự kiểm tra và bấm Đã nhận tiền → mới cho Handover đầu tiên của SELL → B xác nhận nhận cuối → chuyển chủ và COMPLETED`.
 
-- Mã QR **ngân hàng** khác QR Material và QR Handover; chỉ hiển thị **sau A duyệt**, dùng thông tin A khai báo, số tiền snapshot, mã tham chiếu; không lưu mật khẩu/OTP, không tự kiểm tra giao dịch thật.
+- Mã QR **ngân hàng** khác QR Material dùng đối chiếu bàn giao; chỉ hiển thị **sau A duyệt**, dùng thông tin A khai báo, số tiền snapshot, mã tham chiếu; không lưu mật khẩu/OTP, không tự kiểm tra giao dịch thật.
 - `buyer_reported_at`/nút “Tôi đã chuyển khoản” **chỉ là thông báo**, không đủ để giao sách; chỉ `seller_confirmed_at` do A xác nhận sau kiểm tra ngoài app mới mở khóa tạo/gửi **bất kỳ Handover SELL**.
 - Có thể thỏa thuận điểm hẹn, tạo DeliveryTask và chọn C trước khi A xác nhận tiền, nhưng **không cho Handover A→C/A→B hoặc các chặng tiếp theo được thực thi trước khi A xác nhận tiền**.
 - Sau A xác nhận tiền nhưng chưa có B nhận cuối: `owner=A`, `holder` vẫn là người nhận hợp lệ gần nhất, Transaction chưa hoàn tất. Khi B nhận cuối hợp lệ: server **nguyên tử** owner=B, holder=B, Transaction COMPLETED, Listing cũ ARCHIVED.
@@ -344,7 +363,7 @@ UI phải hiển thị lỗi thân thiện, không hiển thị `service_role`, 
 | MVP-D05 | Nút “Báo vấn đề” khi chờ receiver luôn khả dụng cho người có quyền; không bắt buộc phải đợi N giờ. | Không có timeout tự xác nhận. |
 | MVP-D06 | Listing bắt buộc tên, môn/loại, tình trạng, ≥1 ảnh, một hình thức; SELL giá VND>0. B được rút Request PENDING. | Validation cụ thể cho UI/DB. |
 | MVP-D07 | Điểm hẹn có mô tả bắt buộc; GPS optional; mở bản đồ ngoài app, không tracking. | Giảm phạm vi, đủ chứng minh tính năng thiết bị. |
-| MVP-D08 | QR material có token khó đoán; QR Handover là mã tham chiếu gắn Handover do server kiểm tra, **không là yếu tố xác nhận đủ một mình**. | Giảm rủi ro QR bị sao chép và tránh lệ thuộc QR làm bằng chứng duy nhất. |
+| MVP-D08 | QR Material có token khó đoán và ổn định theo bản vật lý; server đối chiếu trong đúng chặng. Không dùng UUID thuần hoặc QR Handover thay mã Material; chỉ fallback có lý do khi đủ điều kiện tại H2. | Giữ mã đã in và tránh lệ thuộc QR làm bằng chứng duy nhất. |
 | MVP-D09 | Mọi state-changing action dùng idempotency key, timestamp server, quyền server và event nhất quán; Mock phải mô phỏng lỗi. | Tránh double-approval, double-holder-update. |
 
 **Không tự quyết định bằng code:** quyền xóa chứng cứ đang có tranh chấp, đóng Issue đơn phương, chính sách BOOT/PRIV khi thiếu người phê duyệt độc lập, thanh toán hoặc hoàn tiền tự động, theo dõi vị trí liên tục. Chuyển các mục này sang backlog/hướng phát triển và hỏi trưởng nhóm **chỉ nếu** tính năng thực sự được đưa vào phạm vi triển khai.
@@ -376,7 +395,7 @@ UI phải hiển thị lỗi thân thiện, không hiển thị `service_role`, 
 | AC-02 | 3 Request cùng Listing, A duyệt Request thứ 2 | Chỉ 1 ACCEPTED/Transaction; 2 REJECTED, có timestamp. |
 | AC-03 | Hai thao tác duyệt đồng thời | Không tạo 2 Transaction active cho một Material. |
 | AC-04 | Listing PUBLISHED nhưng RESERVED | Vẫn hiện “Đã được đặt”; client và server chặn Request mới. |
-| AC-05 | QR Handover đọc được nhưng sai | Chặn, không manual override. |
+| AC-05 | QR Material đọc được nhưng sai; đổi lần thử/mở lại màn rồi fallback | Server vẫn chặn; chỉ quét lại đúng QR bằng thao tác mới mới gỡ chặn. |
 | AC-06 | QR không có/không đọc được | Fallback có lý do, vẫn ảnh + receiver xác nhận. |
 | AC-07 | Handover thiếu ảnh/người giao tự confirm | Server không đổi holder. |
 | AC-08 | A→C→B, mỗi chặng ảnh/confirm | Holder A→C→B đúng 2 Event. |
@@ -397,6 +416,10 @@ UI phải hiển thị lỗi thân thiện, không hiển thị `service_role`, 
 | AC-23 | Giao nhiệm vụ cho hai C gần như cùng lúc | Chỉ một ACCEPTED, Task có một courier. |
 | AC-24 | C rút trước pickup | Không đổi holder; Task cũ hủy đúng quy tắc, Task mới không dùng ảnh cũ. |
 | AC-25 | Bán đã nhận tiền, C trả sách về A rồi hai bên đồng ý hủy | A hoàn tiền ngoài app, B xác nhận đã nhận hoàn, mới cho CANCELLED. |
+| AC-26 | Xem QR lần đầu khi chưa có ảnh/Listing; nhiều lần xem đồng thời | Chỉ tạo một QR cho Material, các lần xem trả cùng mã. |
+| AC-27 | Owner khác holder; sau đó chuyển chủ hợp lệ và chủ cũ gửi lại yêu cầu xem QR | Owner hiện tại được xem; giữ cùng QR khi chuyển chủ, chủ cũ bị từ chối. |
+| AC-28 | Trang chủ có dữ liệu vượt giới hạn một trang; một khối tải lỗi | Tổng vẫn tính toàn bộ dữ liệu có quyền; khối lỗi có thử lại, không hiện số 0 giả, các khối khác vẫn dùng được. |
+| AC-29 | Mở QR trực tiếp, ra nền/đổi phiên; lưu Material rồi quay lại | QR trong bộ nhớ bị xóa, xem lại cần server kiểm tra; luôn có Back phù hợp, không quay lại form đã lưu. |
 
 **Bằng chứng mỗi cá nhân:** UI chạy trên emulator/Android, unit/widget tests cho phân hệ, mock scenario và real repository đúng interface, commit/PR cá nhân. Test được ghi “đạt” **chỉ khi đã chạy**, không đánh dấu bằng lời mô tả.
 
@@ -471,7 +494,7 @@ Các mã `BR-xx` **được giữ nguyên**, để `QUY_TRINH_HOAT_DONG.md`, tes
 | BR-29 | ĐÃ CHỐT | **Mọi Handover SELL (trực tiếp hoặc qua C) bị chặn cho tới khi A xác nhận đã nhận tiền ngoài ứng dụng**. Chỉ hiển thị «đã nhận tiền» sau ACK server; không tự suy ra thanh toán từ thông báo của B. Nếu có giao sách ngoài hệ thống trái quy trình, ghi Issue để đối soát, không coi đó là Handover hợp lệ. |
 | BR-30 | ĐÃ CHỐT | **Mọi Handover** đều phải có ít nhất **một ảnh minh chứng**, bao gồm giao trực tiếp, A→C, C→B, trả trực tiếp và trả qua C. |
 | BR-31 | ĐÃ CHỐT | **Người giao từng chặng** chụp và gửi ít nhất một ảnh; **người nhận được chỉ định** xác nhận đã nhận. Người giao không được xác nhận thay người nhận. |
-| BR-32 | ĐÃ CHỐT | Ưu tiên **QR tài liệu**; nếu **không có mã dán** hoặc **camera không đọc được mã**, cho phép đối chiếu bằng **QR lượt bàn giao** hoặc **thủ công có ghi lý do**. Dù dùng cách thủ công, vẫn phải có ảnh và người nhận xác nhận. **Mã QR đọc được nhưng không khớp không phải lý do để bỏ qua xác thực** (xem BR-50). |
+| BR-32 | ĐÃ CHỐT | Đối chiếu bằng **QR Material**; nếu **không có mã dán** hoặc **camera không đọc được mã**, cho phép **thủ công có ghi lý do** khi chặng không bị chặn do mismatch. MVP không dùng QR Handover thay mã Material. Dù dùng thủ công, vẫn phải có ảnh và người nhận xác nhận. **Mã QR đọc được nhưng không khớp không phải lý do để bỏ qua xác thực** (xem BR-50). |
 | BR-33 | ĐÃ CHỐT | Chỉ sau khi ảnh đã được server ghi nhận và người nhận xác nhận, Handover mới thành công và server cập nhật `holder_id`, lịch sử, trạng thái liên quan. |
 | BR-34 | ĐÃ CHỐT | Từ chối trước khi nhận vì sai/hỏng/chưa nhận: Handover DISPUTED, mở Issue, không đổi holder; phản ánh sau đã nhận không đảo ngược Handover. |
 | BR-35 | ĐÃ CHỐT | Khi mất mạng hoặc upload lỗi: lưu ảnh/bản nháp trên điện thoại, hiển thị “chưa gửi/chưa xác nhận”; **không** tự thông báo bàn giao hoàn tất. |
@@ -489,7 +512,7 @@ Các mã `BR-xx` **được giữ nguyên**, để `QUY_TRINH_HOAT_DONG.md`, tes
 | BR-47 | ĐÃ CHỐT | Khắc phục sự cố qua Handover mới/Issue; không tự sửa holder/owner, không tự đóng Issue khi các bên chưa xác nhận. |
 | BR-48 | QUY ƯỚC MVP | MVP có danh sách/chi tiết Issue và thông báo trong ứng dụng; UI Admin hoàn chỉnh và push notifications không bắt buộc. |
 | BR-49 | ĐÃ CHỐT | `Listing.status = PUBLISHED` vẫn có thể hiển thị trong kết quả khám phá khi Material đã `RESERVED`, nhưng phải có nhãn **Đã được đặt** và **khóa nút Gửi yêu cầu**. Server phải từ chối tạo yêu cầu mới khi Material không khả dụng. Listing `ARCHIVED` **không hiển thị** trong danh sách khám phá thông thường. |
-| BR-50 | ĐÃ CHỐT | Nếu hệ thống **đọc được QR nhưng mã không khớp** với Material/Handover cần bàn giao, **chặn xác nhận lượt bàn giao hiện tại**, báo sai mã và yêu cầu kiểm tra/đối chiếu lại đúng tài liệu. **Không cho chuyển sang thủ công để vượt qua kết quả không khớp đó.** |
+| BR-50 | ĐÃ CHỐT | Nếu hệ thống **đọc được QR nhưng mã không khớp** với Material của chặng cần bàn giao, server **lưu chặn lượt bàn giao hiện tại** và yêu cầu đối chiếu lại đúng tài liệu. **Không cho chuyển sang thủ công, đổi lần thử, mở lại màn hoặc dùng kết quả thành công cũ để vượt qua.** Chỉ quét lại đúng QR bằng thao tác mới mới gỡ chặn. |
 
 ### Phụ lục A.1. Trạng thái OPEN-01 đến OPEN-10 của bản SS-BR cũ
 
@@ -507,3 +530,5 @@ Các mã `BR-xx` **được giữ nguyên**, để `QUY_TRINH_HOAT_DONG.md`, tes
 | OPEN-10 | Quy ước MVP-D07: mô tả điểm hẹn, GPS tùy chọn, mở bản đồ ngoài app, không theo dõi liên tục. |
 
 **Ghi chú thay đổi:** Bản 2.0 tích hợp các nội dung nghiệp vụ từ tài liệu hướng dẫn đã soạn trước đó **vào đúng tệp `QUY_TAC_NGHIEP_VU.md`**; không duy trì một file hướng dẫn nghiệp vụ khác tên trong thư mục `docs/`. Các tài liệu workflow/phân hệ vẫn giữ tên riêng vì phục vụ mô tả luồng và trách nhiệm, không thay thế nguồn quy tắc SS-BR.
+
+Bản 2.1 đồng bộ quy tắc QR Material, đối chiếu/fallback, Trang chủ và điều hướng tại mục 3.1.3, 3.3, 4; đồng thời cập nhật INV-05, MVP-D08, AC-05/26–29 và BR-32/50. Chi tiết triển khai và kết quả kiểm thử tiếp tục nằm trong tài liệu phân hệ/contracts.

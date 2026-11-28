@@ -951,4 +951,95 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get matCached => 'Showing a device copy. Connect to refresh and edit.';
+
+  @override
+  String homeHello(String name) {
+    return 'Hello, $name!';
+  }
+
+  @override
+  String get homeFallbackName => 'there';
+
+  @override
+  String get homeIntro =>
+      'Manage your materials and continue where you left off.';
+
+  @override
+  String get homeAddMaterial => 'Add material';
+
+  @override
+  String get homeMyMaterials => 'My materials';
+
+  @override
+  String get homeManageListings => 'Manage listings';
+
+  @override
+  String get homeOverviewTitle => 'Your overview';
+
+  @override
+  String get homeOwnedCount => 'Materials owned';
+
+  @override
+  String get homePublishedCount => 'Published listings';
+
+  @override
+  String get homeDraftCount => 'Server drafts';
+
+  @override
+  String get homeActiveCount => 'Active transactions';
+
+  @override
+  String get homeContinueDraft => 'Continue listing drafts';
+
+  @override
+  String get homeNoDrafts =>
+      'No server drafts. Device drafts are available in Publish.';
+
+  @override
+  String get homeRecentTitle => 'Recently shared materials';
+
+  @override
+  String get homeNoListings =>
+      'No published listings yet. Add a material to create your first listing.';
+
+  @override
+  String get homeRetry => 'Retry';
+
+  @override
+  String get qrTitle => 'Material QR';
+
+  @override
+  String get qrShow => 'Show material QR';
+
+  @override
+  String get qrRetry => 'Reload QR';
+
+  @override
+  String get qrEnlarge => 'Enlarge QR';
+
+  @override
+  String get qrNotice =>
+      'Identifies this physical copy and stays unchanged when relisted. Scanning does not confirm delivery or receipt.';
+
+  @override
+  String get qrDemoNotice => 'Demo QR. Not valid for real handovers.';
+
+  @override
+  String get qrOffline =>
+      'Connect to verify current access. QR payloads are not stored for offline use.';
+
+  @override
+  String get qrUnavailable =>
+      'This material QR is unavailable. Refresh material details or sign in again.';
+
+  @override
+  String get qrBackendUnavailable =>
+      'QR is temporarily unavailable. Please try again later.';
+
+  @override
+  String get qrUnknown =>
+      'The issuing result is unknown. Retry checks the same request and preserves the QR.';
+
+  @override
+  String get qrFailed => 'Could not load the QR. Please retry.';
 }

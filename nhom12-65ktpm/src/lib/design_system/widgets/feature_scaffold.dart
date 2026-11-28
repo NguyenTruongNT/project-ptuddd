@@ -10,11 +10,13 @@ class FeatureScaffold extends StatelessWidget {
     required this.body,
     required this.fallbackLocation,
     this.actions,
+    this.bottomNavigationBar,
   });
   final String title;
   final Widget body;
   final String fallbackLocation;
   final List<Widget>? actions;
+  final Widget? bottomNavigationBar;
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +42,7 @@ class FeatureScaffold extends StatelessWidget {
           actions: actions,
         ),
         body: SafeArea(child: body),
+        bottomNavigationBar: bottomNavigationBar,
       ),
     );
   }
